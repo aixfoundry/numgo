@@ -1,5 +1,7 @@
 package numgo
 
+import "math"
+
 // EMCP 列主元消去(高斯列主元消去法)
 //
 // 输入: [ A | b ] 增广矩阵, A是方形矩阵
@@ -8,7 +10,7 @@ package numgo
 //	b : 线性代数方程组(A x = b)的常数列向量
 //
 // 输出: sol 解
-func (x *Array) EMCP() (sol *Array) {
+func EMCP(x *Array) (sol *Array) {
 	if x.c-1 != x.r {
 		return
 	}
@@ -46,4 +48,61 @@ func (x *Array) EMCP() (sol *Array) {
 		c:    n,
 		data: buf,
 	}
+}
+
+// CELSQ 矛盾方程组的最小二乘法(contradictory equations)
+//
+// 输入:
+//
+//	A : 线性代数方程组(A x = b)的系数矩阵
+//	b : 线性代数方程组(A x = b)的常数列向量
+//
+// 输出: sol 解
+func CELSQ(a *Array, b *Array) (sol *Array) {
+	if a.r != b.r {
+		return
+	}
+	at := a.T()
+	aa := at.Dot(a)
+	ab := at.Dot(b)
+	return EMCP(aa.Cat(ab, 1))
+}
+
+// LSQFitting 线性最小二乘拟合
+//
+// 输入: [ xy ] (n, 2)维矩阵
+//
+// 输出: sol 解
+func LSQFitting(xy *Array) (sol *Array) {
+	ex2, ex, exy, ey := 0.0, 0.0, 0.0, 0.0
+	for ir := range xy.r {
+		ex2 += xy.At(ir, 0) * xy.At(ir, 0)
+		ex += xy.At(ir, 0)
+		exy += xy.At(ir, 0) * xy.At(ir, 1)
+		ey += xy.At(ir, 1)
+	}
+	a := NewArray(2, 3, []float64{
+		ex2, ex, exy,
+		ex, float64(xy.r), ey,
+	})
+	return EMCP(a)
+}
+
+// PolyFitting 多项式拟合
+//
+// 输入:
+//
+//	[ xy ] (n, 2)维矩阵
+//	m: 多项式次数，m < N-1
+//
+// 输出: sol 解
+func PolyFitting(xy *Array, m int) (sol *Array) {
+	n := xy.r
+	a := ZeroArray(n, m+1)
+	for i := range n {
+		for j := range m + 1 {
+			a.Set(i, j, math.Pow(xy.At(i, 0), float64(j)))
+		}
+	}
+	return CELSQ(a, xy.Of(1, 1))
 }

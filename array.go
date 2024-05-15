@@ -19,10 +19,18 @@ func CopyOf(a *Array) (x *Array) {
 	return
 }
 
-func ZeroArray(r, c int) (a *Array) {
+func EmptyArray(r, c int) (a *Array) {
 	return &Array{
 		r: r,
 		c: c,
+	}
+}
+
+func ZeroArray(r, c int) (a *Array) {
+	return &Array{
+		r:    r,
+		c:    c,
+		data: make([]float64, r*c),
 	}
 }
 
@@ -42,9 +50,9 @@ func NewArray(r, c int, data []float64) (a *Array) {
 
 func (x *Array) T() (a *Array) {
 	a = ZeroArray(x.c, x.r)
-	for ir := range x.r {
-		for ic := range x.c {
-			a.Set(ic, ir, x.At(ir, ic))
+	for ir := range x.c {
+		for ic := range x.r {
+			a.Set(ir, ic, x.At(ic, ir))
 		}
 	}
 	return
@@ -137,5 +145,57 @@ func (x *Array) Swap(f, t int, axis int) {
 		for ir := range x.r {
 			x.data[f*x.r+ir], x.data[t*x.r+ir] = x.data[t*x.r+ir], x.data[f*x.r+ir]
 		}
+	}
+}
+
+func (x *Array) Cat(b *Array, axis int) (ret *Array) {
+	if axis == 0 {
+		ret = EmptyArray(x.r+b.r, x.c)
+		for i := range x.r {
+			for ja := range x.c {
+				ret.data = append(ret.data, x.data[i*x.c+ja])
+			}
+		}
+		for i := range b.r {
+			for jb := range b.c {
+				ret.data = append(ret.data, b.data[i*b.c+jb])
+			}
+		}
+	} else {
+		ret = EmptyArray(x.r, x.c+b.c)
+		for i := range x.r {
+			for ja := range x.c {
+				ret.data = append(ret.data, x.data[i*x.c+ja])
+			}
+			for jb := range b.c {
+				ret.data = append(ret.data, b.data[i*b.c+jb])
+			}
+		}
+	}
+	return
+}
+
+func (x *Array) Of(i int, axis int) (ret *Array) {
+	buf := []float64{}
+	if axis == 0 {
+		for ir := range x.r {
+			if ir == i {
+				for ic := range x.c {
+					buf = append(buf, x.At(ir, ic))
+				}
+				break
+			}
+		}
+		return NewArray(1, x.c, buf)
+	} else {
+		for ir := range x.r {
+			for ic := range x.c {
+				if ic == i {
+					buf = append(buf, x.At(ir, ic))
+					break
+				}
+			}
+		}
+		return NewArray(x.r, 1, buf)
 	}
 }

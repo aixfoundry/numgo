@@ -49,3 +49,18 @@ func (a *Array) Min() (sol float64, r, c int) {
 	}
 	return
 }
+
+func (a *Array) Dot(b *Array) (ret *Array) {
+	if a.c != b.r {
+		return
+	}
+	ret = ZeroArray(a.r, b.c)
+	for i := range a.r {
+		for j := range b.c {
+			for k := range a.c {
+				ret.data[b.c*i+j] += a.At(i, k) * b.At(k, j)
+			}
+		}
+	}
+	return
+}
