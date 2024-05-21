@@ -11,3 +11,6 @@ num go
 ## 线性代数
 
 * 列主元消去法(EMCP)
+* 矛盾方程组的最小二乘法(CELSQ)
+* 线性最小二乘拟合(LSQFitting)
+* 多项式拟合(PolyFitting)
