@@ -92,8 +92,9 @@ func (x *Array) At(i, j int) float64 {
 }
 
 // Set 设置坐标值
-func (x *Array) Set(i, j int, f float64) {
+func (x *Array) Set(i, j int, f float64) *Array {
 	x.data[i*x.c+j] = f
+	return x
 }
 
 // Format 字符串输出格式
@@ -118,7 +119,7 @@ func (x *Array) RangeDelete(f, t int, axis int) *Array {
 		buf := []float64{}
 		for ir := range x.r {
 			for ic := range x.c {
-				if ic >= f && ic <= t {
+				if ic >= f && ic < t {
 					continue
 				}
 				buf = append(buf, x.data[ir*x.r+ic])
