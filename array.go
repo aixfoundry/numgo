@@ -4,21 +4,24 @@ import (
 	"fmt"
 )
 
-// Array matrix
+// Array 矩阵
 type Array struct {
 	r, c int
 	data []float64
 }
 
+// CopyOf 创建一个新的副本
 func CopyOf(a *Array) (x *Array) {
 	x = &Array{
 		c:    a.c,
 		r:    a.r,
-		data: a.data,
+		data: make([]float64, len(a.data)),
 	}
+	copy(x.data, a.data)
 	return
 }
 
+// EmptyArray 创建空矩阵
 func EmptyArray(r, c int) (a *Array) {
 	return &Array{
 		r: r,
@@ -26,6 +29,7 @@ func EmptyArray(r, c int) (a *Array) {
 	}
 }
 
+// ZeroArray 创建全为0的矩阵
 func ZeroArray(r, c int) (a *Array) {
 	return &Array{
 		r:    r,
@@ -34,6 +38,7 @@ func ZeroArray(r, c int) (a *Array) {
 	}
 }
 
+// NewArray 创建矩阵
 func NewArray(r, c int, data []float64) (a *Array) {
 	if r*c > len(data) {
 		buf := make([]float64, r*c-len(data))
@@ -48,46 +53,69 @@ func NewArray(r, c int, data []float64) (a *Array) {
 	}
 }
 
-func (x *Array) T() (a *Array) {
-	a = ZeroArray(x.c, x.r)
-	for ir := range x.c {
-		for ic := range x.r {
-			a.Set(ir, ic, x.At(ic, ir))
-		}
+// Reshape 矩阵变形
+func (x *Array) Reshape(r, c int) *Array {
+	if r*c > len(x.data) {
+		buf := make([]float64, r*c-len(x.data))
+		x.data = append(x.data, buf...)
+	} else if r*c < len(x.data) {
+		x.data = x.data[:r*c]
 	}
-	return
+	x.r, x.c = r, c
+	return x
 }
 
+// T 矩阵转置
+//
+// numpy: a.T
+func (x *Array) T() *Array {
+	data := make([]float64, len(x.data))
+	r, c := x.r, x.c
+	copy(data, x.data)
+	x.Reshape(x.c, x.r)
+	for ir := range c {
+		for ic := range r {
+			x.Set(ir, ic, data[ic*c+ir])
+		}
+	}
+	return x
+}
+
+// Dims 获取矩阵形状
 func (x *Array) Dims() (r, c int) {
 	return x.r, x.c
 }
 
+// At 获取坐标值
 func (x *Array) At(i, j int) float64 {
 	return x.data[i*x.c+j]
 }
 
+// Set 设置坐标值
 func (x *Array) Set(i, j int, f float64) {
 	x.data[i*x.c+j] = f
 }
 
+// Format 字符串输出格式
 func (x *Array) Format(fs fmt.State, c rune) {
 	x.format("", 0, '.', true, fs, c)
 }
 
-func (x *Array) RangeDelete(f, t int, axis int) (a *Array) {
-	buf := []float64{}
-	r, c := x.r, x.c
+// RangeDelete 范围删除行或列
+//
+// f: 要删除的行或列的开始
+// t: 要删除的行或列的结束
+// axis:
+//
+//   - 0: 按行删除
+//
+//   - 1: 按列删除
+func (x *Array) RangeDelete(f, t int, axis int) *Array {
 	if axis == 0 {
-		for ir := range x.r {
-			if ir >= f && ir <= t {
-				continue
-			}
-			for ic := range x.c {
-				buf = append(buf, x.data[ir*x.r+ic])
-			}
-		}
-		r = x.r - t + f
+		x.data = append(x.data[:f*x.r], x.data[t*x.r:]...)
+		x.r -= t - f
 	} else {
+		buf := []float64{}
 		for ir := range x.r {
 			for ic := range x.c {
 				if ic >= f && ic <= t {
@@ -96,29 +124,26 @@ func (x *Array) RangeDelete(f, t int, axis int) (a *Array) {
 				buf = append(buf, x.data[ir*x.r+ic])
 			}
 		}
-		c = x.c - t + f
+		x.c -= t - f
+		x.data = buf
 	}
-	return &Array{
-		c:    c,
-		r:    r,
-		data: buf,
-	}
+	return x
 }
 
-func (x *Array) Delete(n int, axis int) (a *Array) {
-	buf := []float64{}
-	r, c := x.r, x.c
+// Delete 删除某行或列
+//
+// n: 要删除的行或列
+// axis:
+//
+//   - 0: 按行删除
+//
+//   - 1: 按列删除
+func (x *Array) Delete(n int, axis int) *Array {
 	if axis == 0 {
-		for ir := range x.r {
-			if ir == n {
-				continue
-			}
-			for ic := range x.c {
-				buf = append(buf, x.data[ir*x.r+ic])
-			}
-		}
-		r = x.r - 1
+		x.data = append(x.data[:x.r*n], x.data[x.r*n+x.c:]...)
+		x.r--
 	} else {
+		buf := []float64{}
 		for ir := range x.r {
 			for ic := range x.c {
 				if ic == n {
@@ -127,55 +152,73 @@ func (x *Array) Delete(n int, axis int) (a *Array) {
 				buf = append(buf, x.data[ir*x.r+ic])
 			}
 		}
-		c = x.c - 1
+		x.data = buf
+		x.c--
 	}
-	return &Array{
-		c:    c,
-		r:    r,
-		data: buf,
-	}
+	return x
 }
 
-func (x *Array) Swap(f, t int, axis int) {
+// Swap 交换行或列
+//
+// numpy: a[1], a[2] = a[2], a[1]
+//
+// axis:
+//
+//   - 0: 按行交换
+//
+//   - 1: 按列交换
+func (x *Array) Swap(f, t int, axis int) *Array {
 	if axis == 0 {
 		for ic := range x.c {
-			x.data[f*x.c+ic], x.data[t*x.c+ic] = x.data[t*x.c+ic], x.data[f*x.c+ic]
+			x.data[f*x.r+ic], x.data[t*x.r+ic] = x.data[t*x.r+ic], x.data[f*x.r+ic]
 		}
 	} else if axis == 1 {
 		for ir := range x.r {
-			x.data[f*x.r+ir], x.data[t*x.r+ir] = x.data[t*x.r+ir], x.data[f*x.r+ir]
+			x.data[f+x.r*ir], x.data[t+x.r*ir] = x.data[t+x.r*ir], x.data[f+x.r*ir]
 		}
 	}
+	return x
 }
 
-func (x *Array) Cat(b *Array, axis int) (ret *Array) {
+// Cat 拼接两个向量
+//
+// numpy: np.concatenate((a, b), axis)
+//
+// axis:
+//
+//   - 0: 按行拼接
+//
+//   - 1: 按列拼接
+func (x *Array) Cat(b *Array, axis int) *Array {
 	if axis == 0 {
-		ret = EmptyArray(x.r+b.r, x.c)
-		for i := range x.r {
-			for ja := range x.c {
-				ret.data = append(ret.data, x.data[i*x.c+ja])
-			}
-		}
-		for i := range b.r {
-			for jb := range b.c {
-				ret.data = append(ret.data, b.data[i*b.c+jb])
-			}
-		}
+		x.r += b.r
+		x.data = append(x.data, b.data...)
 	} else {
-		ret = EmptyArray(x.r, x.c+b.c)
+		buf := []float64{}
 		for i := range x.r {
 			for ja := range x.c {
-				ret.data = append(ret.data, x.data[i*x.c+ja])
+				buf = append(buf, x.data[i*x.c+ja])
 			}
 			for jb := range b.c {
-				ret.data = append(ret.data, b.data[i*b.c+jb])
+				buf = append(buf, b.data[i*b.c+jb])
 			}
 		}
+		x.c += b.c
+		x.data = buf
 	}
-	return
+	return x
 }
 
-func (x *Array) Of(i int, axis int) (ret *Array) {
+// Of 获取行或者列
+//
+// numpy: a[i], a[:, i]
+//
+// axis:
+//
+//   - 0: 按行获取
+//
+//   - 1: 按列获取
+func (x *Array) Of(i int, axis int) *Array {
 	buf := []float64{}
 	if axis == 0 {
 		for ir := range x.r {

@@ -1,6 +1,8 @@
 package numgo
 
-import "math"
+import (
+	"math"
+)
 
 // EMCP 列主元消去(高斯列主元消去法)
 //
@@ -62,10 +64,10 @@ func CELSQ(a *Array, b *Array) (sol *Array) {
 	if a.r != b.r {
 		return
 	}
-	at := a.T()
+	at := T(a)
 	aa := at.Dot(a)
 	ab := at.Dot(b)
-	return EMCP(aa.Cat(ab, 1))
+	return EMCP(Cat(aa, ab, 1))
 }
 
 // LSQFitting 线性最小二乘拟合
@@ -82,8 +84,8 @@ func LSQFitting(xy *Array) (sol *Array) {
 		ey += xy.At(ir, 1)
 	}
 	a := NewArray(2, 3, []float64{
-		ex2, ex, exy,
-		ex, float64(xy.r), ey,
+		float64(xy.r), ex, ey,
+		ex, ex2, exy,
 	})
 	return EMCP(a)
 }
