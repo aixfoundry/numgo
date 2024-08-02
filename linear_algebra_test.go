@@ -1,18 +1,28 @@
 package numgo
 
-import "testing"
+import (
+	"fmt"
+)
 
-func TestEMCP(t *testing.T) {
-	a := NewArray(3, 4, []float64{
-		2, 1, -1, 8,
-		-3, -1, 2, -11,
-		-2, 1, 2, -3,
+func ExampleEMCP() {
+	a := NewArray(3, 3, []float64{
+		2, 1, -1,
+		-3, -1, 2,
+		-2, 1, 2,
 	})
-	sol := EMCP(a)
-	t.Log(sol)
+	b := NewArray(3, 1, []float64{
+		8,
+		-11,
+		-3,
+	})
+	ab := Cat(a, b, 1)
+	sol := EMCP(ab)
+	fmt.Println(sol)
+	// Output:
+	// [3.230769230769231  8.846153846153847  -2.692307692307692]
 }
 
-func TestLSQ(t *testing.T) {
+func ExampleLstsq() {
 	a := NewArray(6, 3, []float64{
 		1.0, 0.0, 0.0,
 		0.0, 1.0, 0.0,
@@ -29,13 +39,13 @@ func TestLSQ(t *testing.T) {
 		2.0,
 		1.0,
 	})
-	sol := CELSQ(a, b)
-	t.Log(sol)
-
-	t.Logf("\n%v\n", sol)
+	sol := Lstsq(a, b)
+	fmt.Println(sol)
+	// Output:
+	// [1.25  1.7500000000000002  3]
 }
 
-func TestLSQFitting(t *testing.T) {
+func ExampleLsqFit() {
 	a := NewArray(8, 2, []float64{
 		-1.0, 10.0,
 		0.0, 9.0,
@@ -45,23 +55,24 @@ func TestLSQFitting(t *testing.T) {
 		4.0, 3.0,
 		5.0, 0.0,
 		6.0, -1.0})
-	sol := LSQFitting(a)
-	t.Log(sol)
-
-	t.Logf("\n%v\n", sol)
+	sol := LsqFit(a)
+	fmt.Println(sol)
+	// Output:
+	// [-2.2692307692307705  8.798076923076925]
 }
 
-func TestPolyFitting(t *testing.T) {
-	a := NewArray(7, 2, []float64{
-		1.0, 10.0,
-		3.0, 5.0,
-		4.0, 4.0,
-		5.0, 2.0,
-		6.0, 1.0,
-		7.0, 1.0,
-		8.0, 2.0})
-	sol := PolyFitting(a, 2)
-	t.Log(sol)
-
-	t.Logf("\n%v\n", sol)
+func ExamplePolyFit_lsq() {
+	a := NewArray(8, 2, []float64{
+		-1.0, 10.0,
+		0.0, 9.0,
+		1.0, 7.0,
+		2.0, 5.0,
+		3.0, 4.0,
+		4.0, 3.0,
+		5.0, 0.0,
+		6.0, -1.0})
+	sol := PolyFit(a, 1)
+	fmt.Println(sol)
+	// Output:
+	// [-2.2692307692307705  8.798076923076925]
 }

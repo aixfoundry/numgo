@@ -1,9 +1,5 @@
 package numgo
 
-import (
-	"math"
-)
-
 // EMCP 列主元消去(高斯列主元消去法)
 //
 // 输入: [ A | b ] 增广矩阵, A是方形矩阵
@@ -52,7 +48,9 @@ func EMCP(x *Array) (sol *Array) {
 	}
 }
 
-// CELSQ 矛盾方程组的最小二乘法(contradictory equations)
+// Lstsq 线性矩阵方程的最小二乘解
+//
+// numpy: [numpy.linalg.lstsq]
 //
 // 输入:
 //
@@ -60,7 +58,9 @@ func EMCP(x *Array) (sol *Array) {
 //	b : 线性代数方程组(A x = b)的常数列向量
 //
 // 输出: sol 解
-func CELSQ(a *Array, b *Array) (sol *Array) {
+//
+// [numpy.linalg.lstsq]: https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
+func Lstsq(a *Array, b *Array) (sol *Array) {
 	if a.r != b.r {
 		return
 	}
@@ -70,12 +70,16 @@ func CELSQ(a *Array, b *Array) (sol *Array) {
 	return EMCP(Cat(aa, ab, 1))
 }
 
-// LSQFitting 线性最小二乘拟合
+// LsqFit 线性最小二乘拟合
+//
+// numpy: [numpy.linalg.lstsq]
 //
 // 输入: [ xy ] (n, 2)维矩阵
 //
 // 输出: sol 解
-func LSQFitting(xy *Array) (sol *Array) {
+//
+// [numpy.linalg.lstsq]: https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
+func LsqFit(xy *Array) (sol *Array) {
 	ex2, ex, exy, ey := 0.0, 0.0, 0.0, 0.0
 	for ir := range xy.r {
 		ex2 += xy.At(ir, 0) * xy.At(ir, 0)
@@ -88,23 +92,4 @@ func LSQFitting(xy *Array) (sol *Array) {
 		ex, ex2, exy,
 	})
 	return EMCP(a)
-}
-
-// PolyFitting 多项式拟合
-//
-// 输入:
-//
-//	[ xy ] (n, 2)维矩阵
-//	m: 多项式次数，m < N-1
-//
-// 输出: sol 解
-func PolyFitting(xy *Array, m int) (sol *Array) {
-	n := xy.r
-	a := ZeroArray(n, m+1)
-	for i := range n {
-		for j := range m + 1 {
-			a.Set(i, j, math.Pow(xy.At(i, 0), float64(j)))
-		}
-	}
-	return CELSQ(a, xy.Of(1, 1))
 }
