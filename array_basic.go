@@ -43,11 +43,11 @@ func T(a *Array) (o *Array) {
 func (a *Array) Swap(f, t int, axis int) *Array {
 	if axis == 0 {
 		for ic := range a.c {
-			a.data[f*a.r+ic], a.data[t*a.r+ic] = a.data[t*a.r+ic], a.data[f*a.r+ic]
+			a.data[f*a.c+ic], a.data[t*a.c+ic] = a.data[t*a.c+ic], a.data[f*a.c+ic]
 		}
 	} else if axis == 1 {
 		for ir := range a.r {
-			a.data[f+a.r*ir], a.data[t+a.r*ir] = a.data[t+a.r*ir], a.data[f+a.r*ir]
+			a.data[f+a.c*ir], a.data[t+a.c*ir] = a.data[t+a.c*ir], a.data[f+a.c*ir]
 		}
 	}
 	return a

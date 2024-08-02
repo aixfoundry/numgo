@@ -217,29 +217,29 @@ func ExampleArray_Cat_col() {
 }
 
 func ExampleArray_Swap_row() {
-	a := NewArray(3, 3, []float64{
-		1, 2, 3,
-		4, 5, 6,
-		7, 8, 9,
+	a := NewArray(3, 4, []float64{
+		1, 2, 3, 3,
+		4, 5, 6, 2,
+		7, 8, 9, 2,
 	})
 	fmt.Printf("%v", a.Swap(0, 1, 0))
 	// Output:
-	// ⎡4  5  6⎤
-	// ⎢1  2  3⎥
-	// ⎣7  8  9⎦
+	// ⎡4  5  6  2⎤
+	// ⎢1  2  3  3⎥
+	// ⎣7  8  9  2⎦
 }
 
 func ExampleArray_Swap_col() {
-	a := NewArray(3, 3, []float64{
-		1, 2, 3,
-		4, 5, 6,
-		7, 8, 9,
+	a := NewArray(3, 4, []float64{
+		1, 2, 3, 3,
+		4, 5, 6, 2,
+		7, 8, 9, 2,
 	})
 	fmt.Printf("%v", a.Swap(0, 1, 1))
 	// Output:
-	// ⎡2  1  3⎤
-	// ⎢5  4  6⎥
-	// ⎣8  7  9⎦
+	// ⎡2  1  3  3⎤
+	// ⎢5  4  6  2⎥
+	// ⎣8  7  9  2⎦
 }
 
 func ExampleArray_Reshape_row() {

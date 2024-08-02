@@ -6,20 +6,20 @@ import (
 
 func ExampleEMCP() {
 	a := NewArray(3, 3, []float64{
-		2, 1, -1,
-		-3, -1, 2,
-		-2, 1, 2,
+		1.0, 4.0, -5.0,
+		1.0, 3.0, -2.0,
+		6.0, -1.0, 18.0,
 	})
 	b := NewArray(3, 1, []float64{
-		8,
-		-11,
-		-3,
+		3,
+		2,
+		2,
 	})
 	ab := Cat(a, b, 1)
 	sol := EMCP(ab)
 	fmt.Println(sol)
 	// Output:
-	// [3.230769230769231  8.846153846153847  -2.692307692307692]
+	// [1.333333333333333  1.0658141036401502e-16  -0.33333333333333326]
 }
 
 func ExampleLstsq() {
@@ -58,7 +58,7 @@ func ExampleLsqFit() {
 	sol := LsqFit(a)
 	fmt.Println(sol)
 	// Output:
-	// [-2.2692307692307705  8.798076923076925]
+	// [8.642857142857142  -1.6071428571428568]
 }
 
 func ExamplePolyFit_lsq() {
@@ -74,5 +74,5 @@ func ExamplePolyFit_lsq() {
 	sol := PolyFit(a, 1)
 	fmt.Println(sol)
 	// Output:
-	// [-2.2692307692307705  8.798076923076925]
+	// [8.642857142857142  -1.6071428571428568]
 }

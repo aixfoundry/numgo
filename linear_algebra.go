@@ -8,10 +8,11 @@ package numgo
 //	b : 线性代数方程组(A x = b)的常数列向量
 //
 // 输出: sol 解
-func EMCP(x *Array) (sol *Array) {
-	if x.c-1 != x.r {
+func EMCP(a *Array) (sol *Array) {
+	if a.c-1 != a.r {
 		return
 	}
+	x := CopyOf(a)
 	n := x.r // n为方程数
 	// 求上三角
 	for i := range n { // 遍历所有行

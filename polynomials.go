@@ -24,3 +24,50 @@ func PolyFit(xy *Array, m int) (sol *Array) {
 	}
 	return Lstsq(a, xy.Of(1, 1))
 }
+
+// Poly1D 多项式的值
+//
+// numpy: [numpy.poly1d]
+//
+// 输入:
+//
+//	b: 常数列向量(一维)
+//	x: x值
+//
+// 输出: y 解
+//
+// [numpy.poly1d]: https://numpy.org/doc/stable/reference/generated/numpy.poly1d.html
+func Poly1D(b *Array, x float64) (y float64) {
+	if b.r != 1 {
+		return
+	}
+	for ic := range b.c {
+		y += b.At(0, ic) * math.Pow(x, float64(ic))
+	}
+	return
+}
+
+// PolyVal 多项式的值
+//
+// numpy: [numpy.polyval]
+//
+// 输入:
+//
+//	b: 常数列向量(一维)
+//	x: x值
+//
+// 输出: y 解
+//
+// [numpy.polyval]: https://numpy.org/doc/stable/reference/generated/numpy.polyval.html
+func PolyVal(b *Array, x *Array) (y *Array) {
+	if b.r != 1 {
+		return
+	}
+	y = ZeroArray(x.r, x.c)
+	for ir := range x.r {
+		for ic := range x.c {
+			y.Set(ir, ic, Poly1D(b, x.At(ir, ic)))
+		}
+	}
+	return
+}
