@@ -3,11 +3,11 @@ package numgo
 // T 矩阵转置
 //
 // numpy: a.T
-func T(x *Array) (o *Array) {
-	o = ZeroArray(x.c, x.r)
-	for ir := range x.c {
-		for ic := range x.r {
-			o.Set(ir, ic, x.At(ic, ir))
+func T(a *Array) (o *Array) {
+	o = ZeroArray(a.c, a.r)
+	for ir := range a.c {
+		for ic := range a.r {
+			o.Set(ir, ic, a.At(ic, ir))
 		}
 	}
 	return
@@ -22,15 +22,15 @@ func T(x *Array) (o *Array) {
 //   - 0: 按行交换
 //
 //   - 1: 按列交换
-func Swap(x *Array, f, t int, axis int) (o *Array) {
-	o = CopyOf(x)
+func Swap(a *Array, f, t int, axis int) (o *Array) {
+	o = CopyOf(a)
 	if axis == 0 {
 		for ic := range o.c {
-			o.data[f*o.c+ic], o.data[t*o.c+ic] = o.data[t*o.c+ic], o.data[f*o.c+ic]
+			o.data[f*o.r+ic], o.data[t*o.r+ic] = o.data[t*o.r+ic], o.data[f*o.r+ic]
 		}
 	} else if axis == 1 {
 		for ir := range o.r {
-			o.data[f*o.r+ir], o.data[t*o.r+ir] = o.data[t*o.r+ir], o.data[f*o.r+ir]
+			o.data[f+o.r*ir], o.data[t+o.r*ir] = o.data[t+o.r*ir], o.data[f+o.r*ir]
 		}
 	}
 	return
@@ -45,12 +45,12 @@ func Swap(x *Array, f, t int, axis int) (o *Array) {
 //   - 0: 按行拼接
 //
 //   - 1: 按列拼接
-func Cat(x *Array, b *Array, axis int) (o *Array) {
+func Cat(a *Array, b *Array, axis int) (o *Array) {
 	if axis == 0 {
-		o = EmptyArray(x.r+b.r, x.c)
-		for i := range x.r {
-			for ja := range x.c {
-				o.data = append(o.data, x.data[i*x.c+ja])
+		o = EmptyArray(a.r+b.r, a.c)
+		for i := range a.r {
+			for ja := range a.c {
+				o.data = append(o.data, a.data[i*a.c+ja])
 			}
 		}
 		for i := range b.r {
@@ -59,10 +59,10 @@ func Cat(x *Array, b *Array, axis int) (o *Array) {
 			}
 		}
 	} else {
-		o = EmptyArray(x.r, x.c+b.c)
-		for i := range x.r {
-			for ja := range x.c {
-				o.data = append(o.data, x.data[i*x.c+ja])
+		o = EmptyArray(a.r, a.c+b.c)
+		for i := range a.r {
+			for ja := range a.c {
+				o.data = append(o.data, a.data[i*a.c+ja])
 			}
 			for jb := range b.c {
 				o.data = append(o.data, b.data[i*b.c+jb])
@@ -80,24 +80,24 @@ func Cat(x *Array, b *Array, axis int) (o *Array) {
 //   - 0: 按行删除
 //
 //   - 1: 按列删除
-func Delete(x *Array, n int, axis int) *Array {
+func Delete(a *Array, n int, axis int) *Array {
 	buf := []float64{}
-	r, c := x.r, x.c
+	r, c := a.r, a.c
 	if axis == 0 {
-		buf = append(x.data[:x.r*n], x.data[x.r*n+x.c:]...)
-		r = x.r - 1
+		buf = append(a.data[:a.r*n], a.data[a.r*n+a.c:]...)
+		r = a.r - 1
 	} else {
-		for ir := range x.r {
-			for ic := range x.c {
+		for ir := range a.r {
+			for ic := range a.c {
 				if ic == n {
 					continue
 				}
-				buf = append(buf, x.data[ir*x.r+ic])
+				buf = append(buf, a.data[ir*a.r+ic])
 			}
 		}
-		c = x.c - 1
+		c = a.c - 1
 	}
-	return NewArray(c, r, buf)
+	return NewArray(r, c, buf)
 }
 
 // RangeDelete 范围删除行或列
@@ -109,22 +109,35 @@ func Delete(x *Array, n int, axis int) *Array {
 //   - 0: 按行删除
 //
 //   - 1: 按列删除
-func RangeDelete(x *Array, f, t int, axis int) *Array {
+func RangeDelete(a *Array, f, t int, axis int) *Array {
 	buf := []float64{}
-	r, c := x.r, x.c
+	r, c := a.r, a.c
 	if axis == 0 {
-		buf = append(x.data[:f*x.r], x.data[t*x.r:]...)
-		r = x.r - 1
+		buf = append(a.data[:f*a.r], a.data[t*a.r:]...)
+		r = a.r - t + f
 	} else {
-		for ir := range x.r {
-			for ic := range x.c {
-				if ic >= f && ic <= t {
+		for ir := range a.r {
+			for ic := range a.c {
+				if ic >= f && ic < t {
 					continue
 				}
-				buf = append(buf, x.data[ir*x.r+ic])
+				buf = append(buf, a.data[ir*a.r+ic])
 			}
 		}
-		c = x.c - 1
+		c = a.c - t + f
 	}
-	return NewArray(c, r, buf)
+	return NewArray(r, c, buf)
+}
+
+// Reshape 矩阵变形
+func Reshape(a *Array, r, c int) (o *Array) {
+	o = CopyOf(a)
+	if r*c > len(o.data) {
+		buf := make([]float64, r*c-len(o.data))
+		o.data = append(o.data, buf...)
+	} else if r*c < len(o.data) {
+		o.data = o.data[:r*c]
+	}
+	o.r, o.c = r, c
+	return
 }

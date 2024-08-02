@@ -65,8 +65,8 @@ func CELSQ(a *Array, b *Array) (sol *Array) {
 		return
 	}
 	at := T(a)
-	aa := at.Dot(a)
-	ab := at.Dot(b)
+	aa := Dot(at, a)
+	ab := Dot(at, b)
 	return EMCP(Cat(aa, ab, 1))
 }
 

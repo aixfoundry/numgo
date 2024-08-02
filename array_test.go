@@ -2,28 +2,7 @@ package numgo
 
 import (
 	"fmt"
-	"testing"
 )
-
-func TestArray_Cat(t *testing.T) {
-	a := NewArray(6, 3, []float64{
-		1.0, 0.0, 0.0,
-		0.0, 1.0, 0.0,
-		0.0, 0.0, 1.0,
-		-1.0, 1.0, 0.0,
-		0.0, -1.0, 1.0,
-		-1.0, 0.0, 1.0,
-	})
-	b := NewArray(1, 3, []float64{
-		1.0,
-		2.0,
-		3.0,
-	})
-	t.Logf("\n%v\n", a)
-	t.Logf("\n%v\n", b)
-
-	t.Logf("\n%v\n", Cat(a, b, 0))
-}
 
 func ExampleArray_Cat_row() {
 	a := NewArray(6, 3, []float64{
