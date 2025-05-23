@@ -10,10 +10,7 @@ func (x *Array) format(prefix string, margin int, dot byte, squeeze bool, fs fmt
 
 	var printed int
 	if margin <= 0 {
-		printed = rows
-		if cols > printed {
-			printed = cols
-		}
+		printed = max(cols, rows)
 	} else {
 		printed = margin
 	}

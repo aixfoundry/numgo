@@ -69,6 +69,11 @@ func (a *Array) Set(i, j int, f float64) *Array {
 	return a
 }
 
+// Data 值
+func (a *Array) Data() []float64 {
+	return a.data
+}
+
 // Format 字符串输出格式
 func (a *Array) Format(fs fmt.State, c rune) {
 	a.format("", 0, '.', true, fs, c)
