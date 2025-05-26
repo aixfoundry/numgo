@@ -393,3 +393,11 @@ func ExampleEqual() {
 	// Output:
 	// false
 }
+
+func ExampleFilter() {
+	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
+	filteredArray := Filter(a, func(v float64) bool { return v > 2.0 })
+	fmt.Println(filteredArray.data)
+	// Output:
+	// [3 4]
+}

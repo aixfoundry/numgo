@@ -108,7 +108,7 @@ func ExampleNorm_row() {
 	b := Norm(a, 1, 1)
 	fmt.Println(b)
 	// Output:
-	// [4]
+	// [20]
 }
 
 func ExampleNorm_col() {
@@ -116,7 +116,7 @@ func ExampleNorm_col() {
 	b := Norm(a, math.Inf(1), 1)
 	fmt.Println(b)
 	// Output:
-	// [20]
+	// [4]
 }
 
 func ExampleNormInf() {

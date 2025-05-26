@@ -267,6 +267,7 @@ func RangeDelete(a *Array, f, t int, axis int) *Array {
 }
 
 // Reshape changes the dimensions of the array.
+//
 // Example:
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
@@ -283,6 +284,7 @@ func (a *Array) Reshape(r, c int) *Array {
 }
 
 // Reshape changes the dimensions of the array.
+//
 // Example:
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
@@ -294,10 +296,11 @@ func Reshape(a *Array, r, c int) *Array {
 
 // Equal checks if two Array instances are equal by comparing their dimensions and data.
 // It returns true if both the row and column dimensions are the same and all corresponding elements are equal.
+//
 // Example:
 //
-//	a := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
-//	b := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	a := NewArray(2, 2, []float64{1, 2, 3, 4})
+//	b := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	fmt.Println(a.Equal(b)) // Output: true
 func (a *Array) Equal(b *Array) bool {
 	if a.r != b.r || a.c != b.c {
@@ -314,9 +317,40 @@ func (a *Array) Equal(b *Array) bool {
 // Equal is a standalone function that checks if two Array instances are equal by calling the Equal method of the first Array.
 // Example:
 //
-//	a := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
-//	b := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	a := NewArray(2, 2, []float64{1, 2, 3, 4})
+//	b := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	fmt.Println(Equal(a, b)) // Output: true
 func Equal(a *Array, b *Array) bool {
 	return a.Equal(b)
+}
+
+// Filter applies a filtering function to each element of the Array, returning a new Array
+// containing only the elements for which the function returns true.
+//
+// Example:
+//
+//	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
+//	filteredArray := a.Filter(func(v float64) bool { return v > 2.0 })
+//	fmt.Println(filteredArray.data) // Output: [3 4]
+func (a *Array) Filter(f func(v float64) bool) (ret *Array) {
+	data := []float64{}
+	for _, v := range a.data {
+		if f(v) {
+			data = append(data, v)
+		}
+	}
+	ret = New1DArray(data)
+	return
+}
+
+// Filter applies a filtering function to each element of the Array, returning a new Array
+// containing only the elements for which the function returns true.
+//
+// Example:
+//
+//	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
+//	filteredArray := Filter(a, func(v float64) bool { return v > 2.0 })
+//	fmt.Println(filteredArray.data) // Output: [3 4]
+func Filter(a *Array, f func(v float64) bool) *Array {
+	return a.Filter(f)
 }
