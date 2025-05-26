@@ -8,9 +8,14 @@ num go
 * 最大值(Max)
 * 最小值(Min)
 * 点乘(Dot)
-* 求和(Sum)
-* 平均值(Avg)
-* 移动平均值(MovingAvg)
+* 平均值(Mean)
+* 统计求和(Sum)
+* 统计平均值(Avg)
+* 统计移动平均值(MovingAvg)
+* 加法(Add)
+* 减法(Sub)
+* 乘法(Mul)
+* 除法(Div)
 
 ## 线性代数
 

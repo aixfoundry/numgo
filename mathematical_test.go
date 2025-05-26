@@ -274,3 +274,179 @@ func TestMean(t *testing.T) {
 		})
 	}
 }
+
+func TestDiv(t *testing.T) {
+	type args struct {
+		a *Array
+		b *Array
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Div 2x2 2x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New2DArray([][]float64{{1, 1}, {1, 1}}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+		{
+			name: "Test Div 2x2 1x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+		{
+			name: "Test Div 2x2 2x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: NewArray(2, 1, []float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := Div(tt.args.a, tt.args.b); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("Div() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestMul(t *testing.T) {
+	type args struct {
+		a *Array
+		b *Array
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Mul 2x2 2x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New2DArray([][]float64{{1, 1}, {1, 1}}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+		{
+			name: "Test Mul 2x2 1x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+		{
+			name: "Test Mul 2x2 2x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: NewArray(2, 1, []float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := Mul(tt.args.a, tt.args.b); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("Mul() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestAdd(t *testing.T) {
+	type args struct {
+		a *Array
+		b *Array
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Add 2x2 2x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New2DArray([][]float64{{1, 1}, {1, 1}}),
+			},
+			wantRet: New2DArray([][]float64{{2, 3}, {4, 5}}),
+		},
+		{
+			name: "Test Add 2x2 1x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{2, 3}, {4, 5}}),
+		},
+		{
+			name: "Test Add 2x2 2x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: NewArray(2, 1, []float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{2, 3}, {4, 5}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := Add(tt.args.a, tt.args.b); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("Add() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestSub(t *testing.T) {
+	type args struct {
+		a *Array
+		b *Array
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Sub 2x2 2x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New2DArray([][]float64{{1, 1}, {1, 1}}),
+			},
+			wantRet: New2DArray([][]float64{{0, 1}, {2, 3}}),
+		},
+		{
+			name: "Test Sub 2x2 1x2",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{0, 1}, {2, 3}}),
+		},
+		{
+			name: "Test Sub 2x2 2x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: NewArray(2, 1, []float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{0, 1}, {2, 3}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := Sub(tt.args.a, tt.args.b); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("Sub() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}

@@ -346,3 +346,197 @@ func (a *Array) MovingAvg(window int, step int, axis int) (ret *Array) {
 func MovingAvg(a *Array, window int, step int, axis int) (ret *Array) {
 	return a.MovingAvg(window, step, axis)
 }
+
+// Sub subtracts two arrays element-wise. If the dimensions of the arrays do not match,
+// it checks for broadcasting conditions where one array is a single row or column.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := a.Sub(b) // result is [[0, 1], [2, 3]]
+func (a *Array) Sub(b *Array) (ret *Array) {
+	if a.r == b.r && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)-b.At(ir, ic))
+			}
+		}
+	} else if a.r != b.r && b.r == 1 && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)-b.At(0, ic))
+			}
+		}
+	} else if a.c != b.c && b.c == 1 && a.r == b.r {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)-b.At(ir, 0))
+			}
+		}
+	}
+	return
+}
+
+// Sub subtracts two arrays element-wise. It is a wrapper around the Array.Sub method.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := Sub(a, b) // result is [[0, 1], [2, 3]]
+func Sub(a *Array, b *Array) (ret *Array) {
+	return a.Sub(b)
+}
+
+// Add adds two arrays element-wise. If the dimensions of the arrays do not match,
+// it checks for broadcasting conditions where one array is a single row or column.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := a.Add(b) // result is [[2, 3], [4, 5]]
+func (a *Array) Add(b *Array) (ret *Array) {
+	if a.r == b.r && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)+b.At(ir, ic))
+			}
+		}
+	} else if a.r != b.r && b.r == 1 && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)+b.At(0, ic))
+			}
+		}
+	} else if a.c != b.c && b.c == 1 && a.r == b.r {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)+b.At(ir, 0))
+			}
+		}
+	}
+	return
+}
+
+// Add adds two arrays element-wise. It is a wrapper around the Array.Add method.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := Add(a, b) // result is [[2, 3], [4, 5]]
+func Add(a *Array, b *Array) (ret *Array) {
+	return a.Add(b)
+}
+
+// Mul multiplies two arrays element-wise. If the dimensions of the arrays do not match,
+// it checks for broadcasting conditions where one array is a single row or column.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{2, 2}})
+//	result := a.Mul(b) // result is [[2, 4], [6, 8]]
+func (a *Array) Mul(b *Array) (ret *Array) {
+	if a.r == b.r && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)*b.At(ir, ic))
+			}
+		}
+	} else if a.r != b.r && b.r == 1 && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)*b.At(0, ic))
+			}
+		}
+	} else if a.c != b.c && b.c == 1 && a.r == b.r {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)*b.At(ir, 0))
+			}
+		}
+	}
+	return
+}
+
+// Mul multiplies two arrays element-wise. It is a wrapper around the Array.Mul method.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{2, 2}})
+//	result := Mul(a, b) // result is [[2, 4], [6, 8]]
+func Mul(a *Array, b *Array) (ret *Array) {
+	return a.Mul(b)
+}
+
+// Div divides two arrays element-wise. If the dimensions of the arrays do not match,
+// it checks for broadcasting conditions where one array is a single row or column.
+// Division by zero results in NaN for that element.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := a.Div(b) // result is [[1, 2], [3, 4]]
+func (a *Array) Div(b *Array) (ret *Array) {
+	if a.r == b.r && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				if b.At(ir, ic) == 0 {
+					ret.Set(ir, ic, math.NaN())
+				} else {
+					ret.Set(ir, ic, a.At(ir, ic)/b.At(ir, ic))
+				}
+			}
+		}
+	} else if a.r != b.r && b.r == 1 && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				if b.At(0, ic) == 0 {
+					ret.Set(ir, ic, math.NaN())
+				} else {
+					ret.Set(ir, ic, a.At(ir, ic)/b.At(0, ic))
+				}
+			}
+		}
+	} else if a.c != b.c && b.c == 1 && a.r == b.r {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				if b.At(ir, 0) == 0 {
+					ret.Set(ir, ic, math.NaN())
+				} else {
+					ret.Set(ir, ic, a.At(ir, ic)/b.At(ir, 0))
+				}
+			}
+		}
+	}
+	return
+}
+
+// Div divides two arrays element-wise. It is a wrapper around the Array.Div method.
+// Division by zero results in NaN for that element.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	b := NewArray([][]float64{{1, 1}})
+//	result := Div(a, b) // result is [[1, 2], [3, 4]]
+func Div(a *Array, b *Array) (ret *Array) {
+	return a.Div(b)
+}

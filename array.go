@@ -50,6 +50,23 @@ func ZeroArray(r, c int) (a *Array) {
 	}
 }
 
+// NewValueArray creates a new Array with dimensions r (rows) and c (columns),
+// initializing all elements to the specified value.
+//
+// Example:
+//
+//	a := NewValueArray(2, 3, 5.0)
+//	// a will be:
+//	// [[5.0 5.0 5.0]
+//	//  [5.0 5.0 5.0]]
+func NewValueArray(r, c int, value float64) (a *Array) {
+	a = ZeroArray(r, c)
+	for i := range a.data {
+		a.data[i] = value
+	}
+	return
+}
+
 // NewArray creates a new Array with specified rows, columns, and data.
 // If the data length is less than r*c, it is padded with zeros.
 // If the data length is more than r*c, it is truncated.

@@ -2,9 +2,25 @@ package numgo
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"testing"
 )
+
+func TestNewValueArray(t *testing.T) {
+	data := []float64{
+		12, 12, 12,
+		12, 12, 12,
+		12, 12, 12,
+	}
+	a := NewValueArray(3, 3, 12)
+	b := NewArray(3, 3, data)
+	if !reflect.DeepEqual(a, b) {
+		t.Error(a)
+		t.Error(b)
+		t.FailNow()
+	}
+}
 
 func TestArray_Data(t *testing.T) {
 	data := []float64{
