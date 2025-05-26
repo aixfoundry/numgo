@@ -169,16 +169,31 @@ func FrobeniusNorm(a *Array, axis int) (ret *Array) {
 // Example:
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
-//	norm := a.Norm1() // norm will be a 1D array with value [9]
-func (a *Array) Norm1() (ret *Array) {
-	norm, max := 0.0, 0.0
-	for ic := range a.c {
-		norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
-		if norm > max {
-			max = norm
+//	norm := a.Norm1(-1) // norm will be a 1D array with value [9]
+func (a *Array) Norm1(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			norm := a.Col(ic).Abs().Sum(-1).At(0, 0)
+			ret.Set(0, ic, norm)
 		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for ir := range a.r {
+			norm := a.Row(ir).Abs().Sum(-1).At(0, 0)
+			ret.Set(ir, 0, norm)
+		}
+	} else {
+		norm, max := 0.0, 0.0
+		for ic := range a.c {
+			norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
+			if norm > max {
+				max = norm
+			}
+		}
+		ret = New1DArray([]float64{max})
 	}
-	ret = New1DArray([]float64{max})
+
 	return
 }
 
@@ -187,9 +202,9 @@ func (a *Array) Norm1() (ret *Array) {
 // Example:
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
-//	norm := Norm1(a) // norm will be a 1D array with value [9]
-func Norm1(a *Array) *Array {
-	return a.Norm1()
+//	norm := Norm1(a, -1) // norm will be a 1D array with value [9]
+func Norm1(a *Array, axis int) *Array {
+	return a.Norm1(axis)
 }
 
 // Norm2 calculates the Frobenius norm of the array along the specified axis.
@@ -219,16 +234,31 @@ func Norm2(a *Array, axis int) *Array {
 // Example:
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
-//	norm := a.NormInf() // norm will be a 1D array with value [15]
-func (a *Array) NormInf() (ret *Array) {
-	norm, max := 0.0, 0.0
-	for ir := range a.r {
-		norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
-		if norm > max {
-			max = norm
+//	norm := a.NormInf(-1) // norm will be a 1D array with value [15]
+func (a *Array) NormInf(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			sol, _, _ := a.Col(ic).MaxAbs()
+			ret.Set(0, ic, sol)
 		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for ir := range a.r {
+			sol, _, _ := a.Row(ir).MaxAbs()
+			ret.Set(ir, 0, sol)
+		}
+	} else {
+		norm, max := 0.0, 0.0
+		for ir := range a.r {
+			norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
+			if norm > max {
+				max = norm
+			}
+		}
+		ret = New1DArray([]float64{max})
 	}
-	ret = New1DArray([]float64{max})
+
 	return
 }
 
@@ -238,8 +268,8 @@ func (a *Array) NormInf() (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
 //	norm := NormInf(a) // norm will be a 1D array with value [15]
-func NormInf(a *Array) *Array {
-	return a.NormInf()
+func NormInf(a *Array, axis int) *Array {
+	return a.NormInf(axis)
 }
 
 // Norm calculates the norm of the array based on the given order and axis.
@@ -257,11 +287,11 @@ func NormInf(a *Array) *Array {
 func (a *Array) Norm(ord float64, axis int) (ret *Array) {
 	switch ord {
 	case math.Inf(1):
-		ret = a.NormInf()
+		ret = a.NormInf(axis)
 	case 2:
 		ret = a.FrobeniusNorm(axis)
 	case 1:
-		ret = a.Norm1()
+		ret = a.Norm1(axis)
 	}
 	return ret
 }

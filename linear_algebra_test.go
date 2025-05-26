@@ -121,18 +121,51 @@ func ExampleNorm_col() {
 
 func ExampleNormInf() {
 	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
-	norm := NormInf(a) // norm will be a 1D array with value [15]
+	norm := NormInf(a, -1) // norm will be a 1D array with value [15]
 	fmt.Println(norm)
 	// Output:
 	// [15]
 }
 
+func ExampleNormInf_row() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := NormInf(a, 1)
+	fmt.Println(norm)
+	// Output:
+	// ⎡3⎤
+	// ⎣6⎦
+}
+
+func ExampleNormInf_col() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := NormInf(a, 0)
+	fmt.Println(norm)
+	// Output:
+	// [4  5  6]
+}
+
 func ExampleNorm1() {
 	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
-	norm := Norm1(a) // norm will be a 1D array with value [9]
+	norm := Norm1(a, -1) // norm will be a 1D array with value [9]
 	fmt.Println(norm)
 	// Output:
 	// [9]
+}
+func ExampleNorm1_row() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := Norm1(a, 1) // norm will be a 1D array with value [9]
+	fmt.Println(norm)
+	// Output:
+	// ⎡ 6⎤
+	// ⎣15⎦
+}
+
+func ExampleNorm1_col() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := Norm1(a, 0) // norm will be a 1D array with value [9]
+	fmt.Println(norm)
+	// Output:
+	// [5  7  9]
 }
 
 func ExampleNorm2() {
