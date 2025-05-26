@@ -199,6 +199,46 @@ func Dot(a *Array, b *Array) (ret *Array) {
 	return
 }
 
+// Mean calculates the mean of the elements along the specified axis of the array.
+// If axis is 0, it calculates the mean for each column and returns a 1xN array.
+// If axis is 1, it calculates the mean for each row and returns an Nx1 array.
+// If the array is empty or has zero dimensions, it returns nil.
+//
+// Example usage:
+//
+//	a := NewArray([][]float64{{1, 2, 3}, {4, 5, 6}})
+//	mean := a.Mean(0) // mean will be a *Array with data [[2.5, 3.5, 4.5]]
+//	mean := a.Mean(1) // mean will be a *Array with data [[2], [5]]
+func (a *Array) Mean(axis int) (ret *Array) {
+	if len(a.data) == 0 || a.r == 0 || a.c == 0 {
+		return
+	}
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			ret.Set(0, ic, a.Of(ic, 1).Avg())
+		}
+	} else if axis == 1 {
+		ret = ZeroArray(1, a.r)
+		for ir := range a.r {
+			ret.Set(0, ir, a.Of(ir, 0).Avg())
+		}
+	}
+	return
+}
+
+// Mean is a utility function that calls the Mean method on the Array receiver.
+// It calculates the mean of the elements along the specified axis of the array.
+//
+// Example usage:
+//
+//	a := NewArray([][]float64{{1, 2, 3}, {4, 5, 6}})
+//	mean := Mean(a, 0) // mean will be a *Array with data [[2.5, 3.5, 4.5]]
+//	mean := Mean(a, 1) // mean will be a *Array with data [[2], [5]]
+func Mean(a *Array, axis int) (ret *Array) {
+	return a.Mean(axis)
+}
+
 // Avg computes the average of all elements in the array.
 //
 // Example:
@@ -258,14 +298,14 @@ func Sum(a *Array) (ret float64) {
 //	a := New1DArray([]float64{1, 2, 3, 4, 5})
 //	result := a.MovingAvg(3, 1, 0)
 //	fmt.Println(result) // Output: [2 3 4]
-func (a *Array) MovingAvg(window int, step int, axios int) (ret *Array) {
+func (a *Array) MovingAvg(window int, step int, axis int) (ret *Array) {
 	data := []float64{}
 	if window <= 0 || step <= 0 || window > len(a.data) {
 		data = append(data, a.Avg())
 		ret = New1DArray(data)
 		return
 	}
-	if axios == 0 {
+	if axis == 0 {
 		i := 0
 		l := len(a.data)
 		for {
@@ -287,7 +327,7 @@ func (a *Array) MovingAvg(window int, step int, axios int) (ret *Array) {
 			i += step
 		}
 		ret = New1DArray(data)
-	} else if axios == 1 {
+	} else if axis == 1 {
 		ca := CopyOf(a).T()
 		ret = ca.MovingAvg(window, step, 0)
 	}
@@ -303,6 +343,6 @@ func (a *Array) MovingAvg(window int, step int, axios int) (ret *Array) {
 //	a := New1DArray([]float64{1, 2, 3, 4, 5})
 //	result := MovingAvg(a, 3, 1, 0)
 //	fmt.Println(result) // Output: [2 3 4]
-func MovingAvg(a *Array, window int, step int, axios int) (ret *Array) {
-	return a.MovingAvg(window, step, axios)
+func MovingAvg(a *Array, window int, step int, axis int) (ret *Array) {
+	return a.MovingAvg(window, step, axis)
 }

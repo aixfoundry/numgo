@@ -142,7 +142,7 @@ func TestWindowAvg(t *testing.T) {
 		a      *Array
 		window int
 		step   int
-		axios  int
+		axis   int
 	}
 	tests := []struct {
 		name    string
@@ -155,7 +155,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 9,
 				step:   1,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{4}),
 		},
@@ -165,7 +165,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 9,
 				step:   2,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{4}),
 		},
@@ -175,7 +175,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 3,
 				step:   1,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{1, 2, 3, 4, 5, 6, 7}),
 		},
@@ -185,7 +185,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 3,
 				step:   2,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{1, 3, 5, 7}),
 		},
@@ -195,7 +195,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 3,
 				step:   100,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{1}),
 		},
@@ -205,7 +205,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 0,
 				step:   1,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{4}),
 		},
@@ -215,7 +215,7 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 4,
 				step:   1,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{1.5, 2.5, 3.5, 4.5, 5.5, 6.5}),
 		},
@@ -225,15 +225,51 @@ func TestWindowAvg(t *testing.T) {
 				a:      New1DArray([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8}),
 				window: 4,
 				step:   2,
-				axios:  0,
+				axis:   0,
 			},
 			wantRet: New1DArray([]float64{1.5, 3.5, 5.5, 7}),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotRet := MovingAvg(tt.args.a, tt.args.window, tt.args.step, tt.args.axios); !reflect.DeepEqual(gotRet, tt.wantRet) {
+			if gotRet := MovingAvg(tt.args.a, tt.args.window, tt.args.step, tt.args.axis); !reflect.DeepEqual(gotRet, tt.wantRet) {
 				t.Errorf("WindowAvg() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestMean(t *testing.T) {
+	type args struct {
+		a    *Array
+		axis int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Mean Axis 0",
+			args: args{
+				a:    New2DArray([][]float64{{1, 2}, {3, 4}}),
+				axis: 0,
+			},
+			wantRet: New1DArray([]float64{2, 3}),
+		},
+		{
+			name: "Test Mean Axis 1",
+			args: args{
+				a:    New2DArray([][]float64{{1, 2}, {3, 4}}),
+				axis: 1,
+			},
+			wantRet: New1DArray([]float64{1.5, 3.5}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := Mean(tt.args.a, tt.args.axis); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("Mean() = %v, want %v", gotRet, tt.wantRet)
 			}
 		})
 	}
