@@ -2,7 +2,43 @@ package numgo
 
 import (
 	"fmt"
+	"slices"
+	"testing"
 )
+
+func TestArray_Data(t *testing.T) {
+	data := []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	}
+	a := NewArray(3, 3, data)
+	if !slices.Equal(data, a.Data()) {
+		t.Error(data)
+		t.Error(a.Data())
+		t.FailNow()
+	}
+}
+
+func TestNew2DArray(t *testing.T) {
+	adata := [][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
+	}
+	bdata := []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	}
+	a := New2DArray(adata)
+	b := NewArray(3, 3, bdata)
+	if !slices.Equal(a.Data(), b.Data()) {
+		t.Error(a.Data())
+		t.Error(b.Data())
+		t.FailNow()
+	}
+}
 
 func ExampleArray_Of_row() {
 	a := NewArray(3, 3, []float64{

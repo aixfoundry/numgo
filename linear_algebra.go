@@ -1,25 +1,34 @@
 package numgo
 
-// EMCP 列主元消去(高斯列主元消去法)
+// EMCP performs Gaussian elimination with partial pivoting (column main element elimination) on an augmented matrix.
 //
-// 输入: [ A | b ] 增广矩阵, A是方形矩阵
+// The function solves the system of linear equations A x = b, where A is a square matrix.
 //
-//	A : 线性代数方程组(A x = b)的系数矩阵
-//	b : 线性代数方程组(A x = b)的常数列向量
+// Parameters:
 //
-// 输出: sol 解
+//	a - an augmented matrix of size (n, n+1), where the first n columns represent matrix A and the last column represents vector b.
+//
+// Returns:
+//
+//	sol - a solution vector of size (1, n) if the system has a unique solution.
+//
+// Example:
+//
+//	a := NewArray(3, 4, []float64{1, 2, -1, 8, -4, -5, 1, 10, 1, 0, 3, 3})
+//	sol := EMCP(a)
+//	// sol should be [2, -1, 3]
 func EMCP(a *Array) (sol *Array) {
 	if a.c-1 != a.r {
 		return
 	}
 	x := CopyOf(a)
-	n := x.r // n为方程数
-	// 求上三角
-	for i := range n { // 遍历所有行
-		// 求第i列的主元素并调整顺序
+	n := x.r // n is the number of equations
+	// Convert to upper triangular form
+	for i := range n { // Traverse all rows
+		// Find the pivot element in the current column and swap rows if necessary
 		cols := []float64{}
-		for ic := i; ic < n; ic++ { // 遍历未调整顺序的行
-			cols = append(cols, x.At(ic, i)) // 取[ic:n][i]数据
+		for ic := i; ic < n; ic++ { // Traverse unprocessed rows
+			cols = append(cols, x.At(ic, i)) // Collect elements from column i
 		}
 		acol := NewArray(1, len(cols), cols)
 		_, _, c := acol.MaxAbs()
@@ -49,18 +58,25 @@ func EMCP(a *Array) (sol *Array) {
 	}
 }
 
-// Lstsq 线性矩阵方程的最小二乘解
+// Lstsq computes the least-squares solution to a linear matrix equation using the EMCP method.
 //
-// numpy: [numpy.linalg.lstsq]
+// It solves the system of linear equations A x = b, where A is a matrix and b is a vector.
 //
-// 输入:
+// Parameters:
 //
-//	A : 线性代数方程组(A x = b)的系数矩阵
-//	b : 线性代数方程组(A x = b)的常数列向量
+//	a - the coefficient matrix of size (m, n)
+//	b - the constant vector of size (m, 1)
 //
-// 输出: sol 解
+// Returns:
 //
-// [numpy.linalg.lstsq]: https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
+//	sol - the least-squares solution vector of size (1, n)
+//
+// Example:
+//
+//	a := NewArray(2, 3, []float64{1, 0, 1, 1, 1, 0})
+//	b := NewArray(2, 1, []float64{3, 4})
+//	sol := Lstsq(a, b)
+//	// sol should be [2, 1]
 func Lstsq(a *Array, b *Array) (sol *Array) {
 	if a.r != b.r {
 		return
@@ -71,15 +87,23 @@ func Lstsq(a *Array, b *Array) (sol *Array) {
 	return EMCP(Cat(aa, ab, 1))
 }
 
-// LsqFit 线性最小二乘拟合
+// LsqFit performs linear least squares fitting for a set of points using the EMCP method.
 //
-// numpy: [numpy.linalg.lstsq]
+// It finds the best fit line y = mx + c for a given set of points (x, y).
 //
-// 输入: [ xy ] (n, 2)维矩阵
+// Parameters:
 //
-// 输出: sol 解
+//	xy - an array of size (n, 2) where each row represents a point (x, y)
 //
-// [numpy.linalg.lstsq]: https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html
+// Returns:
+//
+//	sol - a solution vector [c, m] of size (1, 2) representing the intercept and slope of the best fit line
+//
+// Example:
+//
+//	xy := NewArray(3, 2, []float64{1, 2, 2, 3, 3, 4})
+//	sol := LsqFit(xy)
+//	// sol should be [1, 1]
 func LsqFit(xy *Array) (sol *Array) {
 	ex2, ex, exy, ey := 0.0, 0.0, 0.0, 0.0
 	for ir := range xy.r {

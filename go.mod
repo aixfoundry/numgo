@@ -1,3 +1,3 @@
 module github.com/kaisawind/numgo
 
-go 1.22.1
+go 1.24.2

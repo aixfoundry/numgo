@@ -2,16 +2,24 @@ package numgo
 
 import "math"
 
-// PolyFit 多项式拟合
+// PolyFit performs polynomial fitting.
 //
 // numpy: [numpy.polyfit]
 //
-// 输入:
+// Inputs:
 //
-//	[ xy ] (n, 2)维矩阵
-//	m: 多项式次数，m < N-1
+//	xy: an (n, 2) matrix where each row is a (x, y) pair.
+//	m: the degree of the polynomial, m < N-1.
 //
-// 输出: sol 解
+// Output:
+//
+//	sol: the coefficients of the polynomial that fits the data.
+//
+// Example:
+//
+//	xy := NewArray(2, 2, []float64{1, 2, 3, 2, 3, 5})
+//	sol := PolyFit(xy, 1)
+//	fmt.Println(sol) // Output will be the coefficients of the best fit line
 //
 // [numpy.polyfit]: https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html
 func PolyFit(xy *Array, m int) (sol *Array) {
@@ -25,16 +33,24 @@ func PolyFit(xy *Array, m int) (sol *Array) {
 	return Lstsq(a, xy.Of(1, 1))
 }
 
-// Poly1D 多项式的值
+// Poly1D evaluates a polynomial at a given point.
 //
 // numpy: [numpy.poly1d]
 //
-// 输入:
+// Inputs:
 //
-//	b: 常数列向量(一维)
-//	x: x值
+//	b: a 1D array of coefficients.
+//	x: the value at which to evaluate the polynomial.
 //
-// 输出: y 解
+// Output:
+//
+//	y: the result of evaluating the polynomial at x.
+//
+// Example:
+//
+//	b := NewArray(1, 1, []float64{1, 2}) // Represents the polynomial 1 + 2x
+//	y := Poly1D(b, 3)
+//	fmt.Println(y) // Output will be 7
 //
 // [numpy.poly1d]: https://numpy.org/doc/stable/reference/generated/numpy.poly1d.html
 func Poly1D(b *Array, x float64) (y float64) {
@@ -47,16 +63,25 @@ func Poly1D(b *Array, x float64) (y float64) {
 	return
 }
 
-// PolyVal 多项式的值
+// PolyVal evaluates a polynomial at multiple points.
 //
 // numpy: [numpy.polyval]
 //
-// 输入:
+// Inputs:
 //
-//	b: 常数列向量(一维)
-//	x: x值
+//	b: a 1D array of coefficients.
+//	x: an array of points at which to evaluate the polynomial.
 //
-// 输出: y 解
+// Output:
+//
+//	y: an array of results from evaluating the polynomial at each point in x.
+//
+// Example:
+//
+//	b := NewArray(1, 2, []float64{1, 2}) // Represents the polynomial 1 + 2x
+//	x := NewArray(2, 1, []float64{1, 2})
+//	y := PolyVal(b, x)
+//	fmt.Println(y) // Output will be an array with values [3, 5]
 //
 // [numpy.polyval]: https://numpy.org/doc/stable/reference/generated/numpy.polyval.html
 func PolyVal(b *Array, x *Array) (y *Array) {

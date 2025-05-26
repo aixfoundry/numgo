@@ -1,6 +1,8 @@
 package numgo
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func ExampleCat_row() {
 	a := NewArray(6, 3, []float64{
@@ -157,6 +159,18 @@ func ExampleRangeDelete_row() {
 	fmt.Printf("%v", RangeDelete(a, 0, 1, 0))
 	// Output:
 	// ⎡4  5  6⎤
+	// ⎣7  8  9⎦
+}
+
+func ExampleRangeDelete_row2() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", RangeDelete(a, 1, 2, 0))
+	// Output:
+	// ⎡1  2  3⎤
 	// ⎣7  8  9⎦
 }
 
@@ -342,4 +356,40 @@ func ExampleArray_RangeDelete_col() {
 	// ⎡2  3⎤
 	// ⎢5  6⎥
 	// ⎣8  9⎦
+}
+
+func ExampleArray_Equal() {
+	adata := [][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
+	}
+	bdata := []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	}
+	a := New2DArray(adata)
+	b := NewArray(3, 3, bdata)
+	fmt.Printf("%v", a.Equal(b))
+	// Output:
+	// true
+}
+
+func ExampleEqual() {
+	adata := [][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
+	}
+	bdata := []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 10,
+	}
+	a := New2DArray(adata)
+	b := NewArray(3, 3, bdata)
+	fmt.Printf("%v", Equal(a, b))
+	// Output:
+	// false
 }

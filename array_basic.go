@@ -1,8 +1,10 @@
 package numgo
 
-// T 矩阵转置
+// T returns the transpose of the matrix.
+// Example:
 //
-// numpy: a.T
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	a.T() // Result: 1 4 2 5 3 6 (reshaped to 3x2)
 func (a *Array) T() *Array {
 	data := make([]float64, len(a.data))
 	r, c := a.r, a.c
@@ -16,9 +18,11 @@ func (a *Array) T() *Array {
 	return a
 }
 
-// T 矩阵转置
+// T returns the transpose of the matrix.
+// Example:
 //
-// numpy: a.T
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	T(a) // Result: 1 4 2 5 3 6 (new 3x2 array)
 func T(a *Array) (o *Array) {
 	o = ZeroArray(a.c, a.r)
 	for ir := range a.c {
@@ -29,15 +33,15 @@ func T(a *Array) (o *Array) {
 	return
 }
 
-// Swap 交换行或列
-//
-// numpy: a[1], a[2] = a[2], a[1]
-//
+// Swap exchanges two rows or columns.
 // axis:
+//   - 0: swap rows
+//   - 1: swap columns
 //
-//   - 0: 按行交换
+// Example:
 //
-//   - 1: 按列交换
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	a.Swap(0, 1, 0) // Swaps first and second rows
 func (a *Array) Swap(f, t int, axis int) *Array {
 	if axis == 0 {
 		for ic := range a.c {
@@ -51,15 +55,15 @@ func (a *Array) Swap(f, t int, axis int) *Array {
 	return a
 }
 
-// Swap 交换行或列
-//
-// numpy: a[1], a[2] = a[2], a[1]
-//
+// Swap exchanges two rows or columns.
 // axis:
+//   - 0: swap rows
+//   - 1: swap columns
 //
-//   - 0: 按行交换
+// Example:
 //
-//   - 1: 按列交换
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	Swap(a, 0, 1, 0) // Returns new array with first and second rows swapped
 func Swap(a *Array, f, t int, axis int) (o *Array) {
 	o = CopyOf(a)
 	if axis == 0 {
@@ -74,15 +78,16 @@ func Swap(a *Array, f, t int, axis int) (o *Array) {
 	return
 }
 
-// Cat 拼接两个向量
-//
-// numpy: np.concatenate((a, b), axis)
-//
+// Cat concatenates two arrays along the specified axis.
 // axis:
+//   - 0: concatenate along rows
+//   - 1: concatenate along columns
 //
-//   - 0: 按行拼接
+// Example:
 //
-//   - 1: 按列拼接
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	b := NewArray(2, 3, []float64{7, 8, 9, 10, 11, 12})
+//	a.Cat(b, 0) // Concatenates along rows, resulting in a 4x3 array
 func (a *Array) Cat(b *Array, axis int) *Array {
 	if axis == 0 {
 		a.r += b.r
@@ -103,15 +108,16 @@ func (a *Array) Cat(b *Array, axis int) *Array {
 	return a
 }
 
-// Cat 拼接两个向量
-//
-// numpy: np.concatenate((a, b), axis)
-//
+// Cat concatenates two arrays along the specified axis.
 // axis:
+//   - 0: concatenate along rows
+//   - 1: concatenate along columns
 //
-//   - 0: 按行拼接
+// Example:
 //
-//   - 1: 按列拼接
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	b := NewArray(2, 3, []float64{7, 8, 9, 10, 11, 12})
+//	Cat(a, b, 0) // Returns new 4x3 array concatenated along rows
 func Cat(a *Array, b *Array, axis int) (o *Array) {
 	if axis == 0 {
 		o = EmptyArray(a.r+b.r, a.c)
@@ -139,14 +145,16 @@ func Cat(a *Array, b *Array, axis int) (o *Array) {
 	return
 }
 
-// Delete 删除某行或列
-//
-// n: 要删除的行或列
+// Delete removes a specified row or column.
+// n: index of the row or column to remove
 // axis:
+//   - 0: remove row
+//   - 1: remove column
 //
-//   - 0: 按行删除
+// Example:
 //
-//   - 1: 按列删除
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	a.Delete(0, 0) // Removes the first row
 func (a *Array) Delete(n int, axis int) *Array {
 	if axis == 0 {
 		a.data = append(a.data[:a.r*n], a.data[a.r*n+a.c:]...)
@@ -167,14 +175,16 @@ func (a *Array) Delete(n int, axis int) *Array {
 	return a
 }
 
-// Delete 删除某行或列
-//
-// n: 要删除的行或列
+// Delete removes a specified row or column.
+// n: index of the row or column to remove
 // axis:
+//   - 0: remove row
+//   - 1: remove column
 //
-//   - 0: 按行删除
+// Example:
 //
-//   - 1: 按列删除
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	Delete(a, 0, 0) // Returns new array with the first row removed
 func Delete(a *Array, n int, axis int) *Array {
 	buf := []float64{}
 	r, c := a.r, a.c
@@ -195,15 +205,17 @@ func Delete(a *Array, n int, axis int) *Array {
 	return NewArray(r, c, buf)
 }
 
-// RangeDelete 范围删除行或列
-//
-// f: 要删除的行或列的开始
-// t: 要删除的行或列的结束
+// RangeDelete removes a range of rows or columns.
+// f: start index of the row or column to remove
+// t: end index of the row or column to remove
 // axis:
+//   - 0: remove rows
+//   - 1: remove columns
 //
-//   - 0: 按行删除
+// Example:
 //
-//   - 1: 按列删除
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	a.RangeDelete(0, 1, 0) // Removes the first row
 func (a *Array) RangeDelete(f, t int, axis int) *Array {
 	if axis == 0 {
 		a.data = append(a.data[:f*a.r], a.data[t*a.r:]...)
@@ -218,42 +230,47 @@ func (a *Array) RangeDelete(f, t int, axis int) *Array {
 				buf = append(buf, a.data[ir*a.r+ic])
 			}
 		}
-		a.c -= t - f
 		a.data = buf
+		a.c -= t - f
 	}
 	return a
 }
 
-// RangeDelete 范围删除行或列
-//
-// f: 要删除的行或列的开始
-// t: 要删除的行或列的结束
+// RangeDelete removes a range of rows or columns.
+// f: start index of the row or column to remove
+// t: end index of the row or column to remove
 // axis:
+//   - 0: remove rows
+//   - 1: remove columns
 //
-//   - 0: 按行删除
+// Example:
 //
-//   - 1: 按列删除
+//	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+//	RangeDelete(a, 0, 1, 0) // Returns new array with the first row removed
 func RangeDelete(a *Array, f, t int, axis int) *Array {
 	buf := []float64{}
 	r, c := a.r, a.c
 	if axis == 0 {
-		buf = append(a.data[:f*a.r], a.data[t*a.r:]...)
-		r = a.r - t + f
+		buf = append(a.data[:f*a.c], a.data[t*a.c:]...)
+		r = a.r - (t - f)
 	} else {
 		for ir := range a.r {
 			for ic := range a.c {
-				if ic >= f && ic < t {
-					continue
+				if ic < f || ic >= t {
+					buf = append(buf, a.data[ir*a.c+ic])
 				}
-				buf = append(buf, a.data[ir*a.r+ic])
 			}
 		}
-		c = a.c - t + f
+		c = a.c - (t - f)
 	}
 	return NewArray(r, c, buf)
 }
 
-// Reshape 矩阵变形
+// Reshape changes the dimensions of the array.
+// Example:
+//
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	a.Reshape(3, 2) // Reshapes to 3x2
 func (a *Array) Reshape(r, c int) *Array {
 	if r*c > len(a.data) {
 		buf := make([]float64, r*c-len(a.data))
@@ -265,15 +282,41 @@ func (a *Array) Reshape(r, c int) *Array {
 	return a
 }
 
-// Reshape 矩阵变形
-func Reshape(a *Array, r, c int) (o *Array) {
-	o = CopyOf(a)
-	if r*c > len(o.data) {
-		buf := make([]float64, r*c-len(o.data))
-		o.data = append(o.data, buf...)
-	} else if r*c < len(o.data) {
-		o.data = o.data[:r*c]
+// Reshape changes the dimensions of the array.
+// Example:
+//
+//	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
+//	Reshape(a, 3, 2) // Returns new 3x2 array
+func Reshape(a *Array, r, c int) *Array {
+	o := CopyOf(a)
+	return o.Reshape(r, c)
+}
+
+// Equal checks if two Array instances are equal by comparing their dimensions and data.
+// It returns true if both the row and column dimensions are the same and all corresponding elements are equal.
+// Example:
+//
+//	a := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	b := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	fmt.Println(a.Equal(b)) // Output: true
+func (a *Array) Equal(b *Array) bool {
+	if a.r != b.r || a.c != b.c {
+		return false
 	}
-	o.r, o.c = r, c
-	return
+	for i := range a.data {
+		if a.data[i] != b.data[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Equal is a standalone function that checks if two Array instances are equal by calling the Equal method of the first Array.
+// Example:
+//
+//	a := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	b := &Array{r: 2, c: 2, data: []int{1, 2, 3, 4}}
+//	fmt.Println(Equal(a, b)) // Output: true
+func Equal(a *Array, b *Array) bool {
+	return a.Equal(b)
 }
