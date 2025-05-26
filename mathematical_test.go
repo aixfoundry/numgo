@@ -602,3 +602,65 @@ func TestDivValue(t *testing.T) {
 		})
 	}
 }
+
+func ExampleAtan2() {
+	y := New2DArray([][]float64{{1, 2}, {3, 4}})
+	x := New2DArray([][]float64{{1, 1}, {1, 1}})
+	result := Atan2(y, x)
+	fmt.Println(result)
+	// Output:
+	// ⎡0.7853981633974483  1.1071487177940904⎤
+	// ⎣1.2490457723982544  1.3258176636680323⎦
+}
+
+func ExampleMedian_col() {
+	a := New2DArray([][]float64{{1, 3, 5}, {2, 4, 6}})
+	sorted := Median(a, 0)
+	fmt.Println(sorted)
+	// Output:
+	// [1.5  3.5  5.5]
+}
+
+func ExampleMedian_row() {
+	a := New2DArray([][]float64{{1, 3, 5}, {2, 4, 6}})
+	sorted := Median(a, 1)
+	fmt.Println(sorted)
+	// Output:
+	// ⎡3⎤
+	// ⎣4⎦
+}
+
+func ExampleMedian_all() {
+	a := New2DArray([][]float64{{1, 3, 5}, {2, 4, 6}})
+	sorted := Median(a, -1)
+	fmt.Println(sorted)
+	// Output:
+	// [3.5]
+}
+
+func ExampleSort_all() {
+	a := New2DArray([][]float64{{3, 1, 5}, {6, 4, 2}})
+	sorted := Sort(a, -1)
+	fmt.Println(sorted)
+	// Output:
+	// ⎡1  2  3⎤
+	// ⎣4  5  6⎦
+}
+
+func ExampleSort_row() {
+	a := New2DArray([][]float64{{3, 1, 5}, {6, 4, 2}})
+	sorted := Sort(a, 1)
+	fmt.Println(sorted)
+	// Output:
+	// ⎡1  3  5⎤
+	// ⎣2  4  6⎦
+}
+
+func ExampleSort_col() {
+	a := New2DArray([][]float64{{6, 1, 2}, {3, 4, 5}})
+	sorted := Sort(a, 1)
+	fmt.Println(sorted)
+	// Output:
+	// ⎡1  2  6⎤
+	// ⎣3  4  5⎦
+}

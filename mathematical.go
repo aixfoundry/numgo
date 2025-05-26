@@ -2,6 +2,7 @@ package numgo
 
 import (
 	"math"
+	"slices"
 )
 
 // Abs returns a new Array where each element is the absolute value of the corresponding element in the input Array.
@@ -227,6 +228,104 @@ func Dot(a *Array, b *Array) (ret *Array) {
 	return
 }
 
+// Median calculates the median of the Array along the specified axis.
+// If axis is 0, it calculates the median for each column.
+// If axis is 1, it calculates the median for each row.
+// If axis is -1, it calculates the median of the entire array.
+// It returns a new Array containing the median values.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 3, 5}, {2, 4, 6}})
+//	median := a.Median(0) // median will be a 1x3 Array with values [1.5, 3.5, 5.5]
+func (a *Array) Median(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			col := a.Col(ic).Sort(axis)
+			if col.r%2 == 0 {
+				ret.Set(0, ic, (col.At(col.r/2-1, 0)+col.At(col.r/2, 0))/2)
+			} else {
+				ret.Set(0, ic, col.At(col.r/2, 0))
+			}
+		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for ir := range a.r {
+			row := a.Row(ir).Sort(axis)
+			if row.c%2 == 0 {
+				ret.Set(ir, 0, (row.At(0, row.c/2-1)+row.At(0, row.c/2))/2)
+			} else {
+				ret.Set(ir, 0, row.At(0, row.c/2))
+			}
+		}
+	} else {
+		median := float64(0)
+		data := a.Data()
+		slices.Sort(data)
+		if len(data)%2 == 0 {
+			median = (data[len(data)/2-1] + data[len(data)/2]) / 2
+		} else {
+			median = data[len(data)/2]
+		}
+		ret = New1DArray([]float64{median})
+	}
+	return
+}
+
+// Median is a convenience function that calls the Median method on the Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 3, 5}, {2, 4, 6}})
+//	median := Median(a, 0) // median will be a 1x3 Array with values [1.5, 3.5, 5.5]
+func Median(a *Array, axis int) *Array {
+	return a.Median(axis)
+}
+
+// Sort sorts the elements of the Array along the specified axis.
+// If axis is 0, it sorts each column.
+// If axis is 1, it sorts each row.
+// If axis is -1, it sorts the entire array.
+// It returns the sorted Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{3, 1, 2}, {6, 5, 4}})
+//	sorted := a.Sort(0) // sorted will be a 2x3 Array with values [[3, 1, 2], [6, 5, 4]]
+func (a *Array) Sort(axis int) *Array {
+	if axis == 0 {
+		for ic := range a.c {
+			col := a.Col(ic).Data()
+			slices.Sort(col)
+			for ir := range a.r {
+				a.Set(ir, ic, col[ir])
+			}
+		}
+	} else if axis == 1 {
+		for ir := range a.r {
+			row := a.Row(ir).Data()
+			slices.Sort(row)
+			for ic := range a.c {
+				a.Set(ir, ic, row[ic])
+			}
+		}
+	} else {
+		slices.Sort(a.data)
+	}
+	return a
+}
+
+// Sort is a convenience function that calls the Sort method on the Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{3, 1, 2}, {6, 5, 4}})
+//	sorted := Sort(a, 0) // sorted will be a 2x3 Array with values [[3, 1, 2], [6, 5, 4]]
+func Sort(a *Array, axis int) *Array {
+	return a.Sort(axis)
+}
+
 // Mean calculates the mean of the elements along the specified axis of the array.
 // If axis is 0, it calculates the mean for each column and returns a 1xN array.
 // If axis is 1, it calculates the mean for each row and returns an Nx1 array.
@@ -241,13 +340,15 @@ func (a *Array) Mean(axis int) (ret *Array) {
 	if len(a.data) == 0 || a.r == 0 || a.c == 0 {
 		return
 	}
+	divisor := float64(a.r * a.c)
 	if axis == 0 {
-		ret = a.Sum(axis).DivValue(float64(a.r))
+		divisor = float64(a.r)
 	} else if axis == 1 {
-		ret = a.Sum(axis).DivValue(float64(a.c))
+		divisor = float64(a.c)
 	} else {
-		ret = a.Sum(axis).DivValue(float64(a.r * a.c))
+		divisor = float64(a.r * a.c)
 	}
+	ret = a.Sum(axis).DivValue(divisor)
 	return
 }
 
@@ -705,4 +806,27 @@ func (a *Array) AddValue(value float64) (ret *Array) {
 // Example usage is the same as AddValue method.
 func AddValue(a *Array, value float64) (ret *Array) {
 	return a.AddValue(value)
+}
+
+// Atan2 computes the element-wise arctangent of y/x for arrays y and x.
+// The function returns a new array containing the results.
+// If the dimensions of y and x do not match, the function returns nil.
+//
+// Example:
+//
+//	y := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	x := New2DArray([][]float64{{1, 1}, {1, 1}})
+//	result := Atan2(y, x)
+//	fmt.Println(result) // Output: Array with elements [0.7853981633974483, 1.1071487177940904, 1.2490457723982544, 1.3258176636680326]
+func Atan2(y *Array, x *Array) (ret *Array) {
+	if y.r != x.r || y.c != x.c {
+		return
+	}
+	ret = ZeroArray(y.r, y.c)
+	for ir := range y.r {
+		for ic := range y.c {
+			ret.Set(ir, ic, math.Atan2(y.At(ir, ic), x.At(ir, ic)))
+		}
+	}
+	return ret
 }
