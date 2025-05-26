@@ -214,15 +214,11 @@ func (a *Array) Mean(axis int) (ret *Array) {
 		return
 	}
 	if axis == 0 {
-		ret = ZeroArray(1, a.c)
-		for ic := range a.c {
-			ret.Set(0, ic, a.Of(ic, 1).Avg())
-		}
+		ret = a.Sum(axis).DivValue(float64(a.r))
 	} else if axis == 1 {
-		ret = ZeroArray(1, a.r)
-		for ir := range a.r {
-			ret.Set(0, ir, a.Of(ir, 0).Avg())
-		}
+		ret = a.Sum(axis).DivValue(float64(a.c))
+	} else {
+		ret = a.Sum(axis).DivValue(float64(a.r * a.c))
 	}
 	return
 }
@@ -247,7 +243,7 @@ func Mean(a *Array, axis int) (ret *Array) {
 //	avg := a.Avg()
 //	fmt.Println(avg) // Output: 2.5
 func (a *Array) Avg() (ret float64) {
-	return a.Sum() / float64(len(a.data))
+	return a.Mean(-1).At(0, 0)
 }
 
 // Avg is a wrapper function that calls the Avg method of the Array struct.
@@ -267,12 +263,25 @@ func Avg(a *Array) (ret float64) {
 // Example:
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
-//	sum := a.Sum()
+//	sum := a.Sum(-1)
 //	fmt.Println(sum) // Output: 10
-func (a *Array) Sum() (ret float64) {
-	ret = 0
-	for _, v := range a.data {
-		ret += v
+func (a *Array) Sum(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			ret.Set(0, ic, a.Of(ic, 1).Sum(-1).At(0, 0))
+		}
+	} else if axis == 1 {
+		ret = ZeroArray(1, a.r)
+		for ir := range a.r {
+			ret.Set(0, ir, a.Of(ir, 0).Sum(-1).At(0, 0))
+		}
+	} else {
+		sum := float64(0)
+		for _, v := range a.data {
+			sum += v
+		}
+		ret = New1DArray([]float64{sum})
 	}
 	return
 }
@@ -283,10 +292,10 @@ func (a *Array) Sum() (ret float64) {
 // Example:
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
-//	sum := Sum(a)
+//	sum := Sum(a, -1)
 //	fmt.Println(sum) // Output: 10
-func Sum(a *Array) (ret float64) {
-	return a.Sum()
+func Sum(a *Array, axis int) (ret *Array) {
+	return a.Sum(axis)
 }
 
 // MovingAvg computes the moving average of the array along the specified axis.
@@ -301,7 +310,7 @@ func Sum(a *Array) (ret float64) {
 func (a *Array) MovingAvg(window int, step int, axis int) (ret *Array) {
 	data := []float64{}
 	if window <= 0 || step <= 0 || window > len(a.data) {
-		data = append(data, a.Avg())
+		data = append(data, a.Mean(-1).At(0, 0))
 		ret = New1DArray(data)
 		return
 	}

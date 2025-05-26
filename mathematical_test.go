@@ -125,9 +125,9 @@ func ExampleDot_x2d() {
 
 func ExampleSum() {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	fmt.Println(Sum(a))
+	fmt.Println(Sum(a, -1))
 	// Output:
-	// 46
+	// [46]
 }
 
 func ExampleAvg() {
