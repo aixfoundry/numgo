@@ -269,12 +269,12 @@ func (a *Array) Sum(axis int) (ret *Array) {
 	if axis == 0 {
 		ret = ZeroArray(1, a.c)
 		for ic := range a.c {
-			ret.Set(0, ic, a.Of(ic, 1).Sum(-1).At(0, 0))
+			ret.Set(0, ic, a.Of(ic, axis).Sum(-1).At(0, 0))
 		}
 	} else if axis == 1 {
 		ret = ZeroArray(1, a.r)
 		for ir := range a.r {
-			ret.Set(0, ir, a.Of(ir, 0).Sum(-1).At(0, 0))
+			ret.Set(0, ir, a.Of(ir, axis).Sum(-1).At(0, 0))
 		}
 	} else {
 		sum := float64(0)

@@ -56,7 +56,7 @@ func TestNew2DArray(t *testing.T) {
 	}
 }
 
-func ExampleArray_Of_row() {
+func ExampleArray_Of_col() {
 	a := NewArray(3, 3, []float64{
 		1, 2, 3,
 		4, 5, 6,
@@ -64,10 +64,25 @@ func ExampleArray_Of_row() {
 	})
 	fmt.Printf("%v", a.Of(0, 0))
 	// Output:
-	// [1  2  3]
+	// ⎡1⎤
+	// ⎢4⎥
+	// ⎣7⎦
 }
 
-func ExampleArray_Of_col() {
+func ExampleArray_Col() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", a.Col(0))
+	// Output:
+	// ⎡1⎤
+	// ⎢4⎥
+	// ⎣7⎦
+}
+
+func ExampleArray_Of_row() {
 	a := NewArray(3, 3, []float64{
 		1, 2, 3,
 		4, 5, 6,
@@ -75,9 +90,29 @@ func ExampleArray_Of_col() {
 	})
 	fmt.Printf("%v", a.Of(0, 1))
 	// Output:
-	// ⎡1⎤
-	// ⎢4⎥
-	// ⎣7⎦
+	// [1  2  3]
+}
+
+func ExampleArray_Row() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", a.Row(0))
+	// Output:
+	// [1  2  3]
+}
+
+func ExampleArray_Row_row1() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", a.Row(1))
+	// Output:
+	// [4  5  6]
 }
 
 func ExampleArray_Dims() {

@@ -30,7 +30,7 @@ func PolyFit(xy *Array, m int) (sol *Array) {
 			a.Set(i, j, math.Pow(xy.At(i, 0), float64(j)))
 		}
 	}
-	return Lstsq(a, xy.Of(1, 1))
+	return Lstsq(a, xy.Of(1, 0))
 }
 
 // Poly1D evaluates a polynomial at a given point.

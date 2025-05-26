@@ -76,3 +76,28 @@ func ExamplePolyFit_lsq() {
 	// Output:
 	// [8.642857142857142  -1.6071428571428568]
 }
+
+func ExampleFrobeniusNorm() {
+	a := New1DArray([]float64{-4, -3, -2, -1, 0, 1, 2, 3, 4})
+	b := FrobeniusNorm(a, -1)
+	fmt.Println(b)
+	// Output:
+	// [7.745966692414834]
+}
+
+func ExampleFrobeniusNorm_col() {
+	a := New2DArray([][]float64{{1, 2, 3}, {-1, 1, 4}})
+	b := FrobeniusNorm(a, 0)
+	fmt.Println(b)
+	// Output:
+	// [1.4142135623730951  2.23606797749979  5]
+}
+
+func ExampleFrobeniusNorm_row() {
+	a := New2DArray([][]float64{{1, 2, 3}, {-1, 1, 4}})
+	b := FrobeniusNorm(a, 1)
+	fmt.Println(b)
+	// Output:
+	// ⎡3.7416573867739413⎤
+	// ⎣ 4.242640687119285⎦
+}

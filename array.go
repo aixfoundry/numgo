@@ -164,32 +164,22 @@ func (a *Array) Format(fs fmt.State, c rune) {
 }
 
 // Of returns a sub-array based on the specified axis and index.
-// It returns a row if axis is 0, and a column if axis is 1.
+// It returns a column if axis is 0, and a row if axis is 1.
 // Example:
 //
-//	row := arr.Of(0, 0) // returns the first row
-//	col := arr.Of(1, 1) // returns the second column
+//	row := arr.Of(0, 0) // returns the first column
+//	col := arr.Of(1, 1) // returns the second row
 //
 // numpy: a[i], a[:, i]
 //
 // axis:
 //
-//   - 0: by row
+//   - 0: by column
 //
-//   - 1: by column
-func (a *Array) Of(i int, axis int) *Array {
+//   - 1: by row
+func (a *Array) Of(i int, axis int) (ret *Array) {
 	buf := []float64{}
 	if axis == 0 {
-		for ir := range a.r {
-			if ir == i {
-				for ic := range a.c {
-					buf = append(buf, a.At(ir, ic))
-				}
-				break
-			}
-		}
-		return NewArray(1, a.c, buf)
-	} else {
 		for ir := range a.r {
 			for ic := range a.c {
 				if ic == i {
@@ -198,6 +188,37 @@ func (a *Array) Of(i int, axis int) *Array {
 				}
 			}
 		}
-		return NewArray(a.r, 1, buf)
+		ret = NewArray(a.r, 1, buf)
+	} else if axis == 1 {
+		for ir := range a.r {
+			if ir == i {
+				for ic := range a.c {
+					buf = append(buf, a.At(ir, ic))
+				}
+				break
+			}
+		}
+		ret = NewArray(1, a.c, buf)
 	}
+	return
+}
+
+// Row returns a new Array that contains the i-th row of the original array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}, {5, 6}}) // Assume a is a valid Array with multiple rows
+//	row := a.Row(2)   // row will contain the elements of the third row
+func (a *Array) Row(i int) *Array {
+	return a.Of(i, 1)
+}
+
+// Col returns a new Array that contains the i-th column of the original array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}, {5, 6}}) // Assume a is a valid Array with multiple columns
+//	col := a.Col(1)   // col will contain the elements of the second column
+func (a *Array) Col(i int) *Array {
+	return a.Of(i, 0)
 }

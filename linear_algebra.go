@@ -1,5 +1,7 @@
 package numgo
 
+import "math"
+
 // EMCP performs Gaussian elimination with partial pivoting (column main element elimination) on an augmented matrix.
 //
 // The function solves the system of linear equations A x = b, where A is a square matrix.
@@ -117,4 +119,46 @@ func LsqFit(xy *Array) (sol *Array) {
 		ex, ex2, exy,
 	})
 	return EMCP(a)
+}
+
+// FrobeniusNorm calculates the Frobenius norm of the array along the specified axis.
+// If axis is 0, it calculates the norm for each column.
+// If axis is 1, it calculates the norm for each row.
+// If axis is -1, it calculates the norm for the entire array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	norm := a.FrobeniusNorm(0) // norm will be a 1x2 array with values [sqrt(10), sqrt(25)]
+//	norm := a.FrobeniusNorm(1) // norm will be a 2x1 array with values [sqrt(5), sqrt(25)]
+//	norm := a.FrobeniusNorm(-1) // norm will be a 1x1 array with value [sqrt(30)]
+func (a *Array) FrobeniusNorm(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for ic := range a.c {
+			ret.Set(0, ic, a.Col(ic).FrobeniusNorm(-1).At(0, 0))
+		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for ir := range a.r {
+			ret.Set(ir, 0, a.Row(ir).FrobeniusNorm(-1).At(0, 0))
+		}
+	} else {
+		sum := 0.0
+		for _, v := range a.data {
+			sum += v * v
+		}
+		ret = New1DArray([]float64{math.Sqrt(sum)})
+	}
+	return
+}
+
+// FrobeniusNorm is a wrapper function that calls the FrobeniusNorm method of the Array struct.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	norm := FrobeniusNorm(a, 0) // norm will be a 1x2 array with values [sqrt(10), sqrt(25)]
+func FrobeniusNorm(a *Array, axis int) (ret *Array) {
+	return a.FrobeniusNorm(axis)
 }
