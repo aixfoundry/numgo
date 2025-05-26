@@ -4,6 +4,33 @@ import (
 	"math"
 )
 
+// Abs returns a new Array where each element is the absolute value of the corresponding element in the input Array.
+//
+// Example:
+//
+//	a := NewArray(2, 2, []float64{-1.0, 2.0, -3.0, 4.0})
+//	absA := a.Abs()
+//	fmt.Println(absA) // Output: [1 2 3 4]
+func (a *Array) Abs() (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for i, v := range a.data {
+		ret.data[i] = math.Abs(v)
+	}
+	return ret
+}
+
+// Abs returns a new Array where each element is the absolute value of the corresponding element in the input Array.
+// This is a convenience function that calls the Abs method on the Array.
+//
+// Example:
+//
+//	a := NewArray(2, 2, []float64{-1.0, 2.0, -3.0, 4.0})
+//	absA := Abs(a)
+//	fmt.Println(absA) // Output: [1 2 3 4]
+func Abs(a *Array) (ret *Array) {
+	return a.Abs()
+}
+
 // MaxAbs returns the element with the maximum absolute value in the array and its position.
 // It returns the value, row index, and column index of the element.
 //
@@ -19,8 +46,9 @@ func (a *Array) MaxAbs() (sol float64, r, c int) {
 	}
 	for ir := range a.r {
 		for ic := range a.c {
-			if math.Abs(sol) < math.Abs(a.data[ir*a.c+ic]) {
-				sol = a.data[ir*a.c+ic]
+			v := math.Abs(a.data[ir*a.c+ic])
+			if math.Abs(sol) < v {
+				sol = v
 				r, c = ir, ic
 			}
 		}
@@ -55,8 +83,8 @@ func (a *Array) MinAbs() (sol float64, r, c int) {
 	}
 	for ir := range a.r {
 		for ic := range a.c {
-			v := a.data[ir*a.c+ic]
-			if math.Abs(sol) > math.Abs(v) {
+			v := math.Abs(a.data[ir*a.c+ic])
+			if math.Abs(sol) > v {
 				sol = v
 				r, c = ir, ic
 			}

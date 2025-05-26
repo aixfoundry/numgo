@@ -162,3 +162,51 @@ func (a *Array) FrobeniusNorm(axis int) (ret *Array) {
 func FrobeniusNorm(a *Array, axis int) (ret *Array) {
 	return a.FrobeniusNorm(axis)
 }
+
+// Norm calculates the norm of the array based on the given order and axis.
+// It supports the following norms:
+// - ord = math.Inf(1): Maximum absolute column sum (L∞ norm)
+// - ord = 2: Frobenius norm
+// - ord = 1: Maximum absolute row sum (L1 norm)
+//
+// Examples:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	fmt.Println(a.Norm(math.Inf(1), 0)) // Output: [6]
+//	fmt.Println(a.Norm(2, 0))          // Output: [5.477225575051661]
+//	fmt.Println(a.Norm(1, 0))          // Output: [4]
+func (a *Array) Norm(ord float64, axis int) (ret *Array) {
+	switch ord {
+	case math.Inf(1):
+		norm, max := 0.0, 0.0
+		for ic := range a.c {
+			norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
+			if norm > max {
+				max = norm
+			}
+		}
+		ret = New1DArray([]float64{max})
+	case 2:
+		ret = a.FrobeniusNorm(axis)
+	case 1:
+		norm, max := 0.0, 0.0
+		for ir := range a.r {
+			norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
+			if norm > max {
+				max = norm
+			}
+		}
+		ret = New1DArray([]float64{max})
+	}
+	return ret
+}
+
+// Norm is a convenience function that calls the Norm method of the Array receiver.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	fmt.Println(Norm(a, math.Inf(1), 0)) // Output: [6]
+func Norm(a *Array, ord float64, axis int) *Array {
+	return a.Norm(ord, axis)
+}

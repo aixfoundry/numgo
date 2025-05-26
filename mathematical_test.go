@@ -32,15 +32,23 @@ func ExampleMax() {
 }
 
 func ExampleArray_MaxAbs() {
-	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, -13, 5, 6, 7, 9})
 	sol, r, c := a.MaxAbs()
 	fmt.Println(sol, r, c)
 	// Output:
 	// 13 0 4
 }
 
+func ExampleArray_Abs() {
+	a := NewArray(1, 4, []float64{-1.0, 2.0, -3.0, 4.0})
+	sol := Abs(a)
+	fmt.Println(sol)
+	// Output:
+	// [1  2  3  4]
+}
+
 func ExampleMaxAbs() {
-	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, -13, 5, 6, 7, 9})
 	sol, r, c := MaxAbs(a)
 	fmt.Println(sol, r, c)
 	// Output:
@@ -48,7 +56,7 @@ func ExampleMaxAbs() {
 }
 
 func ExampleArray_MinAbs() {
-	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, -13, 5, 6, 7, 9})
 	sol, r, c := a.MinAbs()
 	fmt.Println(sol, r, c)
 	// Output:

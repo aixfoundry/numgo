@@ -2,6 +2,7 @@ package numgo
 
 import (
 	"fmt"
+	"math"
 )
 
 func ExampleEMCP() {
@@ -100,4 +101,20 @@ func ExampleFrobeniusNorm_row() {
 	// Output:
 	// ⎡3.7416573867739413⎤
 	// ⎣ 4.242640687119285⎦
+}
+
+func ExampleNorm_row() {
+	a := New1DArray([]float64{-4, -3, -2, -1, 0, 1, 2, 3, 4})
+	b := Norm(a, 1, 1)
+	fmt.Println(b)
+	// Output:
+	// [20]
+}
+
+func ExampleNorm_col() {
+	a := New1DArray([]float64{-4, -3, -2, -1, 0, 1, 2, 3, 4})
+	b := Norm(a, math.Inf(1), 1)
+	fmt.Println(b)
+	// Output:
+	// [4]
 }
