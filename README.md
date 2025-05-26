@@ -3,6 +3,7 @@ num go
 
 ## 算术
 
+* 绝对值(Abs)
 * 绝对值最大值(MaxAbs)
 * 绝对值最小值(MinAbs)
 * 最大值(Max)
@@ -29,6 +30,10 @@ num go
 * 多项式拟合(PolyFit)
 * 计算线性方程的值(Poly1D)
 * 计算多项式的值(PolyVal)
+* 弗罗贝尼乌斯范数(FrobeniusNorm)
+* 1范数(Norm1)
+* 2范数(Norm2)
+* 无穷范数(NormInf)
 
 ## 归一化
 

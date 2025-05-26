@@ -82,6 +82,19 @@ func ExampleArray_Col() {
 	// ⎣7⎦
 }
 
+func ExampleArray_Col_d2() {
+	a := New2DArray([][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
+	})
+	fmt.Printf("%v", a.Col(0))
+	// Output:
+	// ⎡1⎤
+	// ⎢4⎥
+	// ⎣7⎦
+}
+
 func ExampleArray_Of_row() {
 	a := NewArray(3, 3, []float64{
 		1, 2, 3,
@@ -98,6 +111,17 @@ func ExampleArray_Row() {
 		1, 2, 3,
 		4, 5, 6,
 		7, 8, 9,
+	})
+	fmt.Printf("%v", a.Row(0))
+	// Output:
+	// [1  2  3]
+}
+
+func ExampleArray_Row_d2() {
+	a := New2DArray([][]float64{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9},
 	})
 	fmt.Printf("%v", a.Row(0))
 	// Output:

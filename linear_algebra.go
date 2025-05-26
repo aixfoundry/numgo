@@ -163,6 +163,85 @@ func FrobeniusNorm(a *Array, axis int) (ret *Array) {
 	return a.FrobeniusNorm(axis)
 }
 
+// Norm1 calculates the maximum absolute row sum of the array.
+// It returns a new 1D array containing the maximum norm value.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+//	norm := a.Norm1() // norm will be a 1D array with value [9]
+func (a *Array) Norm1() (ret *Array) {
+	norm, max := 0.0, 0.0
+	for ic := range a.c {
+		norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
+		if norm > max {
+			max = norm
+		}
+	}
+	ret = New1DArray([]float64{max})
+	return
+}
+
+// Norm1 is a wrapper function that calls the Norm1 method on the Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+//	norm := Norm1(a) // norm will be a 1D array with value [9]
+func Norm1(a *Array) *Array {
+	return a.Norm1()
+}
+
+// Norm2 calculates the Frobenius norm of the array along the specified axis.
+// It returns a new array representing the norm along the specified axis.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	norm := a.Norm2(0) // norm will be a 1D array with value [sqrt(10), sqrt(25)]
+func (a *Array) Norm2(axis int) *Array {
+	return a.FrobeniusNorm(axis)
+}
+
+// Norm2 is a wrapper function that calls the Norm2 method on the Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	norm := Norm2(a, 0) // norm will be a 1D array with value [sqrt(10), sqrt(25)]
+func Norm2(a *Array, axis int) *Array {
+	return a.Norm2(axis)
+}
+
+// NormInf calculates the maximum absolute column sum of the array.
+// It returns a new 1D array containing the maximum norm value.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+//	norm := a.NormInf() // norm will be a 1D array with value [15]
+func (a *Array) NormInf() (ret *Array) {
+	norm, max := 0.0, 0.0
+	for ir := range a.r {
+		norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
+		if norm > max {
+			max = norm
+		}
+	}
+	ret = New1DArray([]float64{max})
+	return
+}
+
+// NormInf is a wrapper function that calls the NormInf method on the Array.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+//	norm := NormInf(a) // norm will be a 1D array with value [15]
+func NormInf(a *Array) *Array {
+	return a.NormInf()
+}
+
 // Norm calculates the norm of the array based on the given order and axis.
 // It supports the following norms:
 // - ord = math.Inf(1): Maximum absolute column sum (L∞ norm)
@@ -178,25 +257,11 @@ func FrobeniusNorm(a *Array, axis int) (ret *Array) {
 func (a *Array) Norm(ord float64, axis int) (ret *Array) {
 	switch ord {
 	case math.Inf(1):
-		norm, max := 0.0, 0.0
-		for ic := range a.c {
-			norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
-			if norm > max {
-				max = norm
-			}
-		}
-		ret = New1DArray([]float64{max})
+		ret = a.NormInf()
 	case 2:
 		ret = a.FrobeniusNorm(axis)
 	case 1:
-		norm, max := 0.0, 0.0
-		for ir := range a.r {
-			norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
-			if norm > max {
-				max = norm
-			}
-		}
-		ret = New1DArray([]float64{max})
+		ret = a.Norm1()
 	}
 	return ret
 }

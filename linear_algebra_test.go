@@ -108,7 +108,7 @@ func ExampleNorm_row() {
 	b := Norm(a, 1, 1)
 	fmt.Println(b)
 	// Output:
-	// [20]
+	// [4]
 }
 
 func ExampleNorm_col() {
@@ -116,5 +116,29 @@ func ExampleNorm_col() {
 	b := Norm(a, math.Inf(1), 1)
 	fmt.Println(b)
 	// Output:
-	// [4]
+	// [20]
+}
+
+func ExampleNormInf() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := NormInf(a) // norm will be a 1D array with value [15]
+	fmt.Println(norm)
+	// Output:
+	// [15]
+}
+
+func ExampleNorm1() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := Norm1(a) // norm will be a 1D array with value [9]
+	fmt.Println(norm)
+	// Output:
+	// [9]
+}
+
+func ExampleNorm2() {
+	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
+	norm := Norm2(a, -1)
+	fmt.Println(norm)
+	// Output:
+	// [9.539392014169456]
 }
