@@ -377,6 +377,13 @@ func (a *Array) Sub(b *Array) (ret *Array) {
 				ret.Set(ir, ic, a.At(ir, ic)-b.At(ir, 0))
 			}
 		}
+	} else if b.c == 1 && b.r == 1 {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)-b.At(0, 0))
+			}
+		}
 	}
 	return
 }
@@ -422,6 +429,13 @@ func (a *Array) Add(b *Array) (ret *Array) {
 				ret.Set(ir, ic, a.At(ir, ic)+b.At(ir, 0))
 			}
 		}
+	} else if b.c == 1 && b.r == 1 {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)+b.At(0, 0))
+			}
+		}
 	}
 	return
 }
@@ -465,6 +479,13 @@ func (a *Array) Mul(b *Array) (ret *Array) {
 		for ir := range a.r {
 			for ic := range a.c {
 				ret.Set(ir, ic, a.At(ir, ic)*b.At(ir, 0))
+			}
+		}
+	} else if b.c == 1 && b.r == 1 {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, a.At(ir, ic)*b.At(0, 0))
 			}
 		}
 	}
@@ -525,6 +546,17 @@ func (a *Array) Div(b *Array) (ret *Array) {
 				}
 			}
 		}
+	} else if b.c == 1 && b.r == 1 {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				if b.At(0, 0) == 0 {
+					ret.Set(ir, ic, math.NaN())
+				} else {
+					ret.Set(ir, ic, a.At(ir, ic)/b.At(0, 0))
+				}
+			}
+		}
 	}
 	return
 }
@@ -539,4 +571,101 @@ func (a *Array) Div(b *Array) (ret *Array) {
 //	result := Div(a, b) // result is [[1, 2], [3, 4]]
 func Div(a *Array, b *Array) (ret *Array) {
 	return a.Div(b)
+}
+
+// DivValue divides each element of the array by a given value.
+// If the value is 0, it sets the result to NaN to avoid division by zero.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	result := a.DivValue(2)
+//	// result will be a new Array with elements [[0.5, 1], [1.5, 2]]
+func (a *Array) DivValue(value float64) (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for ir := range a.r {
+		for ic := range a.c {
+			if value == 0 {
+				ret.Set(ir, ic, math.NaN())
+			} else {
+				ret.Set(ir, ic, a.At(ir, ic)/value)
+			}
+		}
+	}
+	return
+}
+
+// DivValue is a wrapper function that calls the DivValue method of the Array struct.
+// Example usage is the same as DivValue method.
+func DivValue(a *Array, value float64) (ret *Array) {
+	return a.DivValue(value)
+}
+
+// MulValue multiplies each element of the array by a given value.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	result := a.MulValue(2)
+//	// result will be a new Array with elements [[2, 4], [6, 8]]
+func (a *Array) MulValue(value float64) (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for ir := range a.r {
+		for ic := range a.c {
+			ret.Set(ir, ic, a.At(ir, ic)*value)
+		}
+	}
+	return
+}
+
+// MulValue is a wrapper function that calls the MulValue method of the Array struct.
+// Example usage is the same as MulValue method.
+func MulValue(a *Array, value float64) (ret *Array) {
+	return a.MulValue(value)
+}
+
+// SubValue subtracts a given value from each element of the array.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	result := a.SubValue(1)
+//	// result will be a new Array with elements [[0, 1], [2, 3]]
+func (a *Array) SubValue(value float64) (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for ir := range a.r {
+		for ic := range a.c {
+			ret.Set(ir, ic, a.At(ir, ic)-value)
+		}
+	}
+	return
+}
+
+// SubValue is a wrapper function that calls the SubValue method of the Array struct.
+// Example usage is the same as SubValue method.
+func SubValue(a *Array, value float64) (ret *Array) {
+	return a.SubValue(value)
+}
+
+// AddValue adds a given value to each element of the array.
+//
+// Example:
+//
+//	a := NewArray([][]float64{{1, 2}, {3, 4}})
+//	result := a.AddValue(1)
+//	// result will be a new Array with elements [[2, 3], [4, 5]]
+func (a *Array) AddValue(value float64) (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for ir := range a.r {
+		for ic := range a.c {
+			ret.Set(ir, ic, a.At(ir, ic)+value)
+		}
+	}
+	return
+}
+
+// AddValue is a wrapper function that calls the AddValue method of the Array struct.
+// Example usage is the same as AddValue method.
+func AddValue(a *Array, value float64) (ret *Array) {
+	return a.AddValue(value)
 }

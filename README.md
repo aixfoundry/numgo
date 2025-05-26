@@ -16,6 +16,10 @@ num go
 * 减法(Sub)
 * 乘法(Mul)
 * 除法(Div)
+* 加法值(AddValue)
+* 减法值(SubValue)
+* 乘法值(MulValue)
+* 除法值(DivValue)
 
 ## 线性代数
 
@@ -25,3 +29,7 @@ num go
 * 多项式拟合(PolyFit)
 * 计算线性方程的值(Poly1D)
 * 计算多项式的值(PolyVal)
+
+## 归一化
+
+* 最大最小值归一化[0, 1](MinMaxScaler)

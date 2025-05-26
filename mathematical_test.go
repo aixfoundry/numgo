@@ -309,6 +309,14 @@ func TestDiv(t *testing.T) {
 			},
 			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
 		},
+		{
+			name: "Test Div 2x2 1x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -350,6 +358,14 @@ func TestMul(t *testing.T) {
 			args: args{
 				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
 				b: NewArray(2, 1, []float64{1, 1}),
+			},
+			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
+		},
+		{
+			name: "Test Mul 2x2 1x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1}),
 			},
 			wantRet: New2DArray([][]float64{{1, 2}, {3, 4}}),
 		},
@@ -397,6 +413,14 @@ func TestAdd(t *testing.T) {
 			},
 			wantRet: New2DArray([][]float64{{2, 3}, {4, 5}}),
 		},
+		{
+			name: "Test Add 2x2 1x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1}),
+			},
+			wantRet: New2DArray([][]float64{{2, 3}, {4, 5}}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -441,11 +465,131 @@ func TestSub(t *testing.T) {
 			},
 			wantRet: New2DArray([][]float64{{0, 1}, {2, 3}}),
 		},
+		{
+			name: "Test Sub 2x2 1x1",
+			args: args{
+				a: New2DArray([][]float64{{1, 2}, {3, 4}}),
+				b: New1DArray([]float64{1}),
+			},
+			wantRet: New2DArray([][]float64{{0, 1}, {2, 3}}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotRet := Sub(tt.args.a, tt.args.b); !reflect.DeepEqual(gotRet, tt.wantRet) {
 				t.Errorf("Sub() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestAddValue(t *testing.T) {
+	type args struct {
+		a     *Array
+		value float64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Add 2x2",
+			args: args{
+				a:     New2DArray([][]float64{{1, 2}, {3, 4}}),
+				value: 2,
+			},
+			wantRet: New2DArray([][]float64{{3, 4}, {5, 6}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := AddValue(tt.args.a, tt.args.value); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("AddValue() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestSubValue(t *testing.T) {
+	type args struct {
+		a     *Array
+		value float64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Sub 2x2",
+			args: args{
+				a:     New2DArray([][]float64{{1, 2}, {3, 4}}),
+				value: 2,
+			},
+			wantRet: New2DArray([][]float64{{-1, 0}, {1, 2}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := SubValue(tt.args.a, tt.args.value); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("SubValue() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestMulValue(t *testing.T) {
+	type args struct {
+		a     *Array
+		value float64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Mul 2x2",
+			args: args{
+				a:     New2DArray([][]float64{{1, 2}, {3, 4}}),
+				value: 2,
+			},
+			wantRet: New2DArray([][]float64{{2, 4}, {6, 8}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := MulValue(tt.args.a, tt.args.value); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("MulValue() = %v, want %v", gotRet, tt.wantRet)
+			}
+		})
+	}
+}
+
+func TestDivValue(t *testing.T) {
+	type args struct {
+		a     *Array
+		value float64
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantRet *Array
+	}{
+		{
+			name: "Test Div 2x2",
+			args: args{
+				a:     New2DArray([][]float64{{1, 2}, {3, 4}}),
+				value: 2,
+			},
+			wantRet: New2DArray([][]float64{{0.5, 1}, {1.5, 2}}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotRet := DivValue(tt.args.a, tt.args.value); !reflect.DeepEqual(gotRet, tt.wantRet) {
+				t.Errorf("DivValue() = %v, want %v", gotRet, tt.wantRet)
 			}
 		})
 	}
