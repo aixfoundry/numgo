@@ -331,7 +331,7 @@ func Sort(a *Array, axis int) *Array {
 // If axis is 1, it calculates the mean for each row and returns an Nx1 array.
 // If the array is empty or has zero dimensions, it returns nil.
 //
-// Example usage:
+// Example:
 //
 //	a := NewArray([][]float64{{1, 2, 3}, {4, 5, 6}})
 //	mean := a.Mean(0) // mean will be a *Array with data [[2.5, 3.5, 4.5]]
@@ -355,7 +355,7 @@ func (a *Array) Mean(axis int) (ret *Array) {
 // Mean is a utility function that calls the Mean method on the Array receiver.
 // It calculates the mean of the elements along the specified axis of the array.
 //
-// Example usage:
+// Example:
 //
 //	a := NewArray([][]float64{{1, 2, 3}, {4, 5, 6}})
 //	mean := Mean(a, 0) // mean will be a *Array with data [[2.5, 3.5, 4.5]]
@@ -829,4 +829,91 @@ func Atan2(y *Array, x *Array) (ret *Array) {
 		}
 	}
 	return ret
+}
+
+// Pow performs element-wise power operation between two arrays.
+// If the dimensions of a and b match, it raises each element of a to the power of the corresponding element in b.
+// If b is a row vector and a and b have the same number of columns, it raises each element of a to the power of the corresponding element in b's row.
+// If b is a column vector and a and b have the same number of rows, it raises each element of a to the power of the corresponding element in b's column.
+// If b is a scalar (1x1 matrix), it raises each element of a to the power of that scalar.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+//	b := New2DArray([][]float64{{2, 3}, {1, 2}})
+//	result := a.Pow(b)
+//	// result will be a new Array with values {{4, 27}, {4, 25}}
+func (a *Array) Pow(b *Array) (ret *Array) {
+	if a.r == b.r && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(ir, ic)))
+			}
+		}
+	} else if a.r != b.r && b.r == 1 && a.c == b.c {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(0, ic)))
+			}
+		}
+	} else if a.c != b.c && b.c == 1 && a.r == b.r {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(ir, 0)))
+			}
+		}
+	} else if b.c == 1 && b.r == 1 {
+		ret = ZeroArray(a.r, a.c)
+		for ir := range a.r {
+			for ic := range a.c {
+				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(0, 0)))
+			}
+		}
+	}
+	return
+}
+
+// Pow is a helper function that calls the Pow method on the Array a with the Array b.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+//	b := New2DArray([][]float64{{2, 3}, {1, 2}})
+//	result := Pow(a, b)
+//	// result will be a new Array with values {{4, 27}, {4, 25}}
+func Pow(a *Array, b *Array) *Array {
+	return a.Pow(b)
+}
+
+// PowValue raises each element of the array a to the power of the scalar b.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+//	b := 2.0
+//	result := a.PowValue(b)
+//	// result will be a new Array with values {{4, 9}, {16, 25}}
+func (a *Array) PowValue(b float64) (ret *Array) {
+	ret = ZeroArray(a.r, a.c)
+	for ir := range a.r {
+		for ic := range a.c {
+			ret.Set(ir, ic, math.Pow(a.At(ir, ic), b))
+		}
+	}
+	return
+}
+
+// PowValue is a helper function that calls the PowValue method on the Array a with the scalar b.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+//	b := 2.0
+//	result := PowValue(a, b)
+//	// result will be a new Array with values {{4, 9}, {16, 25}}
+func PowValue(a *Array, b float64) *Array {
+	return a.PowValue(b)
 }

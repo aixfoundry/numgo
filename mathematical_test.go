@@ -664,3 +664,53 @@ func ExampleSort_col() {
 	// ⎡1  2  6⎤
 	// ⎣3  4  5⎦
 }
+
+func ExamplePow() {
+	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+	b := New2DArray([][]float64{{2, 3}, {1, 2}})
+	result := Pow(a, b)
+	fmt.Println(result)
+	// Output:
+	// ⎡4  27⎤
+	// ⎣4  25⎦
+}
+
+func ExamplePow_col() {
+	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+	b := New2DArray([][]float64{{2}, {1}})
+	result := Pow(a, b)
+	fmt.Println(result)
+	// Output:
+	// ⎡4  9⎤
+	// ⎣4  5⎦
+}
+
+func ExamplePow_row() {
+	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+	b := New2DArray([][]float64{{2, 1}})
+	result := Pow(a, b)
+	fmt.Println(result)
+	// Output:
+	// ⎡ 4  3⎤
+	// ⎣16  5⎦
+}
+
+func ExamplePow_value() {
+	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+	b := New2DArray([][]float64{{2}})
+	result := Pow(a, b)
+	fmt.Println(result)
+	// Output:
+	// ⎡ 4   9⎤
+	// ⎣16  25⎦
+}
+
+func ExamplePowValue() {
+	a := New2DArray([][]float64{{2, 3}, {4, 5}})
+	b := 2.0
+	result := PowValue(a, b)
+	fmt.Println(result)
+	// Output:
+	// ⎡ 4   9⎤
+	// ⎣16  25⎦
+}

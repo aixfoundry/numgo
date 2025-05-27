@@ -175,3 +175,19 @@ func ExampleNorm2() {
 	// Output:
 	// [9.539392014169456]
 }
+
+func ExampleHistogram2d() {
+	x := New1DArray([]float64{1, 2, 2.5, 3, 3.5, 4})
+	y := New1DArray([]float64{2, 3, 3.5, 4, 4.5, 5})
+	bins := []int{3, 3}
+	hist, xEdges, yEdges := Histogram2d(x, y, bins, [][]float64{})
+	fmt.Println(hist)
+	fmt.Println(xEdges)
+	fmt.Println(yEdges)
+	// Output:
+	// ⎡1  0  0⎤
+	// ⎢0  2  0⎥
+	// ⎣0  0  3⎦
+	// [1  2  3  4]
+	// [2  3  4  5]
+}

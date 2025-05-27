@@ -305,3 +305,76 @@ func (a *Array) Norm(ord float64, axis int) (ret *Array) {
 func Norm(a *Array, ord float64, axis int) *Array {
 	return a.Norm(ord, axis)
 }
+
+// Histogram2d computes the 2D histogram of the input data arrays x and y.
+// It returns the histogram array, and the bin edges along the x and y axes.
+// The bins parameter specifies the number of bins along each dimension.
+// The range_ parameter allows specifying the range of values to consider for each dimension.
+// If range_ is not provided, the function will use the minimum and maximum values of x and y.
+//
+// Example:
+//
+//	x := New1DArray([]float64{1, 2, 2.5, 3, 3.5, 4})
+//	y := New1DArray([]float64{2, 3, 3.5, 4, 4.5, 5})
+//	bins := []int{3, 3}
+//	hist, xEdges, yEdges := Histogram2d(x, y, bins, [][]float64{})
+//
+// The example above computes a 3x3 histogram for the given x and y data.
+func Histogram2d(x, y *Array, bins []int, range_ [][]float64) (hist *Array, xEdges *Array, yEdges *Array) {
+	if len(bins) != 2 {
+		panic("Invalid bins")
+	}
+	x, y = x.Reshape(1, x.r*x.c), y.Reshape(1, y.r*y.c)
+	var xMin, xMax, yMin, yMax float64
+	if len(range_) == 2 && len(range_[0]) == 2 && len(range_[1]) == 2 {
+		xMin = range_[0][0]
+		xMax = range_[0][1]
+		yMin = range_[1][0]
+		yMax = range_[1][1]
+	} else {
+		xMin, _, _ = x.Min()
+		xMax, _, _ = x.Max()
+		yMin, _, _ = y.Min()
+		yMax, _, _ = y.Max()
+	}
+
+	xBinWidth := (xMax - xMin) / float64(bins[0])
+	yBinWidth := (yMax - yMin) / float64(bins[1])
+
+	hist = ZeroArray(bins[0], bins[1])
+
+	for i := range x.c {
+		if len(range_) > 0 {
+			if x.At(0, i) < xMin || x.At(0, i) > xMax || y.At(0, i) < yMin || y.At(0, i) > yMax {
+				continue
+			}
+		}
+		// Determine the bin index for x and y
+		xIdx := int((x.At(0, i) - xMin) / xBinWidth)
+		yIdx := int((y.At(0, i) - yMin) / yBinWidth)
+		// Handle edge case where value is exactly at the upper limit
+		if xIdx == bins[0] {
+			xIdx--
+		}
+		if yIdx == bins[1] {
+			yIdx--
+		}
+		if xIdx >= 0 && xIdx < bins[0] && yIdx >= 0 && yIdx < bins[1] {
+			v := hist.At(xIdx, yIdx)
+			hist.Set(xIdx, yIdx, v+1)
+		}
+	}
+
+	// Create the bin edges arrays
+	edges := []float64{}
+	for i := 0; i <= bins[0]; i++ {
+		edges = append(edges, xMin+float64(i)*xBinWidth)
+	}
+	xEdges = New1DArray(edges)
+	edges = []float64{}
+	for i := 0; i <= bins[1]; i++ {
+		edges = append(edges, yMin+float64(i)*yBinWidth)
+	}
+	yEdges = New1DArray(edges)
+	return
+}
