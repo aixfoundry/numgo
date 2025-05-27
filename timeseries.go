@@ -30,7 +30,7 @@ func ShapeContext(a *Array, radiusNum float64, angleNum float64) (ret *Array) {
 		coords := a.Sub(p)
 		r := coords.Norm(2, 1)
 		angle := Atan2(coords.Col(1), coords.Col(0))
-		normR := r.Div(r.Filter(func(v float64) bool { return v != 0 }).Median(-1))
+		normR := r.Div(r.Filter(func(r, c int, v float64) bool { return v != 0 }).Median(-1))
 		hist, _, _ := Histogram2d(normR, angle, []int{int(radiusNum), int(angleNum)}, [][]float64{{0, 2}, {-math.Pi, math.Pi}})
 		data = append(data, hist.data)
 	}
@@ -59,5 +59,28 @@ const EPSILON = 1e-10
 //	distance := ChiSquareDistance(array1, array2)
 func ChiSquareDistance(a *Array, b *Array) (ret float64) {
 	ret = a.Sub(b).PowValue(2).Div(a.Add(b).AddValue(EPSILON)).Sum(-1).At(0, 0) * 0.5
+	return
+}
+
+// CostMatrix calculates the cost matrix between two arrays 'a' and 'b' using the Chi-Square distance.
+// It returns a new 2D array where each element (i, j) is the Chi-Square distance between the i-th row of 'a' and the j-th row of 'b'.
+//
+// Example:
+//
+//	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+//	b := New2DArray([][]float64{{5, 6}, {7, 8}})
+//	costMatrix := CostMatrix(a, b)
+//	fmt.Println(costMatrix) // Output will be a 2x2 matrix with Chi-Square distances
+func CostMatrix(a *Array, b *Array) (ret *Array) {
+	n := a.r
+	m := b.r
+	data := make([][]float64, n)
+	for i := range n {
+		data[i] = make([]float64, m)
+		for j := range m {
+			data[i][j] = ChiSquareDistance(a.Row(i), b.Row(j))
+		}
+	}
+	ret = New2DArray(data)
 	return
 }

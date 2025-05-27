@@ -21,3 +21,13 @@ func ExampleShapeContext() {
 	// ⎡0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0⎤
 	// ⎣0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0⎦
 }
+
+func ExampleCostMatrix() {
+	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+	b := New2DArray([][]float64{{5, 6}, {7, 8}})
+	costMatrix := CostMatrix(a, b)
+	fmt.Println(costMatrix) // Output will be a 2x2 matrix with Chi-Square distances
+	// Output:
+	// ⎡2.333333333298611  4.049999999953875⎤
+	// ⎣0.449999999994875  1.466666666653111⎦
+}

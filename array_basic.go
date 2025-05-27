@@ -332,11 +332,14 @@ func Equal(a *Array, b *Array) bool {
 //	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
 //	filteredArray := a.Filter(func(v float64) bool { return v > 2.0 })
 //	fmt.Println(filteredArray.data) // Output: [3 4]
-func (a *Array) Filter(f func(v float64) bool) (ret *Array) {
+func (a *Array) Filter(f func(r, c int, v float64) bool) (ret *Array) {
 	data := []float64{}
-	for _, v := range a.data {
-		if f(v) {
-			data = append(data, v)
+	for ir := range a.r {
+		for ic := range a.c {
+			v := a.At(ir, ic)
+			if f(ir, ic, v) {
+				data = append(data, v)
+			}
 		}
 	}
 	ret = New1DArray(data)
@@ -351,6 +354,6 @@ func (a *Array) Filter(f func(v float64) bool) (ret *Array) {
 //	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
 //	filteredArray := Filter(a, func(v float64) bool { return v > 2.0 })
 //	fmt.Println(filteredArray.data) // Output: [3 4]
-func Filter(a *Array, f func(v float64) bool) *Array {
+func Filter(a *Array, f func(r, c int, v float64) bool) *Array {
 	return a.Filter(f)
 }
