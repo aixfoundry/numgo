@@ -332,10 +332,10 @@ func Histogram2d(x, y *Array, bins []int, range_ [][]float64) (hist *Array, xEdg
 		yMin = range_[1][0]
 		yMax = range_[1][1]
 	} else {
-		xMin, _, _ = x.Min()
-		xMax, _, _ = x.Max()
-		yMin, _, _ = y.Min()
-		yMax, _, _ = y.Max()
+		xMin = x.Min(-1).At(0, 0)
+		xMax = x.Max(-1).At(0, 0)
+		yMin = y.Min(-1).At(0, 0)
+		yMax = y.Max(-1).At(0, 0)
 	}
 
 	xBinWidth := (xMax - xMin) / float64(bins[0])
