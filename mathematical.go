@@ -108,18 +108,39 @@ func MinAbs(a *Array) (sol float64, r, c int) {
 // Example:
 //
 //	a := New2DArray([][]float64{{-1, 2}, {-3, 4}})
-//	sol, r, c := a.Max()
-//	fmt.Println(sol, r, c) // Output: 4 1 1
-func (a *Array) Max() (sol float64, r, c int) {
-	sol, r, c = math.SmallestNonzeroFloat64, -1, -1
-	if len(a.data) == 0 {
-		return
-	}
-	for k, v := range a.All() {
-		if sol < v {
-			sol = v
-			r, c = k[0], k[1]
+//	sol := a.Max(-1)
+//	fmt.Println(sol) // Output: [4]
+func (a *Array) Max(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for j := range a.c {
+			maxVal := -math.MaxFloat64
+			for i := range a.r {
+				if a.At(i, j) > maxVal {
+					maxVal = a.At(i, j)
+				}
+			}
+			ret.Set(0, j, maxVal)
 		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for i := range a.r {
+			maxVal := -math.MaxFloat64
+			for j := range a.c {
+				if a.At(i, j) > maxVal {
+					maxVal = a.At(i, j)
+				}
+			}
+			ret.Set(i, 0, maxVal)
+		}
+	} else {
+		maxVal := -math.MaxFloat64
+		for _, v := range a.All() {
+			if maxVal < v {
+				maxVal = v
+			}
+		}
+		ret = New1DArray([]float64{maxVal})
 	}
 	return
 }
@@ -130,10 +151,10 @@ func (a *Array) Max() (sol float64, r, c int) {
 // Example:
 //
 //	a := New2DArray([][]float64{{-1, 2}, {-3, 4}})
-//	sol, r, c := Max(a)
-//	fmt.Println(sol, r, c) // Output: 4 1 1
-func Max(a *Array) (sol float64, r, c int) {
-	return a.Max()
+//	sol := Max(a, -1)
+//	fmt.Println(sol) // Output: [4]
+func Max(a *Array, axis int) *Array {
+	return a.Max(axis)
 }
 
 // Min returns the minimum element in the array and its position.
@@ -144,16 +165,37 @@ func Max(a *Array) (sol float64, r, c int) {
 //	a := New2DArray([][]float64{{-1, 2}, {-3, 4}})
 //	sol, r, c := a.Min()
 //	fmt.Println(sol, r, c) // Output: -3 1 0
-func (a *Array) Min() (sol float64, r, c int) {
-	sol, r, c = math.MaxFloat64, -1, -1
-	if len(a.data) == 0 {
-		return
-	}
-	for k, v := range a.All() {
-		if sol > v {
-			sol = v
-			r, c = k[0], k[1]
+func (a *Array) Min(axis int) (ret *Array) {
+	if axis == 0 {
+		ret = ZeroArray(1, a.c)
+		for j := range a.c {
+			minVal := math.MaxFloat64
+			for i := range a.r {
+				if a.At(i, j) < minVal {
+					minVal = a.At(i, j)
+				}
+			}
+			ret.Set(0, j, minVal)
 		}
+	} else if axis == 1 {
+		ret = ZeroArray(a.r, 1)
+		for i := range a.r {
+			minVal := math.MaxFloat64
+			for j := range a.c {
+				if a.At(i, j) < minVal {
+					minVal = a.At(i, j)
+				}
+			}
+			ret.Set(i, 0, minVal)
+		}
+	} else {
+		minVal := math.MaxFloat64
+		for _, v := range a.All() {
+			if minVal > v {
+				minVal = v
+			}
+		}
+		ret = New1DArray([]float64{minVal})
 	}
 	return
 }
@@ -166,8 +208,8 @@ func (a *Array) Min() (sol float64, r, c int) {
 //	a := New2DArray([][]float64{{-1, 2}, {-3, 4}})
 //	sol, r, c := Min(a)
 //	fmt.Println(sol, r, c) // Output: -3 1 0
-func Min(a *Array) (sol float64, r, c int) {
-	return a.Min()
+func Min(a *Array, axis int) *Array {
+	return a.Min(axis)
 }
 
 // Dot computes the dot product of two arrays.

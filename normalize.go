@@ -10,8 +10,8 @@ package numgo
 //	scaled := a.MinMaxScaler()
 //	fmt.Println(scaled.Data) // Output: [0 0.25 0.5 0.75 1]
 func (a *Array) MinMaxScaler() (ret *Array) {
-	min, _, _ := a.Min()
-	max, _, _ := a.Max()
+	min := a.Min(-1).At(0, 0)
+	max := a.Max(-1).At(0, 0)
 	seq := max - min
 	ret = a.SubValue(min).DivValue(seq)
 	return

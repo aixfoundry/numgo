@@ -8,27 +8,43 @@ import (
 
 func TestArray_Max(t *testing.T) {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	sol, r, c := a.Max()
-	if sol != 13 || r != 0 || c != 4 {
-		t.Log(sol, r, c)
+	sol := a.Max(-1)
+	if sol.At(0, 0) != 13 {
+		t.Log(sol)
 		t.FailNow()
 	}
 }
 
 func ExampleArray_Max() {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	sol, r, c := a.Max()
-	fmt.Println(sol, r, c)
+	sol := a.Max(-1)
+	fmt.Println(sol)
 	// Output:
-	// 13 0 4
+	// [13]
 }
 
 func ExampleMax() {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	sol, r, c := Max(a)
-	fmt.Println(sol, r, c)
+	sol := Max(a, -1)
+	fmt.Println(sol)
 	// Output:
-	// 13 0 4
+	// [13]
+}
+
+func ExampleMax_row() {
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	sol := Max(a, 1)
+	fmt.Println(sol)
+	// Output:
+	// [13]
+}
+
+func ExampleMax_col() {
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	sol := Max(a, 0)
+	fmt.Println(sol)
+	// Output:
+	// [0  1  2  3  13  5  6  7  9]
 }
 
 func ExampleArray_MaxAbs() {
@@ -89,18 +105,34 @@ func ExampleMinAbs_second() {
 
 func ExampleArray_Min() {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	sol, r, c := a.Min()
-	fmt.Println(sol, r, c)
+	sol := a.Min(-1)
+	fmt.Println(sol)
 	// Output:
-	// 0 0 0
+	// [0]
 }
 
 func ExampleMin() {
 	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
-	sol, r, c := Min(a)
-	fmt.Println(sol, r, c)
+	sol := Min(a, -1)
+	fmt.Println(sol)
 	// Output:
-	// 0 0 0
+	// [0]
+}
+
+func ExampleMin_row() {
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	sol := Min(a, 1)
+	fmt.Println(sol)
+	// Output:
+	// [0]
+}
+
+func ExampleMin_col() {
+	a := NewArray(1, 9, []float64{0, 1, 2, 3, 13, 5, 6, 7, 9})
+	sol := Min(a, 0)
+	fmt.Println(sol)
+	// Output:
+	// [0  1  2  3  13  5  6  7  9]
 }
 
 func ExampleArray_Dot() {
