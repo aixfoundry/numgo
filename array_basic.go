@@ -254,11 +254,9 @@ func RangeDelete(a *Array, f, t int, axis int) *Array {
 		buf = append(a.data[:f*a.c], a.data[t*a.c:]...)
 		r = a.r - (t - f)
 	} else {
-		for ir := range a.r {
-			for ic := range a.c {
-				if ic < f || ic >= t {
-					buf = append(buf, a.data[ir*a.c+ic])
-				}
+		for k, v := range a.All() {
+			if k[1] < f || k[1] >= t {
+				buf = append(buf, v)
 			}
 		}
 		c = a.c - (t - f)
@@ -334,12 +332,9 @@ func Equal(a *Array, b *Array) bool {
 //	fmt.Println(filteredArray.data) // Output: [3 4]
 func (a *Array) Filter(f func(r, c int, v float64) bool) (ret *Array) {
 	data := []float64{}
-	for ir := range a.r {
-		for ic := range a.c {
-			v := a.At(ir, ic)
-			if f(ir, ic, v) {
-				data = append(data, v)
-			}
+	for k, v := range a.All() {
+		if f(k[0], k[1], v) {
+			data = append(data, v)
 		}
 	}
 	ret = New1DArray(data)

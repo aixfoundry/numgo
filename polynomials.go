@@ -89,10 +89,8 @@ func PolyVal(b *Array, x *Array) (y *Array) {
 		return
 	}
 	y = ZeroArray(x.r, x.c)
-	for ir := range x.r {
-		for ic := range x.c {
-			y.Set(ir, ic, Poly1D(b, x.At(ir, ic)))
-		}
+	for k, v := range x.All() {
+		y.Set(k[0], k[1], Poly1D(b, v))
 	}
 	return
 }

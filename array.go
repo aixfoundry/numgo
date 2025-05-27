@@ -2,6 +2,7 @@ package numgo
 
 import (
 	"fmt"
+	"iter"
 )
 
 // Array represents a 2D matrix with rows (r) and columns (c).
@@ -221,4 +222,44 @@ func (a *Array) Row(i int) *Array {
 //	col := a.Col(1)   // col will contain the elements of the second column
 func (a *Array) Col(i int) *Array {
 	return a.Of(i, 0)
+}
+
+// All returns a sequence that iterates over all elements of the Array.
+// Each element is represented by a tuple of its row and column indices and its value.
+//
+// Example:
+//
+//	a := NewArray(...) // Assume NewArray creates a new Array
+//	seq := a.All()
+//
+//	seq(func(indices [2]int, value float64) bool {
+//	    fmt.Printf("Index: %v, Value: %v\n", indices, value)
+//	    return true // Return false to stop iteration early
+//	})
+func (a *Array) All() iter.Seq2[[2]int, float64] {
+	return func(yield func([2]int, float64) bool) {
+		for ir := range a.r {
+			for ic := range a.c {
+				if !yield([2]int{ir, ic}, a.At(ir, ic)) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// All returns a sequence that iterates over all elements of the Array.
+// Each element is represented by a tuple of its row and column indices and its value.
+//
+// Example:
+//
+//	a := NewArray(...) // Assume NewArray creates a new Array
+//	seq := All(a)
+//
+//	seq(func(indices [2]int, value float64) bool {
+//	    fmt.Printf("Index: %v, Value: %v\n", indices, value)
+//	    return true // Return false to stop iteration early
+//	})
+func All(a *Array) iter.Seq2[[2]int, float64] {
+	return a.All()
 }

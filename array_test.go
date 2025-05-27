@@ -174,3 +174,24 @@ func ExampleArray_Set() {
 	// ⎢4  11  6⎥
 	// ⎣7   8  9⎦
 }
+
+func ExampleAll() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	for k, v := range All(a) {
+		fmt.Printf("%v %v\n", k, v)
+	}
+	// Output:
+	// [0 0] 1
+	// [0 1] 2
+	// [0 2] 3
+	// [1 0] 4
+	// [1 1] 5
+	// [1 2] 6
+	// [2 0] 7
+	// [2 1] 8
+	// [2 2] 9
+}

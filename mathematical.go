@@ -45,13 +45,11 @@ func (a *Array) MaxAbs() (sol float64, r, c int) {
 	if len(a.data) == 0 {
 		return
 	}
-	for ir := range a.r {
-		for ic := range a.c {
-			v := math.Abs(a.data[ir*a.c+ic])
-			if math.Abs(sol) < v {
-				sol = v
-				r, c = ir, ic
-			}
+	for k, v := range a.All() {
+		vv := math.Abs(v)
+		if math.Abs(sol) < vv {
+			sol = vv
+			r, c = k[0], k[1]
 		}
 	}
 	return
@@ -82,13 +80,11 @@ func (a *Array) MinAbs() (sol float64, r, c int) {
 	if len(a.data) == 0 {
 		return
 	}
-	for ir := range a.r {
-		for ic := range a.c {
-			v := math.Abs(a.data[ir*a.c+ic])
-			if math.Abs(sol) > v {
-				sol = v
-				r, c = ir, ic
-			}
+	for k, v := range a.All() {
+		vv := math.Abs(v)
+		if math.Abs(sol) > vv {
+			sol = vv
+			r, c = k[0], k[1]
 		}
 	}
 	return
@@ -119,12 +115,10 @@ func (a *Array) Max() (sol float64, r, c int) {
 	if len(a.data) == 0 {
 		return
 	}
-	for ir := range a.r {
-		for ic := range a.c {
-			if sol < a.data[ir*a.c+ic] {
-				sol = a.data[ir*a.c+ic]
-				r, c = ir, ic
-			}
+	for k, v := range a.All() {
+		if sol < v {
+			sol = v
+			r, c = k[0], k[1]
 		}
 	}
 	return
@@ -155,12 +149,10 @@ func (a *Array) Min() (sol float64, r, c int) {
 	if len(a.data) == 0 {
 		return
 	}
-	for ir := range a.r {
-		for ic := range a.c {
-			if sol > a.data[ir*a.c+ic] {
-				sol = a.data[ir*a.c+ic]
-				r, c = ir, ic
-			}
+	for k, v := range a.All() {
+		if sol > v {
+			sol = v
+			r, c = k[0], k[1]
 		}
 	}
 	return
@@ -496,31 +488,23 @@ func MovingAvg(a *Array, window int, step int, axis int) (ret *Array) {
 func (a *Array) Sub(b *Array) (ret *Array) {
 	if a.r == b.r && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)-b.At(ir, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v-b.At(k[0], k[1]))
 		}
 	} else if a.r != b.r && b.r == 1 && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)-b.At(0, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v-b.At(0, k[1]))
 		}
 	} else if a.c != b.c && b.c == 1 && a.r == b.r {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)-b.At(ir, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v-b.At(k[0], 0))
 		}
 	} else if b.c == 1 && b.r == 1 {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)-b.At(0, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v-b.At(0, 0))
 		}
 	}
 	return
@@ -548,31 +532,23 @@ func Sub(a *Array, b *Array) (ret *Array) {
 func (a *Array) Add(b *Array) (ret *Array) {
 	if a.r == b.r && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)+b.At(ir, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v+b.At(k[0], k[1]))
 		}
 	} else if a.r != b.r && b.r == 1 && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)+b.At(0, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v+b.At(0, k[1]))
 		}
 	} else if a.c != b.c && b.c == 1 && a.r == b.r {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)+b.At(ir, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v+b.At(k[0], 0))
 		}
 	} else if b.c == 1 && b.r == 1 {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)+b.At(0, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v+b.At(0, 0))
 		}
 	}
 	return
@@ -600,31 +576,23 @@ func Add(a *Array, b *Array) (ret *Array) {
 func (a *Array) Mul(b *Array) (ret *Array) {
 	if a.r == b.r && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)*b.At(ir, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v*b.At(k[0], k[1]))
 		}
 	} else if a.r != b.r && b.r == 1 && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)*b.At(0, ic))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v*b.At(0, k[1]))
 		}
 	} else if a.c != b.c && b.c == 1 && a.r == b.r {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)*b.At(ir, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v*b.At(k[0], 0))
 		}
 	} else if b.c == 1 && b.r == 1 {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, a.At(ir, ic)*b.At(0, 0))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], v*b.At(0, 0))
 		}
 	}
 	return
@@ -653,46 +621,38 @@ func Mul(a *Array, b *Array) (ret *Array) {
 func (a *Array) Div(b *Array) (ret *Array) {
 	if a.r == b.r && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				if b.At(ir, ic) == 0 {
-					ret.Set(ir, ic, math.NaN())
-				} else {
-					ret.Set(ir, ic, a.At(ir, ic)/b.At(ir, ic))
-				}
+		for k, v := range a.All() {
+			if b.At(k[0], k[1]) == 0 {
+				ret.Set(k[0], k[1], math.NaN())
+			} else {
+				ret.Set(k[0], k[1], v/b.At(k[0], k[1]))
 			}
 		}
 	} else if a.r != b.r && b.r == 1 && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				if b.At(0, ic) == 0 {
-					ret.Set(ir, ic, math.NaN())
-				} else {
-					ret.Set(ir, ic, a.At(ir, ic)/b.At(0, ic))
-				}
+		for k, v := range a.All() {
+			if b.At(0, k[1]) == 0 {
+				ret.Set(k[0], k[1], math.NaN())
+			} else {
+				ret.Set(k[0], k[1], v/b.At(0, k[1]))
 			}
 		}
 	} else if a.c != b.c && b.c == 1 && a.r == b.r {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				if b.At(ir, 0) == 0 {
-					ret.Set(ir, ic, math.NaN())
-				} else {
-					ret.Set(ir, ic, a.At(ir, ic)/b.At(ir, 0))
-				}
+		for k, v := range a.All() {
+			if b.At(k[0], 0) == 0 {
+				ret.Set(k[0], k[1], math.NaN())
+			} else {
+				ret.Set(k[0], k[1], v/b.At(k[0], 0))
 			}
 		}
 	} else if b.c == 1 && b.r == 1 {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				if b.At(0, 0) == 0 {
-					ret.Set(ir, ic, math.NaN())
-				} else {
-					ret.Set(ir, ic, a.At(ir, ic)/b.At(0, 0))
-				}
+		for k, v := range a.All() {
+			if b.At(0, 0) == 0 {
+				ret.Set(k[0], k[1], math.NaN())
+			} else {
+				ret.Set(k[0], k[1], v/b.At(0, 0))
 			}
 		}
 	}
@@ -721,13 +681,11 @@ func Div(a *Array, b *Array) (ret *Array) {
 //	// result will be a new Array with elements [[0.5, 1], [1.5, 2]]
 func (a *Array) DivValue(value float64) (ret *Array) {
 	ret = ZeroArray(a.r, a.c)
-	for ir := range a.r {
-		for ic := range a.c {
-			if value == 0 {
-				ret.Set(ir, ic, math.NaN())
-			} else {
-				ret.Set(ir, ic, a.At(ir, ic)/value)
-			}
+	for k, v := range a.All() {
+		if value == 0 {
+			ret.Set(k[0], k[1], math.NaN())
+		} else {
+			ret.Set(k[0], k[1], v/value)
 		}
 	}
 	return
@@ -748,10 +706,8 @@ func DivValue(a *Array, value float64) (ret *Array) {
 //	// result will be a new Array with elements [[2, 4], [6, 8]]
 func (a *Array) MulValue(value float64) (ret *Array) {
 	ret = ZeroArray(a.r, a.c)
-	for ir := range a.r {
-		for ic := range a.c {
-			ret.Set(ir, ic, a.At(ir, ic)*value)
-		}
+	for k, v := range a.All() {
+		ret.Set(k[0], k[1], v*value)
 	}
 	return
 }
@@ -771,10 +727,8 @@ func MulValue(a *Array, value float64) (ret *Array) {
 //	// result will be a new Array with elements [[0, 1], [2, 3]]
 func (a *Array) SubValue(value float64) (ret *Array) {
 	ret = ZeroArray(a.r, a.c)
-	for ir := range a.r {
-		for ic := range a.c {
-			ret.Set(ir, ic, a.At(ir, ic)-value)
-		}
+	for k, v := range a.All() {
+		ret.Set(k[0], k[1], v-value)
 	}
 	return
 }
@@ -794,10 +748,8 @@ func SubValue(a *Array, value float64) (ret *Array) {
 //	// result will be a new Array with elements [[2, 3], [4, 5]]
 func (a *Array) AddValue(value float64) (ret *Array) {
 	ret = ZeroArray(a.r, a.c)
-	for ir := range a.r {
-		for ic := range a.c {
-			ret.Set(ir, ic, a.At(ir, ic)+value)
-		}
+	for k, v := range a.All() {
+		ret.Set(k[0], k[1], v+value)
 	}
 	return
 }
@@ -823,10 +775,8 @@ func Atan2(y *Array, x *Array) (ret *Array) {
 		return
 	}
 	ret = ZeroArray(y.r, y.c)
-	for ir := range y.r {
-		for ic := range y.c {
-			ret.Set(ir, ic, math.Atan2(y.At(ir, ic), x.At(ir, ic)))
-		}
+	for k, v := range y.All() {
+		ret.Set(k[0], k[1], math.Atan2(v, x.At(k[0], k[1])))
 	}
 	return ret
 }
@@ -846,31 +796,23 @@ func Atan2(y *Array, x *Array) (ret *Array) {
 func (a *Array) Pow(b *Array) (ret *Array) {
 	if a.r == b.r && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(ir, ic)))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], math.Pow(v, b.At(k[0], k[1])))
 		}
 	} else if a.r != b.r && b.r == 1 && a.c == b.c {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(0, ic)))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], math.Pow(v, b.At(0, k[1])))
 		}
 	} else if a.c != b.c && b.c == 1 && a.r == b.r {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(ir, 0)))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], math.Pow(v, b.At(k[0], 0)))
 		}
 	} else if b.c == 1 && b.r == 1 {
 		ret = ZeroArray(a.r, a.c)
-		for ir := range a.r {
-			for ic := range a.c {
-				ret.Set(ir, ic, math.Pow(a.At(ir, ic), b.At(0, 0)))
-			}
+		for k, v := range a.All() {
+			ret.Set(k[0], k[1], math.Pow(v, b.At(0, 0)))
 		}
 	}
 	return
@@ -898,10 +840,8 @@ func Pow(a *Array, b *Array) *Array {
 //	// result will be a new Array with values {{4, 9}, {16, 25}}
 func (a *Array) PowValue(b float64) (ret *Array) {
 	ret = ZeroArray(a.r, a.c)
-	for ir := range a.r {
-		for ic := range a.c {
-			ret.Set(ir, ic, math.Pow(a.At(ir, ic), b))
-		}
+	for k, v := range a.All() {
+		ret.Set(k[0], k[1], math.Pow(v, b))
 	}
 	return
 }
