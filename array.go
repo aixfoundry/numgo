@@ -64,6 +64,50 @@ func ZeroArray(r, c int) (a *Array) {
 	}
 }
 
+// RangeArray creates a new Array with a range of values.
+// Depending on the number of arguments provided:
+// - No arguments: Returns a zeroed Array with dimensions (0, 0).
+// - One argument: Returns a 1D Array with the specified number of elements.
+// - Two arguments: Returns a 1D Array from start to stop (exclusive).
+// - Three arguments: Returns a 1D Array from start to stop (exclusive) with a specified step.
+//
+// Examples:
+//
+//	RangeArray() // Returns a zeroed Array with dimensions [].
+//	RangeArray(5) // Returns a 1D Array with elements [0, 1, 2, 3, 4].
+//	RangeArray(1, 5) // Returns a 1D Array with elements [1, 2, 3, 4].
+//	RangeArray(1, 5, 2) // Returns a 1D Array with elements [1, 3].
+func RangeArray(args ...int) (a *Array) {
+	if len(args) == 0 {
+		a = ZeroArray(0, 0)
+		return
+	} else if len(args) == 1 {
+		data := []float64{}
+		for i := range args[0] {
+			data = append(data, float64(i))
+		}
+		a = New1DArray(data)
+		return
+	} else if len(args) == 2 {
+		start, stop := args[0], args[1]
+		data := []float64{}
+		for i := start; i < stop; i++ {
+			data = append(data, float64(i))
+		}
+		a = New1DArray(data)
+	} else if len(args) == 3 {
+		start, stop, step := args[0], args[1], args[2]
+		data := []float64{}
+		for i := start; i < stop; i += step {
+			data = append(data, float64(i))
+		}
+		a = New1DArray(data)
+	} else {
+		a = ZeroArray(0, 0)
+	}
+	return
+}
+
 // NewValueArray creates a new Array with dimensions r (rows) and c (columns),
 // initializing all elements to the specified value.
 //

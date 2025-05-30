@@ -195,3 +195,31 @@ func ExampleAll() {
 	// [2 1] 8
 	// [2 2] 9
 }
+
+func ExampleRangeArray_zero() {
+	a := RangeArray()
+	fmt.Printf("%v", a)
+	// Output:
+	//
+}
+
+func ExampleRangeArray_one() {
+	a := RangeArray(5)
+	fmt.Printf("%v", a)
+	// Output:
+	// [0  1  2  3  4]
+}
+
+func ExampleRangeArray_two() {
+	a := RangeArray(1, 5)
+	fmt.Printf("%v", a)
+	// Output:
+	// [1  2  3  4]
+}
+
+func ExampleRangeArray_three() {
+	a := RangeArray(1, 5, 2)
+	fmt.Printf("%v", a)
+	// Output:
+	// [1  3]
+}
