@@ -14,20 +14,33 @@ type Array struct {
 	data []float64 // data stored in row-major order
 }
 
-// CopyOf creates a new copy of the given Array.
+// Copy creates a new copy of the given Array.
 // Example:
 //
-//	copyArr := CopyOf(arr)
-func CopyOf(a *Array) (x *Array) {
-	x = &Array{
+//	copyArr := Copy(arr)
+func Copy(a *Array) *Array {
+	return a.Copy()
+}
+
+// Copy creates a new Array that is a deep copy of the original Array.
+// It returns a pointer to the new Array.
+//
+// Example:
+//
+//	original := &Array{c: 3, r: 2, data: []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}}
+//	copied := original.Copy()
+//	// Now `copied` is a separate instance with the same data as `original`
+func (a *Array) Copy() *Array {
+	x := &Array{
 		c:    a.c,
 		r:    a.r,
 		data: make([]float64, len(a.data)),
 	}
 	copy(x.data, a.data)
-	return
+	return x
 }
 
+// Reshape changes the dimensions of the Array to the specified rows and columns.
 // EmptyArray creates a new Array with specified rows and columns filled with zeros.
 // Example:
 //
@@ -71,6 +84,7 @@ func NewValueArray(r, c int, value float64) (a *Array) {
 // NewArray creates a new Array with specified rows, columns, and data.
 // If the data length is less than r*c, it is padded with zeros.
 // If the data length is more than r*c, it is truncated.
+//
 // Example:
 //
 //	arr := NewArray(2, 2, []float64{1, 2, 3, 4})
@@ -89,6 +103,7 @@ func NewArray(r, c int, data []float64) (a *Array) {
 }
 
 // New1DArray creates a new 1D array from a slice of float64.
+//
 // Example:
 //
 //	data := []float64{1.0, 2.0, 3.0}
@@ -103,6 +118,7 @@ func New1DArray(data []float64) (a *Array) {
 
 // New2DArray creates a new 2D array from a slice of slices of float64.
 // It flattens the 2D data into a 1D slice internally.
+//
 // Example:
 //
 //	data := [][]float64{{1.0, 2.0}, {3.0, 4.0}}
@@ -124,6 +140,7 @@ func New2DArray(data [][]float64) (a *Array) {
 }
 
 // Dims returns the dimensions (rows, columns) of the Array.
+//
 // Example:
 //
 //	rows, cols := arr.Dims()
@@ -132,6 +149,7 @@ func (a *Array) Dims() (r, c int) {
 }
 
 // At returns the value at the specified row (i) and column (j).
+//
 // Example:
 //
 //	value := arr.At(0, 1)
@@ -140,6 +158,7 @@ func (a *Array) At(i, j int) float64 {
 }
 
 // Set sets the value at the specified row (i) and column (j).
+//
 // Example:
 //
 //	arr.Set(0, 1, 5)
@@ -149,6 +168,7 @@ func (a *Array) Set(i, j int, f float64) *Array {
 }
 
 // Data returns the underlying data slice of the Array.
+//
 // Example:
 //
 //	data := arr.Data()
@@ -157,6 +177,7 @@ func (a *Array) Data() []float64 {
 }
 
 // Format provides a custom string representation of the Array.
+//
 // Example:
 //
 //	fmt.Printf("%v", arr)
@@ -166,6 +187,7 @@ func (a *Array) Format(fs fmt.State, c rune) {
 
 // Of returns a sub-array based on the specified axis and index.
 // It returns a column if axis is 0, and a row if axis is 1.
+//
 // Example:
 //
 //	row := arr.Of(0, 0) // returns the first column

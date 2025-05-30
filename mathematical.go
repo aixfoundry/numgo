@@ -500,7 +500,7 @@ func (a *Array) MovingAvg(window int, step int, axis int) (ret *Array) {
 		}
 		ret = New1DArray(data)
 	} else if axis == 1 {
-		ca := CopyOf(a).T()
+		ca := Copy(a).T()
 		ret = ca.MovingAvg(window, step, 0)
 	}
 	return

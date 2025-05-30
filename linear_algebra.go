@@ -23,7 +23,7 @@ func EMCP(a *Array) (sol *Array) {
 	if a.c-1 != a.r {
 		return
 	}
-	x := CopyOf(a)
+	x := Copy(a)
 	n := x.r // n is the number of equations
 	// Convert to upper triangular form
 	for i := range n { // Traverse all rows

@@ -65,7 +65,7 @@ func (a *Array) Swap(f, t int, axis int) *Array {
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	Swap(a, 0, 1, 0) // Returns new array with first and second rows swapped
 func Swap(a *Array, f, t int, axis int) (o *Array) {
-	o = CopyOf(a)
+	o = Copy(a)
 	if axis == 0 {
 		for ic := range o.c {
 			o.data[f*o.r+ic], o.data[t*o.r+ic] = o.data[t*o.r+ic], o.data[f*o.r+ic]
@@ -288,7 +288,7 @@ func (a *Array) Reshape(r, c int) *Array {
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	Reshape(a, 3, 2) // Returns new 3x2 array
 func Reshape(a *Array, r, c int) *Array {
-	o := CopyOf(a)
+	o := Copy(a)
 	return o.Reshape(r, c)
 }
 
