@@ -23,10 +23,15 @@ func (x *Array) maxFormatWidth(verb rune, prec int) map[int]int {
 }
 
 // Format provides a custom string representation of the Array.
+// It supports various formatting verbs ('v', 'e', 'E', 'f', 'F', 'g', 'G') to control the output format.
+// If an unsupported verb is provided, it defaults to showing the type and dimensions of the Array.
 //
 // Example:
 //
+//	arr := New2DArray([][]float64{{1.1, 2.2}, {3.3, 4.4}})
 //	fmt.Printf("%v", arr)
+//	// Output: ⎡1.1  2.2⎤
+//	//         ⎣3.3  4.4⎦
 func (x *Array) Format(fs fmt.State, verb rune) {
 	switch verb {
 	case 'v', 'e', 'E', 'f', 'F', 'g', 'G':
