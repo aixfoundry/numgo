@@ -99,6 +99,93 @@ func ExampleReshape_reduce() {
 	// ⎣3  4⎦
 }
 
+func ExampleReshape_allrow() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, -1, 1))
+	// Output:
+	// ⎡1⎤
+	// ⎢2⎥
+	// ⎢3⎥
+	// ⎢4⎥
+	// ⎢5⎥
+	// ⎢6⎥
+	// ⎢7⎥
+	// ⎢8⎥
+	// ⎣9⎦
+}
+
+func ExampleReshape_allcol() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, 1, -1))
+	// Output:
+	// [1  2  3  4  5  6  7  8  9]
+}
+
+func ExampleReshape_reducerow() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, 4, -1))
+	// Output:
+	// ⎡1  2⎤
+	// ⎢3  4⎥
+	// ⎢5  6⎥
+	// ⎣7  8⎦
+}
+
+func ExampleReshape_reducecol() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, -1, 4))
+	// Output:
+	// ⎡1  2  3  4⎤
+	// ⎣5  6  7  8⎦
+}
+
+func ExampleReshape_morerow() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, 10, -1))
+	// Output:
+	// ⎡1⎤
+	// ⎢2⎥
+	// ⎢3⎥
+	// ⎢4⎥
+	// ⎢5⎥
+	// ⎢6⎥
+	// ⎢7⎥
+	// ⎢8⎥
+	// ⎢9⎥
+	// ⎣0⎦
+}
+
+func ExampleReshape_morecol() {
+	a := NewArray(3, 3, []float64{
+		1, 2, 3,
+		4, 5, 6,
+		7, 8, 9,
+	})
+	fmt.Printf("%v", Reshape(a, -1, 10))
+	// Output:
+	// [1  2  3  4  5  6  7  8  9  0]
+}
+
 func ExampleSwap_row() {
 	a := NewArray(3, 3, []float64{
 		1, 2, 3,

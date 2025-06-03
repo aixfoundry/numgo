@@ -271,6 +271,11 @@ func RangeDelete(a *Array, f, t int, axis int) *Array {
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	a.Reshape(3, 2) // Reshapes to 3x2
 func (a *Array) Reshape(r, c int) *Array {
+	if r == -1 {
+		r = max(len(a.data)/c, 1)
+	} else if c == -1 {
+		c = max(len(a.data)/r, 1)
+	}
 	if r*c > len(a.data) {
 		buf := make([]float64, r*c-len(a.data))
 		a.data = append(a.data, buf...)
