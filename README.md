@@ -1,6 +1,29 @@
 # numgo
 num go
 
+## 基础
+
+|名称|函数名|
+|---|---|
+|新建一维矩阵|New1DArray|
+|新建二维矩阵|New2DArray|
+|新建矩阵|NewArray|
+|新建初始值的矩阵|NewValueArray|
+|新建0值矩阵|ZeroArray|
+|新建空矩阵|EmptyArray|
+|范围创建|RangeArray|
+|遍历函数|All|
+|比较|Equal|
+|拼接|Cat|
+|复制|Copy|
+|删除|Delete|
+|筛选|Filter|
+|范围筛选|RangeDelete|
+|变形|Reshape|
+|排序|Sort|
+|交换|Swap|
+|转置|T|
+
 ## 算术
 
 |名称|函数名|
@@ -23,6 +46,8 @@ num go
 |减法值|SubValue|
 |乘法值|MulValue|
 |除法值|DivValue|
+|指数|Pow|
+|指数值|PowValue|
 
 ## 线性代数
 
@@ -38,6 +63,7 @@ num go
 |1范数|Norm1|
 |2范数|Norm2|
 |无穷范数|NormInf|
+|2D 直方图|Histogram2d|
 
 ## 归一化
 

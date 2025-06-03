@@ -8,15 +8,13 @@ import (
 func (x *Array) format(prefix string, margin int, dot byte, squeeze bool, fs fmt.State, c rune) {
 	rows, cols := x.r, x.c
 
-	var printed int
+	printed := margin
 	if margin <= 0 {
 		printed = max(cols, rows)
-	} else {
-		printed = margin
 	}
 
-	prec, pOk := fs.Precision()
-	if !pOk {
+	prec, ok := fs.Precision()
+	if !ok {
 		prec = -1
 	}
 
@@ -31,12 +29,10 @@ func (x *Array) format(prefix string, margin int, dot byte, squeeze bool, fs fmt
 		widths = new(uniformWidth)
 	}
 	switch c {
-	case 'v', 'e', 'E', 'f', 'F', 'g', 'G':
-		if c == 'v' {
-			buf, maxWidth = x.maxCellWidth('g', printed, prec, widths)
-		} else {
-			buf, maxWidth = x.maxCellWidth(c, printed, prec, widths)
-		}
+	case 'v':
+		buf, maxWidth = x.maxCellWidth('g', printed, prec, widths)
+	case 'e', 'E', 'f', 'F', 'g', 'G':
+		buf, maxWidth = x.maxCellWidth(c, printed, prec, widths)
 	default:
 		fmt.Fprintf(fs, "%%!%c(%T=Dims(%d, %d))", c, x, rows, cols)
 		return
@@ -98,11 +94,12 @@ func (x *Array) format(prefix string, margin int, dot byte, squeeze bool, fs fmt
 					buf = strconv.AppendFloat(buf[:0], v, byte(c), prec, 64)
 				}
 			}
+			padWidth := widths.width(j) - len(buf)
 			if fs.Flag('-') {
 				fs.Write(buf)
-				fs.Write(pad[:widths.width(j)-len(buf)])
+				fs.Write(pad[:padWidth])
 			} else {
-				fs.Write(pad[:widths.width(j)-len(buf)])
+				fs.Write(pad[:padWidth])
 				fs.Write(buf)
 			}
 
@@ -132,7 +129,7 @@ func (x *Array) maxCellWidth(c rune, printed, prec int, w widther) ([]byte, int)
 			i = rows - printed - 1
 			continue
 		}
-		for j := 0; j < cols; j++ {
+		for j := range cols {
 			if j >= printed && j < cols-printed {
 				continue
 			}

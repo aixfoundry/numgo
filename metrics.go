@@ -38,7 +38,7 @@ func ShapeContext(a *Array, radiusNum float64, angleNum float64) (ret *Array) {
 	return
 }
 
-const EPSILON = 1e-10
+const _EPSILON = 1e-10
 
 // ChiSquareDistance calculates the chi-square distance between two arrays.
 // This distance measure is often used in histogram comparison.
@@ -58,7 +58,7 @@ const EPSILON = 1e-10
 //	array2 := New1DArray([]float64{3, 2, 1})
 //	distance := ChiSquareDistance(array1, array2)
 func ChiSquareDistance(a *Array, b *Array) (ret float64) {
-	ret = a.Sub(b).PowValue(2).Div(a.Add(b).AddValue(EPSILON)).Sum(-1).At(0, 0) * 0.5
+	ret = a.Sub(b).PowValue(2).Div(a.Add(b).AddValue(_EPSILON)).Sum(-1).At(0, 0) * 0.5
 	return
 }
 
