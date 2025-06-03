@@ -374,7 +374,7 @@ func (a *Array) Mean(axis int) (ret *Array) {
 	if len(a.data) == 0 || a.r == 0 || a.c == 0 {
 		return
 	}
-	divisor := float64(a.r * a.c)
+	var divisor float64
 	if axis == 0 {
 		divisor = float64(a.r)
 	} else if axis == 1 {

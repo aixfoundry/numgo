@@ -1,7 +1,6 @@
 package numgo
 
 import (
-	"fmt"
 	"iter"
 )
 
@@ -218,15 +217,6 @@ func (a *Array) Set(i, j int, f float64) *Array {
 //	data := arr.Data()
 func (a *Array) Data() []float64 {
 	return a.data
-}
-
-// Format provides a custom string representation of the Array.
-//
-// Example:
-//
-//	fmt.Printf("%v", arr)
-func (a *Array) Format(fs fmt.State, c rune) {
-	a.format("", 0, '.', true, fs, c)
 }
 
 // Of returns a sub-array based on the specified axis and index.
