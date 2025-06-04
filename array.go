@@ -65,10 +65,11 @@ func ZeroArray(r, c int) (a *Array) {
 
 // RangeArray creates a new Array with a range of values.
 // Depending on the number of arguments provided:
-// - No arguments: Returns a zeroed Array with dimensions (0, 0).
-// - One argument: Returns a 1D Array with the specified number of elements.
-// - Two arguments: Returns a 1D Array from start to stop (exclusive).
-// - Three arguments: Returns a 1D Array from start to stop (exclusive) with a specified step.
+//
+//   - No arguments: Returns a zeroed Array with dimensions (0, 0).
+//   - One argument: Returns a 1D Array with the specified number of elements.
+//   - Two arguments: Returns a 1D Array from start to stop (exclusive).
+//   - Three arguments: Returns a 1D Array from start to stop (exclusive) with a specified step.
 //
 // Examples:
 //
