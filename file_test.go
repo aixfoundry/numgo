@@ -65,3 +65,23 @@ func ExampleLoadFromFile_txt() {
 	// ⎡0  1  2  3  4⎤
 	// ⎣5  6  7  8  9⎦
 }
+
+func ExampleSaveToFile_csv() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToFile(a, "testdata/output.csv")
+	if err != nil {
+		return
+	}
+	// Output:
+}
+
+func ExampleSaveToFile_txt() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToFile(a, "testdata/output.txt")
+	if err != nil {
+		return
+	}
+	// Output:
+}
