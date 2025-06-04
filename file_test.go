@@ -43,3 +43,25 @@ func ExampleLoadFromCsv() {
 	// ⎡0  1  2  3  4⎤
 	// ⎣5  6  7  8  9⎦
 }
+
+func ExampleLoadFromFile_csv() {
+	a, err := LoadFromFile("testdata/output.csv")
+	if err != nil {
+		return
+	}
+	fmt.Println(a)
+	// Output:
+	// ⎡0  1  2  3  4⎤
+	// ⎣5  6  7  8  9⎦
+}
+
+func ExampleLoadFromFile_txt() {
+	a, err := LoadFromFile("testdata/output.txt")
+	if err != nil {
+		return
+	}
+	fmt.Println(a)
+	// Output:
+	// ⎡0  1  2  3  4⎤
+	// ⎣5  6  7  8  9⎦
+}

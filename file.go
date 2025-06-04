@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -187,4 +188,68 @@ func LoadFromCsv(filename string) (a *Array, err error) {
 	}
 	a = New2DArray(data)
 	return
+}
+
+// LoadFromFile reads data from a file and returns an Array and an error.
+// The function supports .txt and .csv file extensions.
+// For .txt files, it uses [LoadFromText], and for .csv files, it uses [LoadFromCsv].
+// If the file extension is unsupported, it returns an error.
+//
+// Example:
+//
+//	array, err := LoadFromFile("data.txt")
+//	if err != nil {
+//	    log.Fatalf("Failed to load data: %v", err)
+//	}
+//	fmt.Println(array)
+func LoadFromFile(filename string) (a *Array, err error) {
+	ext := strings.ToLower(path.Ext(filename))
+	switch ext {
+	case ".txt":
+		a, err = LoadFromText(filename)
+	case ".csv":
+		a, err = LoadFromCsv(filename)
+	default:
+		err = fmt.Errorf("unsupported file extension: %s", ext)
+	}
+	return
+}
+
+// SaveToFile writes the contents of the Array to a file with the given filename.
+// It supports writing to files with .txt and .csv extensions.
+// For other extensions, it returns an error.
+//
+// Example:
+//
+//	a := RangeArray(1, 10)
+//	err := a.SaveToFile("data.txt")
+//
+//	if err != nil {
+//	    log.Fatalf("Failed to save array: %v", err)
+//	}
+func (a *Array) SaveToFile(filename string) (err error) {
+	ext := strings.ToLower(path.Ext(filename))
+	switch ext {
+	case ".txt":
+		err = a.SaveToText(filename)
+	case ".csv":
+		err = a.SaveToCsv(filename)
+	default:
+		err = fmt.Errorf("unsupported file extension: %s", ext)
+	}
+	return
+}
+
+// SaveToFile is a utility function that calls the SaveToFile method on the Array.
+//
+// Example:
+//
+//	a := RangeArray(1, 10)
+//	err := SaveToFile(a, "data.csv")
+//
+//	if err != nil {
+//	    log.Fatalf("Failed to save array: %v", err)
+//	}
+func SaveToFile(a *Array, filename string) (err error) {
+	return a.SaveToFile(filename)
 }
