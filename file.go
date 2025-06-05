@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"image"
+	"image/jpeg"
 	"image/png"
 	"os"
 	"path"
@@ -238,6 +239,8 @@ func (a *Array) SaveToFile(filename string) (err error) {
 		err = a.SaveToCsv(filename)
 	case ".png":
 		err = a.SaveToPng(filename)
+	case ".jpg", ".jpeg":
+		err = a.SaveToJpeg(filename)
 	default:
 		err = fmt.Errorf("unsupported file extension: %s", ext)
 	}
@@ -292,4 +295,39 @@ func (a *Array) SaveToPng(filename string) (err error) {
 //	}
 func SaveToPng(a *Array, filename string) (err error) {
 	return a.SaveToPng(filename)
+}
+
+// SaveToJpeg saves the contents of the Array to a JPEG file with the given filename.
+// It creates a new RGBA image with a size of 800x600 pixels, draws the Array onto this image,
+// and then encodes it into a JPEG file with maximum quality.
+//
+// Example:
+//
+//	arr := RangeArray(1, 10)
+//	err := arr.SaveToJpeg("output.jpg")
+//	if err != nil {
+//	    log.Fatalf("Failed to save image: %v", err)
+//	}
+func (a *Array) SaveToJpeg(filename string) (err error) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	img := image.NewRGBA(image.Rect(0, 0, 800, 600))
+	a.Draw(img)
+	return jpeg.Encode(file, img, &jpeg.Options{Quality: 100})
+}
+
+// SaveToJpeg is a convenience function that calls the SaveToJpeg method on the Array.
+//
+// Example:
+//
+//	arr := RangeArray(1, 10)
+//	err := SaveToJpeg(arr, "output.jpg")
+//	if err != nil {
+//	    log.Fatalf("Failed to save image: %v", err)
+//	}
+func SaveToJpeg(a *Array, filename string) (err error) {
+	return a.SaveToJpeg(filename)
 }

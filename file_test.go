@@ -105,3 +105,23 @@ func ExampleSaveToPng() {
 	}
 	// Output:
 }
+
+func ExampleSaveToFile_jpg() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToFile(a, "testdata/output.jpg")
+	if err != nil {
+		return
+	}
+	// Output:
+}
+
+func ExampleSaveToJpeg() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToJpeg(a, "testdata/output.jpg")
+	if err != nil {
+		return
+	}
+	// Output:
+}
