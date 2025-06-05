@@ -85,3 +85,23 @@ func ExampleSaveToFile_txt() {
 	}
 	// Output:
 }
+
+func ExampleSaveToFile_png() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToFile(a, "testdata/output.png")
+	if err != nil {
+		return
+	}
+	// Output:
+}
+
+func ExampleSaveToPng() {
+	a := RangeArray(0, 10)
+	a.Reshape(2, 5)
+	err := SaveToPng(a, "testdata/output.png")
+	if err != nil {
+		return
+	}
+	// Output:
+}

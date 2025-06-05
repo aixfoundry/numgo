@@ -3,6 +3,8 @@ package numgo
 import (
 	"bufio"
 	"fmt"
+	"image"
+	"image/png"
 	"os"
 	"path"
 	"strings"
@@ -216,7 +218,7 @@ func LoadFromFile(filename string) (a *Array, err error) {
 }
 
 // SaveToFile writes the contents of the Array to a file with the given filename.
-// It supports writing to files with .txt and .csv extensions.
+// It supports writing to files with .txt, .csv and .png extensions.
 // For other extensions, it returns an error.
 //
 // Example:
@@ -234,6 +236,8 @@ func (a *Array) SaveToFile(filename string) (err error) {
 		err = a.SaveToText(filename)
 	case ".csv":
 		err = a.SaveToCsv(filename)
+	case ".png":
+		err = a.SaveToPng(filename)
 	default:
 		err = fmt.Errorf("unsupported file extension: %s", ext)
 	}
@@ -252,4 +256,40 @@ func (a *Array) SaveToFile(filename string) (err error) {
 //	}
 func SaveToFile(a *Array, filename string) (err error) {
 	return a.SaveToFile(filename)
+}
+
+// SaveToPng saves the content of the Array to a PNG file with the given filename.
+// It creates a new RGBA image with dimensions 800x600, draws the array onto it, and encodes it as a PNG.
+//
+// Example:
+//
+//	a := RangeArray(1, 10)
+//	err := a.SaveToPng("output.png")
+//
+//	if err != nil {
+//	    log.Fatalf("Failed to save array to PNG: %v", err)
+//	}
+func (a *Array) SaveToPng(filename string) (err error) {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	img := image.NewRGBA(image.Rect(0, 0, 800, 600))
+	a.Draw(img)
+	return png.Encode(file, img)
+}
+
+// SaveToPng is a helper function that calls the SaveToPng method on the Array instance.
+//
+// Example:
+//
+//	a := RangeArray(1, 10)
+//	err := SaveToPng(a, "output.png")
+//
+//	if err != nil {
+//	    log.Fatalf("Failed to save array to PNG: %v", err)
+//	}
+func SaveToPng(a *Array, filename string) (err error) {
+	return a.SaveToPng(filename)
 }
