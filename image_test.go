@@ -11,6 +11,10 @@ func TestNewRGBA(t *testing.T) {
 		t.Error(err)
 		t.FailNow()
 	}
+	for i := range 10 {
+		b := NewValueArray(a.r, 1, float64(i*100))
+		a.Cat(b, 1)
+	}
 	err = a.SaveToFile("testdata/feature.png")
 	if err != nil {
 		t.Error(err)
