@@ -195,7 +195,7 @@ func (a *Array) drawXAxes(img draw.Image) (step float64, xmin, xmax float64) {
 	for i := range numTicks {
 		x := f.X + int(xstep*float64(i)) + 10                                    // pad left 10 pixels
 		drawLine(img, image.Pt(x, f.Y), image.Pt(x, f.Y+10), ColorRed.RGBA(), 2) // label 15 pixels high
-		text := strconv.Itoa(int(ticks[i]))
+		text := strconv.FormatFloat(ticks[i], 'g', -1, 64)
 		textWidth := basicfont.Face7x13.Width * len(text)
 		drawText(img, image.Pt(x-(textWidth/2), f.Y+23), text, ColorWhite.RGBA())
 	}
