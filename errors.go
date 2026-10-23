@@ -119,3 +119,45 @@ func panicMeshGrid() {
 func panicComplexStat(op string) {
 	panic(fmt.Sprintf("numgo: %s are not defined for complex arrays", op))
 }
+
+// panicKth reports a partition kth outside the axis bounds. numpy's wording
+// for np.partition with a bad kth is a ValueError on index range.
+func panicKth(kth, n int) {
+	panic(fmt.Sprintf("numgo: kth(=%d) out of bounds (%d)", kth, n))
+}
+
+// panicTakeIndex reports an advanced-indexing entry outside the axis dimension
+// (numpy wording, reporting the original index value).
+func panicTakeIndex(idx, axis, size int) {
+	panic(fmt.Sprintf("numgo: index %d is out of bounds for axis %d with size %d",
+		idx, axis, size))
+}
+
+// panicCompressMask reports a boolean mask whose length differs from the
+// selection size (axis dimension or flattened element count).
+func panicCompressMask(got, want int) {
+	panic(fmt.Sprintf("numgo: mask length %d does not match selection size %d",
+		got, want))
+}
+
+// panicComplexAbs reports Abs on a complex array, whose real-valued result
+// Array[T] cannot represent.
+func panicComplexAbs() {
+	panic("numgo: Abs on complex arrays returns real values; use AbsToReal")
+}
+
+// panicMatmul1D reports matmul applied to two 1-D operands.
+func panicMatmul1D() {
+	panic("numgo: matmul: cannot multiply two 1-d arrays; use Vdot")
+}
+
+// panicMatmulShape reports incompatible matmul/Vdot inner dimensions.
+func panicMatmulShape(op string, a, b []int) {
+	panic(fmt.Sprintf("numgo: %s: shape mismatch %s x %s", op, shapeString(a), shapeString(b)))
+}
+
+// panicDotLead reports N-D dot operands whose leading dimensions differ and
+// neither operand is 2-D.
+func panicDotLead(a, b []int) {
+	panic(fmt.Sprintf("numgo: dot: leading dimensions differ %s x %s", shapeString(a), shapeString(b)))
+}

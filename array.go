@@ -136,12 +136,19 @@ func (a *Array[T]) Transpose(axes ...int) *Array[T] {
 	return newArray(l.Shape, l.Strides, l.Offset, a.data)
 }
 
-// View: Slice views a strided sub-array. One Range per dimension is required; the
-// result shares data. Bounds follow numpy: negative indices count from the end,
-// a zero Range means the whole axis, and a negative Step reverses it.
+// View: Slice views a strided sub-array. Ranges cover the leading axes;
+// trailing axes not mentioned are taken whole (numpy a[:2] semantics), so a
+// zero Range or a missing axis means the entire axis. The result shares data.
+// Bounds follow numpy: negative indices count from the end and a negative
+// Step reverses the axis.
 func (a *Array[T]) Slice(rs ...Range) *Array[T] {
-	if len(rs) != len(a.shape) {
+	if len(rs) > len(a.shape) {
 		panicRanges(len(rs), len(a.shape))
+	}
+	if len(rs) < len(a.shape) {
+		full := make([]Range, len(a.shape))
+		copy(full, rs)
+		rs = full
 	}
 	starts := make([]int, len(rs))
 	steps := make([]int, len(rs))

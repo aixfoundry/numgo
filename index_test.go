@@ -121,7 +121,16 @@ func TestSlice3D(t *testing.T) {
 	}
 }
 
-func TestSliceWrongRangeCount(t *testing.T) {
-	a := Zeros[float64](2, 3)
-	mustPanic(t, "numgo: expected 2 ranges for a 2-d array, got 1", func() { a.Slice(To(1)) })
+func TestSliceRangeCount(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	// Trailing axes may be omitted (numpy a[:1] semantics): whole-axis default.
+	s := a.Slice(To(1))
+	if sh := s.Shape(); sh[0] != 1 || sh[1] != 3 {
+		t.Fatalf("partial Slice shape = %v, want [1 3]", sh)
+	}
+	if s.At(0, 2) != 3 {
+		t.Fatalf("partial Slice At(0,2) = %v, want 3", s.At(0, 2))
+	}
+	// Too many ranges still panic.
+	mustPanic(t, "numgo: expected 2 ranges for a 2-d array, got 3", func() { a.Slice(To(1), To(1), To(1)) })
 }
