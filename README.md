@@ -10,7 +10,6 @@ num go
 |新建矩阵|NewArray|
 |新建初始值的矩阵|NewValueArray|
 |新建0值矩阵|ZeroArray|
-|新建空矩阵|EmptyArray|
 |范围创建|RangeArray|
 |遍历函数|All|
 |比较|Equal|
