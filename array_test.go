@@ -1,0 +1,147 @@
+package numgo
+
+import (
+	"math"
+	"slices"
+	"testing"
+)
+
+func mustPanic(t *testing.T, want string, f func()) {
+	t.Helper()
+	defer func() {
+		t.Helper()
+		r := recover()
+		if r == nil {
+			t.Fatalf("expected panic %q, got none", want)
+		}
+		if got, ok := r.(string); !ok || got != want {
+			t.Fatalf("panic = %v, want %q", r, want)
+		}
+	}()
+	f()
+}
+
+func TestShapeAndSize(t *testing.T) {
+	a := Full(7.0, 2, 3, 4)
+	if got := a.Shape(); !slices.Equal(got, []int{2, 3, 4}) {
+		t.Fatalf("Shape = %v", got)
+	}
+	if a.Ndim() != 3 || a.Size() != 24 || !a.IsContiguous() {
+		t.Fatalf("Ndim=%d Size=%d IsContiguous=%v", a.Ndim(), a.Size(), a.IsContiguous())
+	}
+	shape := a.Shape()
+	shape[0] = 99
+	if a.Shape()[0] != 2 {
+		t.Fatal("Shape returned aliased storage")
+	}
+}
+
+func TestCopyIndependent(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	b := a.Copy()
+	b.Set([]int{1, 2}, 99)
+	if a.At(1, 2) != 6 {
+		t.Fatalf("original mutated through Copy: %v", a.At(1, 2))
+	}
+	if !b.IsContiguous() || b.Size() != 6 {
+		t.Fatal("copy is not compact")
+	}
+}
+
+func TestReshapeViewSharesData(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	b := a.Reshape(3, 2)
+	b.Set([]int{2, 1}, 99)
+	if a.At(1, 2) != 99 {
+		t.Fatalf("reshape did not share data: %v", a.At(1, 2))
+	}
+	if !slices.Equal(b.Shape(), []int{3, 2}) {
+		t.Fatalf("shape = %v", b.Shape())
+	}
+}
+
+func TestReshapeInferAndPanics(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	if got := a.Reshape(2, -1).Shape(); !slices.Equal(got, []int{2, 3}) {
+		t.Fatalf("shape = %v", got)
+	}
+	if got := a.Reshape(3, -1).Shape(); !slices.Equal(got, []int{3, 2}) {
+		t.Fatalf("shape = %v", got)
+	}
+	mustPanic(t, "numgo: cannot reshape array of size 6 into shape (4,2)", func() { a.Reshape(4, 2) })
+	mustPanic(t, "numgo: can only specify one unknown dimension (-1)", func() { a.Reshape(-1, -1) })
+}
+
+func TestReshapeNonContiguousCopies(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	tr := a.Transpose() // 3x2, non-contiguous
+	b := tr.Reshape(6)
+	if b.IsContiguous() != true || !slices.Equal(b.Shape(), []int{6}) {
+		t.Fatalf("shape=%v contiguous=%v", b.Shape(), b.IsContiguous())
+	}
+	// C-order traversal of tr is 1,4,2,5,3,6.
+	if got := b.At(1); got != 4 {
+		t.Fatalf("At(1) = %v, want 4", got)
+	}
+	b.Set([]int{0}, 99)
+	if a.At(0, 0) != 99 {
+		// A copy must be independent.
+		return
+	}
+	t.Fatal("reshape of non-contiguous array mutated the source")
+}
+
+func TestTransposeViewSharesData(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	tr := a.Transpose()
+	if !slices.Equal(tr.Shape(), []int{3, 2}) {
+		t.Fatalf("shape = %v", tr.Shape())
+	}
+	if got := tr.At(2, 1); got != 6 {
+		t.Fatalf("At(2,1) = %v, want 6", got)
+	}
+	tr.Set([]int{1, 0}, 77)
+	if a.At(0, 1) != 77 {
+		t.Fatal("transpose did not share data")
+	}
+	if a.IsContiguous() == false || tr.IsContiguous() {
+		t.Fatal("contiguity flags wrong")
+	}
+}
+
+func TestTranspose3DReverseAndPermute(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, 2, 3, 2)
+	rev := a.Transpose()
+	if !slices.Equal(rev.Shape(), []int{2, 3, 2}) { // square-ish; use explicit permute below
+		t.Fatalf("reverse shape = %v", rev.Shape())
+	}
+	if got := rev.At(1, 2, 0); got != a.At(0, 2, 1) {
+		t.Fatalf("reverse mapping: %v != %v", got, a.At(0, 2, 1))
+	}
+	perm := a.Transpose(1, 0, 2) // 3x2x2
+	if !slices.Equal(perm.Shape(), []int{3, 2, 2}) {
+		t.Fatalf("permute shape = %v", perm.Shape())
+	}
+	if got := perm.At(2, 1, 1); got != a.At(1, 2, 1) {
+		t.Fatalf("permute mapping: %v != %v", got, a.At(1, 2, 1))
+	}
+	mustPanic(t, "numgo: axes don't match array", func() { a.Transpose(0, 1) })
+	mustPanic(t, "numgo: axes don't match array", func() { a.Transpose(0, 0, 1) })
+}
+
+func TestShapeMismatchPanicMessage(t *testing.T) {
+	a := Full(1.0, 2, 3)
+	b := Full(1.0, 1, 2)
+	mustPanic(t,
+		"numgo: operands could not be broadcast together with shapes (2,3) (1,2)",
+		func() { a.Add(b) })
+}
+
+func TestDivByZeroIsInf(t *testing.T) {
+	a := FromSlice([]float64{1, -1, 0}, 3)
+	z := Zeros[float64](3)
+	q := a.Div(z)
+	if !math.IsInf(q.At(0), 1) || !math.IsInf(q.At(1), -1) || !math.IsNaN(q.At(2)) {
+		t.Fatalf("got %v", []float64{q.At(0), q.At(1), q.At(2)})
+	}
+}
