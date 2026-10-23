@@ -98,6 +98,10 @@ func calcTicks(min, max float64) (ticks []float64) {
 		ticks = append(ticks, 0)
 		return
 	}
+	// 常量数组（min == max）会导致步长为零，退化为单位区间
+	if min == max {
+		max = min + 1
+	}
 
 	// 计算数据范围
 	dataRange := max - min
@@ -177,7 +181,7 @@ func drawLine(img draw.Image, xy1, xy2 image.Point, color color.RGBA, stribe int
 	}
 }
 
-func (a *Array) drawXAxes(img draw.Image) (step float64, xmin, xmax float64) {
+func (a *Array[T]) drawXAxes(img draw.Image) (step float64, xmin, xmax float64) {
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 	xpad := width / 10
@@ -205,7 +209,7 @@ func (a *Array) drawXAxes(img draw.Image) (step float64, xmin, xmax float64) {
 	return
 }
 
-func (a *Array) drawYAxes(img draw.Image) (step float64, ymin, ymax float64) {
+func (a *Array[T]) drawYAxes(img draw.Image) (step float64, ymin, ymax float64) {
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 	xpad, ypad := width/10, height/10
@@ -215,7 +219,7 @@ func (a *Array) drawYAxes(img draw.Image) (step float64, ymin, ymax float64) {
 	drawLine(img, f, t, ColorGray.RGBA(), 2)
 
 	ylen := float64(t.Y) - float64(f.Y) - (float64(ypad) / 2.0) - 10.0 // 计算label之间宽度
-	vmin, vmax := a.Min(-1).At(0, 0), a.Max(-1).At(0, 0)
+	vmin, vmax := toF64(a.Min(-1).At(0, 0)), toF64(a.Max(-1).At(0, 0))
 	ticks := calcTicks(vmin, vmax)
 	numTicks := len(ticks)
 	ysplit := float64(numTicks - 1)
@@ -268,7 +272,7 @@ func randColors(count int) (colors []Color) {
 }
 
 // drawPoints draws the data points on the image.
-func (a *Array) drawPoints(img draw.Image, xstep, ystep float64, vmin float64) {
+func (a *Array[T]) drawPoints(img draw.Image, xstep, ystep float64, vmin float64) {
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 	xpad, ypad := width/10, height/10
@@ -280,13 +284,13 @@ func (a *Array) drawPoints(img draw.Image, xstep, ystep float64, vmin float64) {
 	for k, v := range a.All() {
 		// Calculate the position of the point
 		x := xstart + int(xstep*float64(k[0]))
-		y := ystart - int(ystep*(v-vmin))
+		y := ystart - int(ystep*(toF64(v)-vmin))
 		img.Set(x, y, colors[k[1]].RGBA())
 	}
 }
 
 // Draw renders the graph on the provided image.
-func (a *Array) Draw(img draw.Image) {
+func (a *Array[T]) Draw(img draw.Image) {
 	xstep, _, _ := a.drawXAxes(img)
 	ystep, ymin, _ := a.drawYAxes(img)
 	a.drawPoints(img, xstep, ystep, ymin)

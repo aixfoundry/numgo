@@ -22,12 +22,12 @@ import "math"
 //	fmt.Println(sol) // Output will be the coefficients of the best fit line
 //
 // [numpy.polyfit]: https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html
-func PolyFit(xy *Array, m int) (sol *Array) {
+func PolyFit[T Float](xy *Array[T], m int) (sol *Array[T]) {
 	n := xy.r
-	a := ZeroArray(n, m+1)
+	a := ZeroArray[T](n, m+1)
 	for i := range n {
 		for j := range m + 1 {
-			a.Set(i, j, math.Pow(xy.At(i, 0), float64(j)))
+			a.Set(i, j, T(math.Pow(toF64(xy.At(i, 0)), float64(j))))
 		}
 	}
 	return Lstsq(a, xy.Of(1, 0))
@@ -48,17 +48,17 @@ func PolyFit(xy *Array, m int) (sol *Array) {
 //
 // Example:
 //
-//	b := NewArray(1, 1, []float64{1, 2}) // Represents the polynomial 1 + 2x
-//	y := Poly1D(b, 3)
+//	b := NewArray(1, 2, []float64{1, 2}) // Represents the polynomial 1 + 2x
+//	y := Poly1D(b, 3.0)
 //	fmt.Println(y) // Output will be 7
 //
 // [numpy.poly1d]: https://numpy.org/doc/stable/reference/generated/numpy.poly1d.html
-func Poly1D(b *Array, x float64) (y float64) {
+func Poly1D[T Float](b *Array[T], x T) (y T) {
 	if b.r != 1 {
 		return
 	}
 	for ic := range b.c {
-		y += b.At(0, ic) * math.Pow(x, float64(ic))
+		y += b.At(0, ic) * T(math.Pow(toF64(x), float64(ic)))
 	}
 	return
 }
@@ -84,11 +84,11 @@ func Poly1D(b *Array, x float64) (y float64) {
 //	fmt.Println(y) // Output will be an array with values [3, 5]
 //
 // [numpy.polyval]: https://numpy.org/doc/stable/reference/generated/numpy.polyval.html
-func PolyVal(b *Array, x *Array) (y *Array) {
+func PolyVal[T Float](b *Array[T], x *Array[T]) (y *Array[T]) {
 	if b.r != 1 {
 		return
 	}
-	y = ZeroArray(x.r, x.c)
+	y = ZeroArray[T](x.r, x.c)
 	for k, v := range x.All() {
 		y.Set(k[0], k[1], Poly1D(b, v))
 	}

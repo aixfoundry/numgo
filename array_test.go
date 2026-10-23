@@ -13,7 +13,7 @@ func TestNewValueArray(t *testing.T) {
 		12, 12, 12,
 		12, 12, 12,
 	}
-	a := NewValueArray(3, 3, 12)
+	a := NewValueArray(3, 3, 12.0)
 	b := NewArray(3, 3, data)
 	if !reflect.DeepEqual(a, b) {
 		t.Error(a)
@@ -168,7 +168,7 @@ func ExampleArray_Set() {
 		4, 5, 6,
 		7, 8, 9,
 	})
-	fmt.Printf("%v", a.Set(1, 1, 11))
+	fmt.Printf("%v", a.Set(1, 1, 11.0))
 	// Output:
 	// ⎡1   2  3⎤
 	// ⎢4  11  6⎥
@@ -197,29 +197,47 @@ func ExampleAll() {
 }
 
 func ExampleRangeArray_zero() {
-	a := RangeArray()
+	a := RangeArray[float64]()
 	fmt.Printf("%v", a)
 	// Output:
 	//
 }
 
 func ExampleRangeArray_one() {
-	a := RangeArray(5)
+	a := RangeArray(5.0)
 	fmt.Printf("%v", a)
 	// Output:
 	// [0  1  2  3  4]
 }
 
 func ExampleRangeArray_two() {
-	a := RangeArray(1, 5)
+	a := RangeArray(1.0, 5.0)
 	fmt.Printf("%v", a)
 	// Output:
 	// [1  2  3  4]
 }
 
 func ExampleRangeArray_three() {
-	a := RangeArray(1, 5, 2)
+	a := RangeArray(1.0, 5.0, 2.0)
 	fmt.Printf("%v", a)
 	// Output:
 	// [1  3]
+}
+
+func TestFloat32Instantiation(t *testing.T) {
+	a := New1DArray([]float32{1, 2, 3})
+	if r, c := a.Dims(); r != 1 || c != 3 {
+		t.Fatalf("dims = %dx%d, want 1x3", r, c)
+	}
+	if got := a.At(0, 1); got != 2 {
+		t.Fatalf("At(0, 1) = %v, want 2", got)
+	}
+	a.Set(0, 1, 5.0)
+	if got := a.At(0, 1); got != 5 {
+		t.Fatalf("At(0, 1) after Set = %v, want 5", got)
+	}
+	got := a.Filter(func(r, c int, v float32) bool { return v > 2 })
+	if !slices.Equal(got.Data(), []float32{5, 3}) {
+		t.Fatalf("Filter data = %v, want [5 3]", got.Data())
+	}
 }

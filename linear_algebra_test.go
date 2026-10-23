@@ -3,6 +3,8 @@ package numgo
 import (
 	"fmt"
 	"math"
+	"strings"
+	"testing"
 )
 
 func ExampleEMCP() {
@@ -190,4 +192,44 @@ func ExampleHistogram2d() {
 	// ⎣0  0  3⎦
 	// [1  2  3  4]
 	// [2  3  4  5]
+}
+
+func TestLinearAlgebraPanics(t *testing.T) {
+	cases := []struct {
+		name string
+		fn   func()
+		want string
+	}{
+		{
+			name: "EMCPSingular",
+			fn: func() {
+				// [[1, 2], [2, 4]] x = [3, 7]: dependent columns
+				EMCP(NewArray(2, 3, []float64{1, 2, 3, 2, 4, 7}))
+			},
+			want: "Singular matrix",
+		},
+		{
+			name: "EMCPShape",
+			fn:   func() { EMCP(NewArray(2, 2, []float64{1, 2, 3, 4})) },
+			want: "shape mismatch",
+		},
+		{
+			name: "LstsqShape",
+			fn: func() {
+				Lstsq(NewArray(2, 1, []float64{1, 2}), NewArray(3, 1, []float64{1, 2, 3}))
+			},
+			want: "shape mismatch",
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				msg := fmt.Sprint(recover())
+				if !strings.Contains(msg, tt.want) {
+					t.Errorf("panic = %q, want it to contain %q", msg, tt.want)
+				}
+			}()
+			tt.fn()
+		})
+	}
 }

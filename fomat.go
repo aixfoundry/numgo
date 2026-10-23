@@ -6,14 +6,14 @@ import (
 	"strings"
 )
 
-func (x *Array) maxFormatWidth(verb rune, prec int) map[int]int {
+func (x *Array[T]) maxFormatWidth(verb rune, prec int) map[int]int {
 	colsWidths := map[int]int{} // 列最大宽度
 	for k, v := range x.All() {
 		var f string
 		if verb == 'v' {
-			f = strconv.FormatFloat(v, 'g', prec, 64)
+			f = strconv.FormatFloat(toF64(v), 'g', prec, 64)
 		} else {
-			f = strconv.FormatFloat(v, byte(verb), prec, 64)
+			f = strconv.FormatFloat(toF64(v), byte(verb), prec, 64)
 		}
 		if len(f) > colsWidths[k[1]] {
 			colsWidths[k[1]] = len(f)
@@ -32,7 +32,7 @@ func (x *Array) maxFormatWidth(verb rune, prec int) map[int]int {
 //	fmt.Printf("%v", arr)
 //	// Output: ⎡1.1  2.2⎤
 //	//         ⎣3.3  4.4⎦
-func (x *Array) Format(fs fmt.State, verb rune) {
+func (x *Array[T]) Format(fs fmt.State, verb rune) {
 	switch verb {
 	case 'v', 'e', 'E', 'f', 'F', 'g', 'G':
 	default:
@@ -65,9 +65,9 @@ func (x *Array) Format(fs fmt.State, verb rune) {
 			v := x.At(i, j)
 			var f string
 			if verb == 'v' {
-				f = strconv.FormatFloat(v, 'g', prec, 64)
+				f = strconv.FormatFloat(toF64(v), 'g', prec, 64)
 			} else {
-				f = strconv.FormatFloat(v, byte(verb), prec, 64)
+				f = strconv.FormatFloat(toF64(v), byte(verb), prec, 64)
 			}
 			if fs.Flag('-') {
 				fs.Write([]byte(f))

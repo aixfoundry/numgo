@@ -21,7 +21,7 @@ import (
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func (a *Array) SaveToText(filename string) (err error) {
+func (a *Array[T]) SaveToText(filename string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return
@@ -31,9 +31,9 @@ func (a *Array) SaveToText(filename string) (err error) {
 	for i := range a.r {
 		row := a.Row(i)
 		for k, v := range row.All() {
-			s := fmt.Sprintf("%g ", v)
+			s := fmt.Sprintf("%g ", toF64(v))
 			if k[1] == row.c-1 {
-				s = fmt.Sprintf("%g", v)
+				s = fmt.Sprintf("%g", toF64(v))
 			}
 			_, err = file.WriteString(s)
 			if err != nil {
@@ -58,7 +58,7 @@ func (a *Array) SaveToText(filename string) (err error) {
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func SaveToText(a *Array, filename string) (err error) {
+func SaveToText[T Float](a *Array[T], filename string) (err error) {
 	return a.SaveToText(filename)
 }
 
@@ -71,7 +71,7 @@ func SaveToText(a *Array, filename string) (err error) {
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func LoadFromText(filename string) (a *Array, err error) {
+func LoadFromText(filename string) (a *Array[float64], err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
@@ -112,7 +112,7 @@ func LoadFromText(filename string) (a *Array, err error) {
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func (a *Array) SaveToCsv(filename string) (err error) {
+func (a *Array[T]) SaveToCsv(filename string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return
@@ -122,9 +122,9 @@ func (a *Array) SaveToCsv(filename string) (err error) {
 	for i := range a.r {
 		row := a.Row(i)
 		for k, v := range row.All() {
-			s := fmt.Sprintf("%g,", v)
+			s := fmt.Sprintf("%g,", toF64(v))
 			if k[1] == row.c-1 {
-				s = fmt.Sprintf("%g", v)
+				s = fmt.Sprintf("%g", toF64(v))
 			}
 			_, err = file.WriteString(s)
 			if err != nil {
@@ -149,7 +149,7 @@ func (a *Array) SaveToCsv(filename string) (err error) {
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func SaveToCsv(a *Array, filename string) (err error) {
+func SaveToCsv[T Float](a *Array[T], filename string) (err error) {
 	return a.SaveToCsv(filename)
 }
 
@@ -162,7 +162,7 @@ func SaveToCsv(a *Array, filename string) (err error) {
 //	if err != nil {
 //	    fmt.Println("Error:", err)
 //	}
-func LoadFromCsv(filename string) (a *Array, err error) {
+func LoadFromCsv(filename string) (a *Array[float64], err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
@@ -205,7 +205,7 @@ func LoadFromCsv(filename string) (a *Array, err error) {
 //	    log.Fatalf("Failed to load data: %v", err)
 //	}
 //	fmt.Println(array)
-func LoadFromFile(filename string) (a *Array, err error) {
+func LoadFromFile(filename string) (a *Array[float64], err error) {
 	ext := strings.ToLower(path.Ext(filename))
 	switch ext {
 	case ".txt":
@@ -230,7 +230,7 @@ func LoadFromFile(filename string) (a *Array, err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save array: %v", err)
 //	}
-func (a *Array) SaveToFile(filename string) (err error) {
+func (a *Array[T]) SaveToFile(filename string) (err error) {
 	ext := strings.ToLower(path.Ext(filename))
 	switch ext {
 	case ".txt":
@@ -257,7 +257,7 @@ func (a *Array) SaveToFile(filename string) (err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save array: %v", err)
 //	}
-func SaveToFile(a *Array, filename string) (err error) {
+func SaveToFile[T Float](a *Array[T], filename string) (err error) {
 	return a.SaveToFile(filename)
 }
 
@@ -272,7 +272,7 @@ func SaveToFile(a *Array, filename string) (err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save array to PNG: %v", err)
 //	}
-func (a *Array) SaveToPng(filename string) (err error) {
+func (a *Array[T]) SaveToPng(filename string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return
@@ -293,7 +293,7 @@ func (a *Array) SaveToPng(filename string) (err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save array to PNG: %v", err)
 //	}
-func SaveToPng(a *Array, filename string) (err error) {
+func SaveToPng[T Float](a *Array[T], filename string) (err error) {
 	return a.SaveToPng(filename)
 }
 
@@ -308,7 +308,7 @@ func SaveToPng(a *Array, filename string) (err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save image: %v", err)
 //	}
-func (a *Array) SaveToJpeg(filename string) (err error) {
+func (a *Array[T]) SaveToJpeg(filename string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return
@@ -328,6 +328,6 @@ func (a *Array) SaveToJpeg(filename string) (err error) {
 //	if err != nil {
 //	    log.Fatalf("Failed to save image: %v", err)
 //	}
-func SaveToJpeg(a *Array, filename string) (err error) {
+func SaveToJpeg[T Float](a *Array[T], filename string) (err error) {
 	return a.SaveToJpeg(filename)
 }

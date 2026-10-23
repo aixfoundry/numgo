@@ -1,14 +1,24 @@
 package numgo
 
+import (
+	"fmt"
+	"slices"
+)
+
+func checkAxis(axis int) {
+	if axis != 0 && axis != 1 {
+		panic(fmt.Sprintf("numgo: axis must be 0 or 1, got %d", axis))
+	}
+}
+
 // T returns the transpose of the matrix.
 // Example:
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	a.T() // Result: 1 4 2 5 3 6 (reshaped to 3x2)
-func (a *Array) T() *Array {
-	data := make([]float64, len(a.data))
+func (a *Array[T]) T() *Array[T] {
+	data := slices.Clone(a.data)
 	r, c := a.r, a.c
-	copy(data, a.data)
 	a.Reshape(a.c, a.r)
 	for ir := range c {
 		for ic := range r {
@@ -23,8 +33,8 @@ func (a *Array) T() *Array {
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	T(a) // Result: 1 4 2 5 3 6 (new 3x2 array)
-func T(a *Array) (o *Array) {
-	o = ZeroArray(a.c, a.r)
+func T[T Float](a *Array[T]) (o *Array[T]) {
+	o = ZeroArray[T](a.c, a.r)
 	for ir := range a.c {
 		for ic := range a.r {
 			o.Set(ir, ic, a.At(ic, ir))
@@ -42,12 +52,19 @@ func T(a *Array) (o *Array) {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	a.Swap(0, 1, 0) // Swaps first and second rows
-func (a *Array) Swap(f, t int, axis int) *Array {
+func (a *Array[T]) Swap(f, t int, axis int) *Array[T] {
+	checkAxis(axis)
 	if axis == 0 {
+		if f < 0 || f >= a.r || t < 0 || t >= a.r {
+			panic(fmt.Sprintf("numgo: index (%d,%d) is out of bounds for axis 0 with size %d", f, t, a.r))
+		}
 		for ic := range a.c {
 			a.data[f*a.c+ic], a.data[t*a.c+ic] = a.data[t*a.c+ic], a.data[f*a.c+ic]
 		}
-	} else if axis == 1 {
+	} else {
+		if f < 0 || f >= a.c || t < 0 || t >= a.c {
+			panic(fmt.Sprintf("numgo: index (%d,%d) is out of bounds for axis 1 with size %d", f, t, a.c))
+		}
 		for ir := range a.r {
 			a.data[f+a.c*ir], a.data[t+a.c*ir] = a.data[t+a.c*ir], a.data[f+a.c*ir]
 		}
@@ -64,18 +81,9 @@ func (a *Array) Swap(f, t int, axis int) *Array {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	Swap(a, 0, 1, 0) // Returns new array with first and second rows swapped
-func Swap(a *Array, f, t int, axis int) (o *Array) {
+func Swap[T Float](a *Array[T], f, t int, axis int) (o *Array[T]) {
 	o = Copy(a)
-	if axis == 0 {
-		for ic := range o.c {
-			o.data[f*o.r+ic], o.data[t*o.r+ic] = o.data[t*o.r+ic], o.data[f*o.r+ic]
-		}
-	} else if axis == 1 {
-		for ir := range o.r {
-			o.data[f+o.r*ir], o.data[t+o.r*ir] = o.data[t+o.r*ir], o.data[f+o.r*ir]
-		}
-	}
-	return
+	return o.Swap(f, t, axis)
 }
 
 // Cat concatenates two arrays along the specified axis.
@@ -88,12 +96,19 @@ func Swap(a *Array, f, t int, axis int) (o *Array) {
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	b := NewArray(2, 3, []float64{7, 8, 9, 10, 11, 12})
 //	a.Cat(b, 0) // Concatenates along rows, resulting in a 4x3 array
-func (a *Array) Cat(b *Array, axis int) *Array {
+func (a *Array[T]) Cat(b *Array[T], axis int) *Array[T] {
+	checkAxis(axis)
 	if axis == 0 {
+		if a.c != b.c {
+			panic(fmt.Sprintf("numgo: cannot concatenate arrays with shapes (%d,%d) and (%d,%d) along axis 0", a.r, a.c, b.r, b.c))
+		}
 		a.r += b.r
 		a.data = append(a.data, b.data...)
 	} else {
-		buf := []float64{}
+		if a.r != b.r {
+			panic(fmt.Sprintf("numgo: cannot concatenate arrays with shapes (%d,%d) and (%d,%d) along axis 1", a.r, a.c, b.r, b.c))
+		}
+		buf := []T{}
 		for i := range a.r {
 			for ja := range a.c {
 				buf = append(buf, a.data[i*a.c+ja])
@@ -118,31 +133,23 @@ func (a *Array) Cat(b *Array, axis int) *Array {
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	b := NewArray(2, 3, []float64{7, 8, 9, 10, 11, 12})
 //	Cat(a, b, 0) // Returns new 4x3 array concatenated along rows
-func Cat(a *Array, b *Array, axis int) (o *Array) {
+func Cat[T Float](a *Array[T], b *Array[T], axis int) *Array[T] {
+	checkAxis(axis)
 	if axis == 0 {
-		o = EmptyArray(a.r+b.r, a.c)
-		for i := range a.r {
-			for ja := range a.c {
-				o.data = append(o.data, a.data[i*a.c+ja])
-			}
+		if a.c != b.c {
+			panic(fmt.Sprintf("numgo: cannot concatenate arrays with shapes (%d,%d) and (%d,%d) along axis 0", a.r, a.c, b.r, b.c))
 		}
-		for i := range b.r {
-			for jb := range b.c {
-				o.data = append(o.data, b.data[i*b.c+jb])
-			}
-		}
-	} else {
-		o = EmptyArray(a.r, a.c+b.c)
-		for i := range a.r {
-			for ja := range a.c {
-				o.data = append(o.data, a.data[i*a.c+ja])
-			}
-			for jb := range b.c {
-				o.data = append(o.data, b.data[i*b.c+jb])
-			}
-		}
+		return NewArray(a.r+b.r, a.c, slices.Concat(a.data, b.data))
 	}
-	return
+	if a.r != b.r {
+		panic(fmt.Sprintf("numgo: cannot concatenate arrays with shapes (%d,%d) and (%d,%d) along axis 1", a.r, a.c, b.r, b.c))
+	}
+	buf := make([]T, 0, a.r*(a.c+b.c))
+	for i := range a.r {
+		buf = append(buf, a.data[i*a.c:(i+1)*a.c]...)
+		buf = append(buf, b.data[i*b.c:(i+1)*b.c]...)
+	}
+	return NewArray(a.r, a.c+b.c, buf)
 }
 
 // Delete removes a specified row or column.
@@ -155,18 +162,25 @@ func Cat(a *Array, b *Array, axis int) (o *Array) {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	a.Delete(0, 0) // Removes the first row
-func (a *Array) Delete(n int, axis int) *Array {
+func (a *Array[T]) Delete(n int, axis int) *Array[T] {
+	checkAxis(axis)
 	if axis == 0 {
-		a.data = append(a.data[:a.r*n], a.data[a.r*n+a.c:]...)
+		if n < 0 || n >= a.r {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 0 with size %d", n, a.r))
+		}
+		a.data = append(a.data[:n*a.c], a.data[(n+1)*a.c:]...)
 		a.r--
 	} else {
-		buf := []float64{}
+		if n < 0 || n >= a.c {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 1 with size %d", n, a.c))
+		}
+		buf := []T{}
 		for ir := range a.r {
 			for ic := range a.c {
 				if ic == n {
 					continue
 				}
-				buf = append(buf, a.data[ir*a.r+ic])
+				buf = append(buf, a.data[ir*a.c+ic])
 			}
 		}
 		a.data = buf
@@ -185,19 +199,26 @@ func (a *Array) Delete(n int, axis int) *Array {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	Delete(a, 0, 0) // Returns new array with the first row removed
-func Delete(a *Array, n int, axis int) *Array {
-	buf := []float64{}
+func Delete[T Float](a *Array[T], n int, axis int) *Array[T] {
+	checkAxis(axis)
+	buf := []T{}
 	r, c := a.r, a.c
 	if axis == 0 {
-		buf = append(a.data[:a.r*n], a.data[a.r*n+a.c:]...)
+		if n < 0 || n >= a.r {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 0 with size %d", n, a.r))
+		}
+		buf = slices.Concat(a.data[:n*a.c], a.data[(n+1)*a.c:])
 		r = a.r - 1
 	} else {
+		if n < 0 || n >= a.c {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 1 with size %d", n, a.c))
+		}
 		for ir := range a.r {
 			for ic := range a.c {
 				if ic == n {
 					continue
 				}
-				buf = append(buf, a.data[ir*a.r+ic])
+				buf = append(buf, a.data[ir*a.c+ic])
 			}
 		}
 		c = a.c - 1
@@ -216,18 +237,25 @@ func Delete(a *Array, n int, axis int) *Array {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	a.RangeDelete(0, 1, 0) // Removes the first row
-func (a *Array) RangeDelete(f, t int, axis int) *Array {
+func (a *Array[T]) RangeDelete(f, t int, axis int) *Array[T] {
+	checkAxis(axis)
 	if axis == 0 {
-		a.data = append(a.data[:f*a.r], a.data[t*a.r:]...)
+		if f < 0 || t > a.r || f > t {
+			panic(fmt.Sprintf("numgo: range (%d,%d) is out of bounds for axis 0 with size %d", f, t, a.r))
+		}
+		a.data = append(a.data[:f*a.c], a.data[t*a.c:]...)
 		a.r -= t - f
 	} else {
-		buf := []float64{}
+		if f < 0 || t > a.c || f > t {
+			panic(fmt.Sprintf("numgo: range (%d,%d) is out of bounds for axis 1 with size %d", f, t, a.c))
+		}
+		buf := []T{}
 		for ir := range a.r {
 			for ic := range a.c {
 				if ic >= f && ic < t {
 					continue
 				}
-				buf = append(buf, a.data[ir*a.r+ic])
+				buf = append(buf, a.data[ir*a.c+ic])
 			}
 		}
 		a.data = buf
@@ -247,13 +275,20 @@ func (a *Array) RangeDelete(f, t int, axis int) *Array {
 //
 //	a := NewArray(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
 //	RangeDelete(a, 0, 1, 0) // Returns new array with the first row removed
-func RangeDelete(a *Array, f, t int, axis int) *Array {
-	buf := []float64{}
+func RangeDelete[T Float](a *Array[T], f, t int, axis int) *Array[T] {
+	checkAxis(axis)
+	buf := []T{}
 	r, c := a.r, a.c
 	if axis == 0 {
-		buf = append(a.data[:f*a.c], a.data[t*a.c:]...)
+		if f < 0 || t > a.r || f > t {
+			panic(fmt.Sprintf("numgo: range (%d,%d) is out of bounds for axis 0 with size %d", f, t, a.r))
+		}
+		buf = slices.Concat(a.data[:f*a.c], a.data[t*a.c:])
 		r = a.r - (t - f)
 	} else {
+		if f < 0 || t > a.c || f > t {
+			panic(fmt.Sprintf("numgo: range (%d,%d) is out of bounds for axis 1 with size %d", f, t, a.c))
+		}
 		for k, v := range a.All() {
 			if k[1] < f || k[1] >= t {
 				buf = append(buf, v)
@@ -270,14 +305,14 @@ func RangeDelete(a *Array, f, t int, axis int) *Array {
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	a.Reshape(3, 2) // Reshapes to 3x2
-func (a *Array) Reshape(r, c int) *Array {
-	if r == -1 {
+func (a *Array[T]) Reshape(r, c int) *Array[T] {
+	if r == -1 && c > 0 {
 		r = max(len(a.data)/c, 1)
-	} else if c == -1 {
+	} else if c == -1 && r > 0 {
 		c = max(len(a.data)/r, 1)
 	}
 	if r*c > len(a.data) {
-		buf := make([]float64, r*c-len(a.data))
+		buf := make([]T, r*c-len(a.data))
 		a.data = append(a.data, buf...)
 	} else if r*c < len(a.data) {
 		a.data = a.data[:r*c]
@@ -292,7 +327,7 @@ func (a *Array) Reshape(r, c int) *Array {
 //
 //	a := NewArray(2, 3, []float64{1, 2, 3, 4, 5, 6})
 //	Reshape(a, 3, 2) // Returns new 3x2 array
-func Reshape(a *Array, r, c int) *Array {
+func Reshape[T Float](a *Array[T], r, c int) *Array[T] {
 	o := Copy(a)
 	return o.Reshape(r, c)
 }
@@ -305,8 +340,11 @@ func Reshape(a *Array, r, c int) *Array {
 //	a := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	b := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	fmt.Println(a.Equal(b)) // Output: true
-func (a *Array) Equal(b *Array) bool {
+func (a *Array[T]) Equal(b *Array[T]) bool {
 	if a.r != b.r || a.c != b.c {
+		return false
+	}
+	if len(a.data) != len(b.data) {
 		return false
 	}
 	for i := range a.data {
@@ -323,7 +361,7 @@ func (a *Array) Equal(b *Array) bool {
 //	a := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	b := NewArray(2, 2, []float64{1, 2, 3, 4})
 //	fmt.Println(Equal(a, b)) // Output: true
-func Equal(a *Array, b *Array) bool {
+func Equal[T Float](a *Array[T], b *Array[T]) bool {
 	return a.Equal(b)
 }
 
@@ -335,8 +373,8 @@ func Equal(a *Array, b *Array) bool {
 //	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
 //	filteredArray := a.Filter(func(v float64) bool { return v > 2.0 })
 //	fmt.Println(filteredArray.data) // Output: [3 4]
-func (a *Array) Filter(f func(r, c int, v float64) bool) (ret *Array) {
-	data := []float64{}
+func (a *Array[T]) Filter(f func(r, c int, v T) bool) (ret *Array[T]) {
+	data := []T{}
 	for k, v := range a.All() {
 		if f(k[0], k[1], v) {
 			data = append(data, v)
@@ -354,6 +392,6 @@ func (a *Array) Filter(f func(r, c int, v float64) bool) (ret *Array) {
 //	a := New1DArray([]float64{1.0, 2.0, 3.0, 4.0})
 //	filteredArray := Filter(a, func(v float64) bool { return v > 2.0 })
 //	fmt.Println(filteredArray.data) // Output: [3 4]
-func Filter(a *Array, f func(r, c int, v float64) bool) *Array {
+func Filter[T Float](a *Array[T], f func(r, c int, v T) bool) *Array[T] {
 	return a.Filter(f)
 }

@@ -68,7 +68,7 @@ func ExampleArray_Format_w10p2() {
 }
 
 func ExampleArray_Format_f() {
-	a := RangeArray(1, 10)
+	a := RangeArray(1.0, 10.0)
 	fmt.Printf("%f", a)
 	// Output:
 	// [1  2  3  4  5  6  7  8  9]

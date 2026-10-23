@@ -1,65 +1,64 @@
 package numgo
 
 import (
+	"fmt"
 	"iter"
+	"slices"
 )
 
+// Float is the element type constraint for Array.
+// Integers are excluded on purpose: Mean/Div on an int array would silently
+// truncate (Go has no numpy-style dtype promotion), so only floats are safe.
+type Float interface {
+	~float32 | ~float64
+}
+
+// toF64 converts v to float64 for math functions; call sites convert back to T.
+func toF64[T Float](v T) float64 { return float64(v) }
+
 // Array represents a 2D matrix with rows (r) and columns (c).
+// Data is stored in row-major order.
+//
 // Example:
 //
 //	arr := NewArray(2, 2, []float64{1, 2, 3, 4})
-type Array struct {
-	r, c int       // number of rows and columns
-	data []float64 // data stored in row-major order
+type Array[T Float] struct {
+	r, c int
+	data []T
 }
 
 // Copy creates a new copy of the given Array.
+//
 // Example:
 //
 //	copyArr := Copy(arr)
-func Copy(a *Array) *Array {
+func Copy[T Float](a *Array[T]) *Array[T] {
 	return a.Copy()
 }
 
 // Copy creates a new Array that is a deep copy of the original Array.
-// It returns a pointer to the new Array.
 //
 // Example:
 //
-//	original := &Array{c: 3, r: 2, data: []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}}
 //	copied := original.Copy()
-//	// Now `copied` is a separate instance with the same data as `original`
-func (a *Array) Copy() *Array {
-	x := &Array{
-		c:    a.c,
+func (a *Array[T]) Copy() *Array[T] {
+	return &Array[T]{
 		r:    a.r,
-		data: make([]float64, len(a.data)),
-	}
-	copy(x.data, a.data)
-	return x
-}
-
-// Reshape changes the dimensions of the Array to the specified rows and columns.
-// EmptyArray creates a new Array with specified rows and columns filled with zeros.
-// Example:
-//
-//	emptyArr := EmptyArray(2, 3)
-func EmptyArray(r, c int) (a *Array) {
-	return &Array{
-		r: r,
-		c: c,
+		c:    a.c,
+		data: slices.Clone(a.data),
 	}
 }
 
 // ZeroArray creates a new Array with specified rows and columns filled with zeros.
+//
 // Example:
 //
 //	zeroArr := ZeroArray(2, 3)
-func ZeroArray(r, c int) (a *Array) {
-	return &Array{
+func ZeroArray[T Float](r, c int) (a *Array[T]) {
+	return &Array[T]{
 		r:    r,
 		c:    c,
-		data: make([]float64, r*c),
+		data: make([]T, r*c),
 	}
 }
 
@@ -73,37 +72,40 @@ func ZeroArray(r, c int) (a *Array) {
 //
 // Examples:
 //
-//	RangeArray() // Returns a zeroed Array with dimensions [].
-//	RangeArray(5) // Returns a 1D Array with elements [0, 1, 2, 3, 4].
-//	RangeArray(1, 5) // Returns a 1D Array with elements [1, 2, 3, 4].
-//	RangeArray(1, 5, 2) // Returns a 1D Array with elements [1, 3].
-func RangeArray(args ...int) (a *Array) {
-	if len(args) == 0 {
-		a = ZeroArray(0, 0)
-		return
-	} else if len(args) == 1 {
-		data := []float64{}
-		for i := range args[0] {
-			data = append(data, float64(i))
+//	RangeArray[int]()    // Returns a zeroed Array with dimensions [].
+//	RangeArray(5)        // Returns a 1D Array with elements [0, 1, 2, 3, 4].
+//	RangeArray(1.0, 5.0) // Returns a 1D Array with elements [1, 2, 3, 4].
+//	RangeArray(1, 5, 2)  // Returns a 1D Array with elements [1, 3].
+func RangeArray[T Float](args ...T) (a *Array[T]) {
+	toI := func(v T) int { return int(v) }
+	switch len(args) {
+	case 0:
+		a = ZeroArray[T](0, 0)
+	case 1:
+		data := make([]T, toI(args[0]))
+		for i := range data {
+			data[i] = T(i)
 		}
 		a = New1DArray(data)
-		return
-	} else if len(args) == 2 {
-		start, stop := args[0], args[1]
-		data := []float64{}
+	case 2:
+		start, stop := toI(args[0]), toI(args[1])
+		data := make([]T, 0, max(stop-start, 0))
 		for i := start; i < stop; i++ {
-			data = append(data, float64(i))
+			data = append(data, T(i))
 		}
 		a = New1DArray(data)
-	} else if len(args) == 3 {
-		start, stop, step := args[0], args[1], args[2]
-		data := []float64{}
+	case 3:
+		start, stop, step := toI(args[0]), toI(args[1]), toI(args[2])
+		if step == 0 {
+			panic("numgo: RangeArray: step must not be zero")
+		}
+		data := make([]T, 0, max((stop-start)/step, 0))
 		for i := start; i < stop; i += step {
-			data = append(data, float64(i))
+			data = append(data, T(i))
 		}
 		a = New1DArray(data)
-	} else {
-		a = ZeroArray(0, 0)
+	default:
+		a = ZeroArray[T](0, 0)
 	}
 	return
 }
@@ -114,11 +116,8 @@ func RangeArray(args ...int) (a *Array) {
 // Example:
 //
 //	a := NewValueArray(2, 3, 5.0)
-//	// a will be:
-//	// [[5.0 5.0 5.0]
-//	//  [5.0 5.0 5.0]]
-func NewValueArray(r, c int, value float64) (a *Array) {
-	a = ZeroArray(r, c)
+func NewValueArray[T Float](r, c int, value T) (a *Array[T]) {
+	a = ZeroArray[T](r, c)
 	for i := range a.data {
 		a.data[i] = value
 	}
@@ -128,55 +127,57 @@ func NewValueArray(r, c int, value float64) (a *Array) {
 // NewArray creates a new Array with specified rows, columns, and data.
 // If the data length is less than r*c, it is padded with zeros.
 // If the data length is more than r*c, it is truncated.
+// The data slice is copied.
 //
 // Example:
 //
 //	arr := NewArray(2, 2, []float64{1, 2, 3, 4})
-func NewArray(r, c int, data []float64) (a *Array) {
-	if r*c > len(data) {
-		buf := make([]float64, r*c-len(data))
-		data = append(data, buf...)
-	} else if r*c < len(data) {
-		data = data[:r*c]
-	}
-	return &Array{
+func NewArray[T Float](r, c int, data []T) (a *Array[T]) {
+	buf := make([]T, r*c)
+	copy(buf, data)
+	return &Array[T]{
 		r:    r,
 		c:    c,
-		data: data,
+		data: buf,
 	}
 }
 
-// New1DArray creates a new 1D array from a slice of float64.
+// New1DArray creates a new 1D array from a slice.
+// The slice is copied, so later changes to the input do not affect the Array.
 //
 // Example:
 //
 //	data := []float64{1.0, 2.0, 3.0}
 //	array := New1DArray(data)
-func New1DArray(data []float64) (a *Array) {
-	return &Array{
+func New1DArray[T Float](data []T) (a *Array[T]) {
+	return &Array[T]{
 		r:    1,
 		c:    len(data),
-		data: data,
+		data: slices.Clone(data),
 	}
 }
 
-// New2DArray creates a new 2D array from a slice of slices of float64.
+// New2DArray creates a new 2D array from a slice of slices.
 // It flattens the 2D data into a 1D slice internally.
+// Panics if the rows have unequal lengths.
 //
 // Example:
 //
 //	data := [][]float64{{1.0, 2.0}, {3.0, 4.0}}
 //	array := New2DArray(data)
-func New2DArray(data [][]float64) (a *Array) {
-	if (len(data) == 0) || (len(data[0]) == 0) {
-		a = EmptyArray(0, 0)
+func New2DArray[T Float](data [][]T) (a *Array[T]) {
+	if len(data) == 0 || len(data[0]) == 0 {
+		a = ZeroArray[T](0, 0)
 		return
 	}
-	buf := []float64{}
+	buf := make([]T, 0, len(data)*len(data[0]))
 	for _, row := range data {
+		if len(row) != len(data[0]) {
+			panic(fmt.Sprintf("numgo: New2DArray: jagged input: row has %d elements, want %d", len(row), len(data[0])))
+		}
 		buf = append(buf, row...)
 	}
-	return &Array{
+	return &Array[T]{
 		r:    len(data),
 		c:    len(data[0]),
 		data: buf,
@@ -188,25 +189,36 @@ func New2DArray(data [][]float64) (a *Array) {
 // Example:
 //
 //	rows, cols := arr.Dims()
-func (a *Array) Dims() (r, c int) {
+func (a *Array[T]) Dims() (r, c int) {
 	return a.r, a.c
 }
 
+// checkIndex panics with a numpy-style message when (i, j) is out of bounds.
+func (a *Array[T]) checkIndex(i, j int) {
+	if i < 0 || i >= a.r || j < 0 || j >= a.c {
+		panic(fmt.Sprintf("numgo: index (%d,%d) is out of bounds for shape (%d,%d)", i, j, a.r, a.c))
+	}
+}
+
 // At returns the value at the specified row (i) and column (j).
+// Panics if the index is out of bounds.
 //
 // Example:
 //
 //	value := arr.At(0, 1)
-func (a *Array) At(i, j int) float64 {
+func (a *Array[T]) At(i, j int) T {
+	a.checkIndex(i, j)
 	return a.data[i*a.c+j]
 }
 
 // Set sets the value at the specified row (i) and column (j).
+// Panics if the index is out of bounds.
 //
 // Example:
 //
 //	arr.Set(0, 1, 5)
-func (a *Array) Set(i, j int, f float64) *Array {
+func (a *Array[T]) Set(i, j int, f T) *Array[T] {
+	a.checkIndex(i, j)
 	a.data[i*a.c+j] = f
 	return a
 }
@@ -216,58 +228,47 @@ func (a *Array) Set(i, j int, f float64) *Array {
 // Example:
 //
 //	data := arr.Data()
-func (a *Array) Data() []float64 {
+func (a *Array[T]) Data() []T {
 	return a.data
 }
 
 // Of returns a sub-array based on the specified axis and index.
 // It returns a column if axis is 0, and a row if axis is 1.
+// Panics if axis is not 0 or 1.
 //
 // Example:
 //
-//	row := arr.Of(0, 0) // returns the first column
-//	col := arr.Of(1, 1) // returns the second row
+//	col := arr.Of(0, 0) // returns the first column
+//	row := arr.Of(1, 1) // returns the second row
 //
-// numpy: a[i], a[:, i]
-//
-// axis:
-//
-//   - 0: by column
-//
-//   - 1: by row
-func (a *Array) Of(i int, axis int) (ret *Array) {
-	buf := []float64{}
-	if axis == 0 {
-		for ir := range a.r {
-			for ic := range a.c {
-				if ic == i {
-					buf = append(buf, a.At(ir, ic))
-					break
-				}
-			}
+// numpy: a[:, i], a[i]
+func (a *Array[T]) Of(i int, axis int) *Array[T] {
+	switch axis {
+	case 0:
+		if i < 0 || i >= a.c {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 1 with size %d", i, a.c))
 		}
-		ret = NewArray(a.r, 1, buf)
-	} else if axis == 1 {
+		buf := make([]T, a.r)
 		for ir := range a.r {
-			if ir == i {
-				for ic := range a.c {
-					buf = append(buf, a.At(ir, ic))
-				}
-				break
-			}
+			buf[ir] = a.data[ir*a.c+i]
 		}
-		ret = NewArray(1, a.c, buf)
+		return NewArray(a.r, 1, buf)
+	case 1:
+		if i < 0 || i >= a.r {
+			panic(fmt.Sprintf("numgo: index (%d) is out of bounds for axis 0 with size %d", i, a.r))
+		}
+		return NewArray(1, a.c, a.data[i*a.c:(i+1)*a.c])
+	default:
+		panic(fmt.Sprintf("numgo: axis must be 0 or 1, got %d", axis))
 	}
-	return
 }
 
 // Row returns a new Array that contains the i-th row of the original array.
 //
 // Example:
 //
-//	a := New2DArray([][]float64{{1, 2}, {3, 4}, {5, 6}}) // Assume a is a valid Array with multiple rows
-//	row := a.Row(2)   // row will contain the elements of the third row
-func (a *Array) Row(i int) *Array {
+//	row := a.Row(2)
+func (a *Array[T]) Row(i int) *Array[T] {
 	return a.Of(i, 1)
 }
 
@@ -275,9 +276,8 @@ func (a *Array) Row(i int) *Array {
 //
 // Example:
 //
-//	a := New2DArray([][]float64{{1, 2}, {3, 4}, {5, 6}}) // Assume a is a valid Array with multiple columns
-//	col := a.Col(1)   // col will contain the elements of the second column
-func (a *Array) Col(i int) *Array {
+//	col := a.Col(1)
+func (a *Array[T]) Col(i int) *Array[T] {
 	return a.Of(i, 0)
 }
 
@@ -286,18 +286,14 @@ func (a *Array) Col(i int) *Array {
 //
 // Example:
 //
-//	a := NewArray(...) // Assume NewArray creates a new Array
-//	seq := a.All()
-//
-//	seq(func(indices [2]int, value float64) bool {
-//	    fmt.Printf("Index: %v, Value: %v\n", indices, value)
-//	    return true // Return false to stop iteration early
-//	})
-func (a *Array) All() iter.Seq2[[2]int, float64] {
-	return func(yield func([2]int, float64) bool) {
+//	for k, v := range a.All() {
+//	    fmt.Println(k, v)
+//	}
+func (a *Array[T]) All() iter.Seq2[[2]int, T] {
+	return func(yield func([2]int, T) bool) {
 		for ir := range a.r {
 			for ic := range a.c {
-				if !yield([2]int{ir, ic}, a.At(ir, ic)) {
+				if !yield([2]int{ir, ic}, a.data[ir*a.c+ic]) {
 					return
 				}
 			}
@@ -306,17 +302,45 @@ func (a *Array) All() iter.Seq2[[2]int, float64] {
 }
 
 // All returns a sequence that iterates over all elements of the Array.
-// Each element is represented by a tuple of its row and column indices and its value.
 //
 // Example:
 //
-//	a := NewArray(...) // Assume NewArray creates a new Array
-//	seq := All(a)
-//
-//	seq(func(indices [2]int, value float64) bool {
-//	    fmt.Printf("Index: %v, Value: %v\n", indices, value)
-//	    return true // Return false to stop iteration early
-//	})
-func All(a *Array) iter.Seq2[[2]int, float64] {
+//	for k, v := range All(a) {
+//	    fmt.Println(k, v)
+//	}
+func All[T Float](a *Array[T]) iter.Seq2[[2]int, T] {
 	return a.All()
+}
+
+// zip applies op element-wise between a and b, broadcasting b against a
+// when b is a single row, a single column, or a 1x1 array (numpy semantics).
+// Panics when the shapes cannot be broadcast together.
+func (a *Array[T]) zip(b *Array[T], op func(x, y T) T) *Array[T] {
+	if !((a.r == b.r || b.r == 1) && (a.c == b.c || b.c == 1)) {
+		panic(fmt.Sprintf("numgo: operands could not be broadcast together with shapes (%d,%d) (%d,%d)", a.r, a.c, b.r, b.c))
+	}
+	ret := ZeroArray[T](a.r, a.c)
+	for i := range a.r {
+		bi := i
+		if b.r == 1 {
+			bi = 0
+		}
+		for j := range a.c {
+			bj := j
+			if b.c == 1 {
+				bj = 0
+			}
+			ret.data[i*a.c+j] = op(a.data[i*a.c+j], b.data[bi*b.c+bj])
+		}
+	}
+	return ret
+}
+
+// zipValue applies op element-wise between a and a scalar.
+func (a *Array[T]) zipValue(value T, op func(x, y T) T) *Array[T] {
+	ret := ZeroArray[T](a.r, a.c)
+	for i, v := range a.data {
+		ret.data[i] = op(v, value)
+	}
+	return ret
 }

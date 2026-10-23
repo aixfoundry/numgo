@@ -3,7 +3,7 @@ package numgo
 import "fmt"
 
 func ExampleArray_SaveToText() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToText(a, "testdata/output.txt")
 	if err != nil {
@@ -24,7 +24,7 @@ func ExampleLoadFromText() {
 }
 
 func ExampleSaveToCsv() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToCsv(a, "testdata/output.csv")
 	if err != nil {
@@ -67,7 +67,7 @@ func ExampleLoadFromFile_txt() {
 }
 
 func ExampleSaveToFile_csv() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToFile(a, "testdata/output.csv")
 	if err != nil {
@@ -77,7 +77,7 @@ func ExampleSaveToFile_csv() {
 }
 
 func ExampleSaveToFile_txt() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToFile(a, "testdata/output.txt")
 	if err != nil {
@@ -87,7 +87,7 @@ func ExampleSaveToFile_txt() {
 }
 
 func ExampleSaveToFile_png() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToFile(a, "testdata/output.png")
 	if err != nil {
@@ -97,7 +97,7 @@ func ExampleSaveToFile_png() {
 }
 
 func ExampleSaveToPng() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToPng(a, "testdata/output.png")
 	if err != nil {
@@ -107,7 +107,7 @@ func ExampleSaveToPng() {
 }
 
 func ExampleSaveToFile_jpg() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToFile(a, "testdata/output.jpg")
 	if err != nil {
@@ -117,7 +117,7 @@ func ExampleSaveToFile_jpg() {
 }
 
 func ExampleSaveToJpeg() {
-	a := RangeArray(0, 10)
+	a := RangeArray(0.0, 10.0)
 	a.Reshape(2, 5)
 	err := SaveToJpeg(a, "testdata/output.jpg")
 	if err != nil {

@@ -1,6 +1,9 @@
 package numgo
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // EMCP performs Gaussian elimination with partial pivoting (column main element elimination) on an augmented matrix.
 //
@@ -14,26 +17,31 @@ import "math"
 //
 //	sol - a solution vector of size (1, n) if the system has a unique solution.
 //
+// It panics if the shape is not (n, n+1) or if the matrix is singular.
+//
 // Example:
 //
 //	a := NewArray(3, 4, []float64{1, 2, -1, 8, -4, -5, 1, 10, 1, 0, 3, 3})
 //	sol := EMCP(a)
 //	// sol should be [2, -1, 3]
-func EMCP(a *Array) (sol *Array) {
+func EMCP[T Float](a *Array[T]) (sol *Array[T]) {
 	if a.c-1 != a.r {
-		return
+		panic(fmt.Sprintf("numgo: EMCP: shape mismatch (%d,%d); expected n x (n+1)", a.r, a.c))
 	}
 	x := Copy(a)
 	n := x.r // n is the number of equations
 	// Convert to upper triangular form
 	for i := range n { // Traverse all rows
 		// Find the pivot element in the current column and swap rows if necessary
-		cols := []float64{}
+		cols := make([]T, 0, n-i)
 		for ic := i; ic < n; ic++ { // Traverse unprocessed rows
 			cols = append(cols, x.At(ic, i)) // Collect elements from column i
 		}
 		acol := NewArray(1, len(cols), cols)
 		_, _, c := acol.MaxAbs()
+		if c < 0 {
+			panic("numgo: Singular matrix")
+		}
 		if c+i != i {
 			x.Swap(c+i, i, 0)
 		}
@@ -44,16 +52,16 @@ func EMCP(a *Array) (sol *Array) {
 			}
 		}
 	}
-	buf := make([]float64, n)
+	buf := make([]T, n)
 	buf[n-1] = x.At(n-1, x.c-1) / x.At(n-1, n-1)
 	for i := n - 2; i >= 0; i-- {
-		t := 0.0
+		var t T
 		for j := i + 1; j < n; j++ {
 			t += x.At(i, j) * buf[j]
 		}
 		buf[i] = (x.At(i, x.c-1) - t) / x.At(i, i)
 	}
-	return &Array{
+	return &Array[T]{
 		r:    1,
 		c:    n,
 		data: buf,
@@ -73,17 +81,19 @@ func EMCP(a *Array) (sol *Array) {
 //
 //	sol - the least-squares solution vector of size (1, n)
 //
+// It panics if the row counts of a and b differ.
+//
 // Example:
 //
 //	a := NewArray(2, 3, []float64{1, 0, 1, 1, 1, 0})
 //	b := NewArray(2, 1, []float64{3, 4})
 //	sol := Lstsq(a, b)
 //	// sol should be [2, 1]
-func Lstsq(a *Array, b *Array) (sol *Array) {
+func Lstsq[T Float](a *Array[T], b *Array[T]) (sol *Array[T]) {
 	if a.r != b.r {
-		return
+		panic(fmt.Sprintf("numgo: Lstsq: shape mismatch (%d,%d) vs (%d,%d)", a.r, a.c, b.r, b.c))
 	}
-	at := T(a)
+	at := Copy(a).T()
 	aa := Dot(at, a)
 	ab := Dot(at, b)
 	return EMCP(Cat(aa, ab, 1))
@@ -106,16 +116,16 @@ func Lstsq(a *Array, b *Array) (sol *Array) {
 //	xy := NewArray(3, 2, []float64{1, 2, 2, 3, 3, 4})
 //	sol := LsqFit(xy)
 //	// sol should be [1, 1]
-func LsqFit(xy *Array) (sol *Array) {
-	ex2, ex, exy, ey := 0.0, 0.0, 0.0, 0.0
+func LsqFit[T Float](xy *Array[T]) (sol *Array[T]) {
+	var ex2, ex, exy, ey T
 	for ir := range xy.r {
 		ex2 += xy.At(ir, 0) * xy.At(ir, 0)
 		ex += xy.At(ir, 0)
 		exy += xy.At(ir, 0) * xy.At(ir, 1)
 		ey += xy.At(ir, 1)
 	}
-	a := NewArray(2, 3, []float64{
-		float64(xy.r), ex, ey,
+	a := NewArray(2, 3, []T{
+		T(xy.r), ex, ey,
 		ex, ex2, exy,
 	})
 	return EMCP(a)
@@ -132,23 +142,23 @@ func LsqFit(xy *Array) (sol *Array) {
 //	norm := a.FrobeniusNorm(0) // norm will be a 1x2 array with values [sqrt(10), sqrt(25)]
 //	norm := a.FrobeniusNorm(1) // norm will be a 2x1 array with values [sqrt(5), sqrt(25)]
 //	norm := a.FrobeniusNorm(-1) // norm will be a 1x1 array with value [sqrt(30)]
-func (a *Array) FrobeniusNorm(axis int) (ret *Array) {
+func (a *Array[T]) FrobeniusNorm(axis int) (ret *Array[T]) {
 	if axis == 0 {
-		ret = ZeroArray(1, a.c)
+		ret = ZeroArray[T](1, a.c)
 		for ic := range a.c {
 			ret.Set(0, ic, a.Col(ic).FrobeniusNorm(-1).At(0, 0))
 		}
 	} else if axis == 1 {
-		ret = ZeroArray(a.r, 1)
+		ret = ZeroArray[T](a.r, 1)
 		for ir := range a.r {
 			ret.Set(ir, 0, a.Row(ir).FrobeniusNorm(-1).At(0, 0))
 		}
 	} else {
-		sum := 0.0
+		var sum T
 		for _, v := range a.data {
 			sum += v * v
 		}
-		ret = New1DArray([]float64{math.Sqrt(sum)})
+		ret = New1DArray([]T{T(math.Sqrt(toF64(sum)))})
 	}
 	return
 }
@@ -159,7 +169,7 @@ func (a *Array) FrobeniusNorm(axis int) (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
 //	norm := FrobeniusNorm(a, 0) // norm will be a 1x2 array with values [sqrt(10), sqrt(25)]
-func FrobeniusNorm(a *Array, axis int) (ret *Array) {
+func FrobeniusNorm[T Float](a *Array[T], axis int) *Array[T] {
 	return a.FrobeniusNorm(axis)
 }
 
@@ -170,28 +180,28 @@ func FrobeniusNorm(a *Array, axis int) (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
 //	norm := a.Norm1(-1) // norm will be a 1D array with value [9]
-func (a *Array) Norm1(axis int) (ret *Array) {
+func (a *Array[T]) Norm1(axis int) (ret *Array[T]) {
 	if axis == 0 {
-		ret = ZeroArray(1, a.c)
+		ret = ZeroArray[T](1, a.c)
 		for ic := range a.c {
 			norm := a.Col(ic).Abs().Sum(-1).At(0, 0)
 			ret.Set(0, ic, norm)
 		}
 	} else if axis == 1 {
-		ret = ZeroArray(a.r, 1)
+		ret = ZeroArray[T](a.r, 1)
 		for ir := range a.r {
 			norm := a.Row(ir).Abs().Sum(-1).At(0, 0)
 			ret.Set(ir, 0, norm)
 		}
 	} else {
-		norm, max := 0.0, 0.0
+		var max T
 		for ic := range a.c {
-			norm = a.Col(ic).Abs().Sum(-1).At(0, 0)
+			norm := a.Col(ic).Abs().Sum(-1).At(0, 0)
 			if norm > max {
 				max = norm
 			}
 		}
-		ret = New1DArray([]float64{max})
+		ret = New1DArray([]T{max})
 	}
 
 	return
@@ -203,7 +213,7 @@ func (a *Array) Norm1(axis int) (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
 //	norm := Norm1(a, -1) // norm will be a 1D array with value [9]
-func Norm1(a *Array, axis int) *Array {
+func Norm1[T Float](a *Array[T], axis int) *Array[T] {
 	return a.Norm1(axis)
 }
 
@@ -214,7 +224,7 @@ func Norm1(a *Array, axis int) *Array {
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
 //	norm := a.Norm2(0) // norm will be a 1D array with value [sqrt(10), sqrt(25)]
-func (a *Array) Norm2(axis int) *Array {
+func (a *Array[T]) Norm2(axis int) *Array[T] {
 	return a.FrobeniusNorm(axis)
 }
 
@@ -224,7 +234,7 @@ func (a *Array) Norm2(axis int) *Array {
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
 //	norm := Norm2(a, 0) // norm will be a 1D array with value [sqrt(10), sqrt(25)]
-func Norm2(a *Array, axis int) *Array {
+func Norm2[T Float](a *Array[T], axis int) *Array[T] {
 	return a.Norm2(axis)
 }
 
@@ -235,28 +245,28 @@ func Norm2(a *Array, axis int) *Array {
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
 //	norm := a.NormInf(-1) // norm will be a 1D array with value [15]
-func (a *Array) NormInf(axis int) (ret *Array) {
+func (a *Array[T]) NormInf(axis int) (ret *Array[T]) {
 	if axis == 0 {
-		ret = ZeroArray(1, a.c)
+		ret = ZeroArray[T](1, a.c)
 		for ic := range a.c {
 			sol, _, _ := a.Col(ic).MaxAbs()
 			ret.Set(0, ic, sol)
 		}
 	} else if axis == 1 {
-		ret = ZeroArray(a.r, 1)
+		ret = ZeroArray[T](a.r, 1)
 		for ir := range a.r {
 			sol, _, _ := a.Row(ir).MaxAbs()
 			ret.Set(ir, 0, sol)
 		}
 	} else {
-		norm, max := 0.0, 0.0
+		var max T
 		for ir := range a.r {
-			norm = a.Row(ir).Abs().Sum(-1).At(0, 0)
+			norm := a.Row(ir).Abs().Sum(-1).At(0, 0)
 			if norm > max {
 				max = norm
 			}
 		}
-		ret = New1DArray([]float64{max})
+		ret = New1DArray([]T{max})
 	}
 
 	return
@@ -268,7 +278,7 @@ func (a *Array) NormInf(axis int) (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, -2, 3}, {-4, 5, -6}})
 //	norm := NormInf(a) // norm will be a 1D array with value [15]
-func NormInf(a *Array, axis int) *Array {
+func NormInf[T Float](a *Array[T], axis int) *Array[T] {
 	return a.NormInf(axis)
 }
 
@@ -284,7 +294,7 @@ func NormInf(a *Array, axis int) *Array {
 //	fmt.Println(a.Norm(math.Inf(1), 0)) // Output: [6]
 //	fmt.Println(a.Norm(2, 0))          // Output: [5.477225575051661]
 //	fmt.Println(a.Norm(1, 0))          // Output: [4]
-func (a *Array) Norm(ord float64, axis int) (ret *Array) {
+func (a *Array[T]) Norm(ord float64, axis int) (ret *Array[T]) {
 	switch ord {
 	case math.Inf(1):
 		ret = a.NormInf(axis)
@@ -302,7 +312,7 @@ func (a *Array) Norm(ord float64, axis int) (ret *Array) {
 //
 //	a := New2DArray([][]float64{{1, 2}, {3, 4}})
 //	fmt.Println(Norm(a, math.Inf(1), 0)) // Output: [6]
-func Norm(a *Array, ord float64, axis int) *Array {
+func Norm[T Float](a *Array[T], ord float64, axis int) *Array[T] {
 	return a.Norm(ord, axis)
 }
 
@@ -320,11 +330,11 @@ func Norm(a *Array, ord float64, axis int) *Array {
 //	hist, xEdges, yEdges := Histogram2d(x, y, bins, [][]float64{})
 //
 // The example above computes a 3x3 histogram for the given x and y data.
-func Histogram2d(x, y *Array, bins []int, range_ [][]float64) (hist *Array, xEdges *Array, yEdges *Array) {
+func Histogram2d[T Float](x, y *Array[T], bins []int, range_ [][]float64) (hist *Array[T], xEdges *Array[T], yEdges *Array[T]) {
 	if len(bins) != 2 {
-		panic("Invalid bins")
+		panic("numgo: Histogram2d: bins must have length 2")
 	}
-	x, y = x.Reshape(1, x.r*x.c), y.Reshape(1, y.r*y.c)
+	x, y = Copy(x).Reshape(1, x.r*x.c), Copy(y).Reshape(1, y.r*y.c)
 	var xMin, xMax, yMin, yMax float64
 	if len(range_) == 2 && len(range_[0]) == 2 && len(range_[1]) == 2 {
 		xMin = range_[0][0]
@@ -332,26 +342,27 @@ func Histogram2d(x, y *Array, bins []int, range_ [][]float64) (hist *Array, xEdg
 		yMin = range_[1][0]
 		yMax = range_[1][1]
 	} else {
-		xMin = x.Min(-1).At(0, 0)
-		xMax = x.Max(-1).At(0, 0)
-		yMin = y.Min(-1).At(0, 0)
-		yMax = y.Max(-1).At(0, 0)
+		xMin = toF64(x.Min(-1).At(0, 0))
+		xMax = toF64(x.Max(-1).At(0, 0))
+		yMin = toF64(y.Min(-1).At(0, 0))
+		yMax = toF64(y.Max(-1).At(0, 0))
 	}
 
 	xBinWidth := (xMax - xMin) / float64(bins[0])
 	yBinWidth := (yMax - yMin) / float64(bins[1])
 
-	hist = ZeroArray(bins[0], bins[1])
+	hist = ZeroArray[T](bins[0], bins[1])
 
 	for i := range x.c {
+		xi, yi := toF64(x.At(0, i)), toF64(y.At(0, i))
 		if len(range_) > 0 {
-			if x.At(0, i) < xMin || x.At(0, i) > xMax || y.At(0, i) < yMin || y.At(0, i) > yMax {
+			if xi < xMin || xi > xMax || yi < yMin || yi > yMax {
 				continue
 			}
 		}
 		// Determine the bin index for x and y
-		xIdx := int((x.At(0, i) - xMin) / xBinWidth)
-		yIdx := int((y.At(0, i) - yMin) / yBinWidth)
+		xIdx := int((xi - xMin) / xBinWidth)
+		yIdx := int((yi - yMin) / yBinWidth)
 		// Handle edge case where value is exactly at the upper limit
 		if xIdx == bins[0] {
 			xIdx--
@@ -366,14 +377,14 @@ func Histogram2d(x, y *Array, bins []int, range_ [][]float64) (hist *Array, xEdg
 	}
 
 	// Create the bin edges arrays
-	edges := []float64{}
+	edges := []T{}
 	for i := 0; i <= bins[0]; i++ {
-		edges = append(edges, xMin+float64(i)*xBinWidth)
+		edges = append(edges, T(xMin+float64(i)*xBinWidth))
 	}
 	xEdges = New1DArray(edges)
-	edges = []float64{}
+	edges = []T{}
 	for i := 0; i <= bins[1]; i++ {
-		edges = append(edges, yMin+float64(i)*yBinWidth)
+		edges = append(edges, T(yMin+float64(i)*yBinWidth))
 	}
 	yEdges = New1DArray(edges)
 	return

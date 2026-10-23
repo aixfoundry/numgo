@@ -2,7 +2,9 @@ package numgo
 
 import (
 	"fmt"
+	"math"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -179,7 +181,7 @@ func ExampleAvg() {
 
 func TestWindowAvg(t *testing.T) {
 	type args struct {
-		a      *Array
+		a      *Array[float64]
 		window int
 		step   int
 		axis   int
@@ -187,7 +189,7 @@ func TestWindowAvg(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Full Window",
@@ -281,13 +283,13 @@ func TestWindowAvg(t *testing.T) {
 
 func TestMean(t *testing.T) {
 	type args struct {
-		a    *Array
+		a    *Array[float64]
 		axis int
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Mean Axis 0",
@@ -303,7 +305,7 @@ func TestMean(t *testing.T) {
 				a:    New2DArray([][]float64{{1, 2}, {3, 4}}),
 				axis: 1,
 			},
-			wantRet: New1DArray([]float64{1.5, 3.5}),
+			wantRet: NewArray(2, 1, []float64{1.5, 3.5}),
 		},
 	}
 	for _, tt := range tests {
@@ -317,13 +319,13 @@ func TestMean(t *testing.T) {
 
 func TestDiv(t *testing.T) {
 	type args struct {
-		a *Array
-		b *Array
+		a *Array[float64]
+		b *Array[float64]
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Div 2x2 2x2",
@@ -369,13 +371,13 @@ func TestDiv(t *testing.T) {
 
 func TestMul(t *testing.T) {
 	type args struct {
-		a *Array
-		b *Array
+		a *Array[float64]
+		b *Array[float64]
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Mul 2x2 2x2",
@@ -421,13 +423,13 @@ func TestMul(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	type args struct {
-		a *Array
-		b *Array
+		a *Array[float64]
+		b *Array[float64]
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Add 2x2 2x2",
@@ -473,13 +475,13 @@ func TestAdd(t *testing.T) {
 
 func TestSub(t *testing.T) {
 	type args struct {
-		a *Array
-		b *Array
+		a *Array[float64]
+		b *Array[float64]
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Sub 2x2 2x2",
@@ -525,13 +527,13 @@ func TestSub(t *testing.T) {
 
 func TestAddValue(t *testing.T) {
 	type args struct {
-		a     *Array
+		a     *Array[float64]
 		value float64
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Add 2x2",
@@ -553,13 +555,13 @@ func TestAddValue(t *testing.T) {
 
 func TestSubValue(t *testing.T) {
 	type args struct {
-		a     *Array
+		a     *Array[float64]
 		value float64
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Sub 2x2",
@@ -581,13 +583,13 @@ func TestSubValue(t *testing.T) {
 
 func TestMulValue(t *testing.T) {
 	type args struct {
-		a     *Array
+		a     *Array[float64]
 		value float64
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Mul 2x2",
@@ -609,13 +611,13 @@ func TestMulValue(t *testing.T) {
 
 func TestDivValue(t *testing.T) {
 	type args struct {
-		a     *Array
+		a     *Array[float64]
 		value float64
 	}
 	tests := []struct {
 		name    string
 		args    args
-		wantRet *Array
+		wantRet *Array[float64]
 	}{
 		{
 			name: "Test Div 2x2",
@@ -745,4 +747,66 @@ func ExamplePowValue() {
 	// Output:
 	// ⎡ 4   9⎤
 	// ⎣16  25⎦
+}
+
+func TestAddFloat32(t *testing.T) {
+	got := New2DArray([][]float32{{1, 2}, {3, 4}}).Add(New2DArray([][]float32{{1, 1}, {1, 1}}))
+	want := New2DArray([][]float32{{2, 3}, {4, 5}})
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Add float32 = %v, want %v", got, want)
+	}
+}
+
+func TestShapeMismatchPanics(t *testing.T) {
+	a := New2DArray([][]float64{{1, 2}, {3, 4}})
+	b := New2DArray([][]float64{{1, 2, 3}})
+	cases := []struct {
+		name string
+		fn   func()
+		want string
+	}{
+		{"Add", func() { a.Add(b) }, "broadcast together"},
+		{"Dot", func() { a.Dot(b) }, "shape mismatch"},
+		{"MovingAvgAxis", func() { New1DArray([]float64{1, 2}).MovingAvg(2, 1, 2) }, "axis must be"},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				msg := fmt.Sprint(recover())
+				if !strings.Contains(msg, tt.want) {
+					t.Errorf("panic = %q, want it to contain %q", msg, tt.want)
+				}
+			}()
+			tt.fn()
+		})
+	}
+}
+
+func TestDivByZeroIEEE(t *testing.T) {
+	got := New2DArray([][]float64{{1, -1, 0}}).Div(New2DArray([][]float64{{0, 0, 0}}))
+	if !math.IsInf(got.At(0, 0), 1) || !math.IsInf(got.At(0, 1), -1) || !math.IsNaN(got.At(0, 2)) {
+		t.Errorf("Div by zero = %v, want [+Inf -Inf NaN]", got.Data())
+	}
+	d := DivValue(New2DArray([][]float64{{1}}), 0.0)
+	if !math.IsInf(d.At(0, 0), 1) {
+		t.Errorf("DivValue by zero = %v, want +Inf", d.Data())
+	}
+}
+
+func TestEmptyReductions(t *testing.T) {
+	a := New2DArray([][]float64{})
+	cases := map[string]func() *Array[float64]{
+		"Max":    func() *Array[float64] { return a.Max(-1) },
+		"Min":    func() *Array[float64] { return a.Min(-1) },
+		"Mean":   func() *Array[float64] { return a.Mean(-1) },
+		"Median": func() *Array[float64] { return a.Median(-1) },
+	}
+	for name, f := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := f()
+			if got.r != 1 || got.c != 1 || !math.IsNaN(got.At(0, 0)) {
+				t.Errorf("%s() = %v (shape %dx%d), want 1x1 NaN", name, got.Data(), got.r, got.c)
+			}
+		})
+	}
 }

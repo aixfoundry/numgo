@@ -22,15 +22,15 @@ import (
 //
 //	points := New2DArray([][]float64{{0, 0}, {1, 0}, {0, 1}})
 //	shapeContext := ShapeContext(points, 5.0, 8.0)
-func ShapeContext(a *Array, radiusNum float64, angleNum float64) (ret *Array) {
+func ShapeContext[T Float](a *Array[T], radiusNum float64, angleNum float64) (ret *Array[T]) {
 	n := a.r
-	data := [][]float64{}
+	data := [][]T{}
 	for i := range n {
 		p := a.Row(i)
 		coords := a.Sub(p)
 		r := coords.Norm(2, 1)
 		angle := Atan2(coords.Col(1), coords.Col(0))
-		normR := r.Div(r.Filter(func(r, c int, v float64) bool { return v != 0 }).Median(-1))
+		normR := r.Div(r.Filter(func(r, c int, v T) bool { return v != 0 }).Median(-1))
 		hist, _, _ := Histogram2d(normR, angle, []int{int(radiusNum), int(angleNum)}, [][]float64{{0, 2}, {-math.Pi, math.Pi}})
 		data = append(data, hist.data)
 	}
@@ -57,7 +57,7 @@ const _EPSILON = 1e-10
 //	array1 := New1DArray([]float64{1, 2, 3})
 //	array2 := New1DArray([]float64{3, 2, 1})
 //	distance := ChiSquareDistance(array1, array2)
-func ChiSquareDistance(a *Array, b *Array) (ret float64) {
+func ChiSquareDistance[T Float](a *Array[T], b *Array[T]) (ret T) {
 	ret = a.Sub(b).PowValue(2).Div(a.Add(b).AddValue(_EPSILON)).Sum(-1).At(0, 0) * 0.5
 	return
 }
@@ -71,12 +71,12 @@ func ChiSquareDistance(a *Array, b *Array) (ret float64) {
 //	b := New2DArray([][]float64{{5, 6}, {7, 8}})
 //	costMatrix := CostMatrix(a, b)
 //	fmt.Println(costMatrix) // Output will be a 2x2 matrix with Chi-Square distances
-func CostMatrix(a *Array, b *Array) (ret *Array) {
+func CostMatrix[T Float](a *Array[T], b *Array[T]) (ret *Array[T]) {
 	n := a.r
 	m := b.r
-	data := make([][]float64, n)
+	data := make([][]T, n)
 	for i := range n {
-		data[i] = make([]float64, m)
+		data[i] = make([]T, m)
 		for j := range m {
 			data[i][j] = ChiSquareDistance(a.Row(i), b.Row(j))
 		}
