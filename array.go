@@ -51,6 +51,14 @@ func (a *Array[T]) IsContiguous() bool {
 	return nditer.IsContiguous(a.layout())
 }
 
+// Shares data: Data returns the underlying storage starting at the view
+// offset. For contiguous arrays it reads in C order; for non-contiguous
+// views the element order does NOT match C order — use Ravel().Data()
+// instead. Mutating it affects every array sharing the storage.
+func (a *Array[T]) Data() []T {
+	return a.data[a.offset:]
+}
+
 // Pure: Copy returns an independent, C-order compact copy of the array.
 func (a *Array[T]) Copy() *Array[T] {
 	shape := slices.Clone(a.shape)
@@ -143,4 +151,110 @@ func (a *Array[T]) Slice(rs ...Range) *Array[T] {
 	}
 	l := nditer.Slice(a.layout(), starts, steps, shape)
 	return newArray(l.Shape, l.Strides, l.Offset, a.data)
+}
+
+// View: Squeeze drops size-1 dimensions. With no axes all size-1 dimensions are
+// dropped; named axes must have size one. The result shares data.
+func (a *Array[T]) Squeeze(axes ...int) *Array[T] {
+	drop := make([]bool, len(a.shape))
+	if len(axes) == 0 {
+		for i, d := range a.shape {
+			drop[i] = d == 1
+		}
+	} else {
+		for _, ax := range axes {
+			ax = a.resolveAxis(ax)
+			if a.shape[ax] != 1 {
+				panicSqueeze()
+			}
+			drop[ax] = true
+		}
+	}
+	shape, strides := make([]int, 0, len(a.shape)), make([]int, 0, len(a.shape))
+	for i := range a.shape {
+		if !drop[i] {
+			shape = append(shape, a.shape[i])
+			strides = append(strides, a.strides[i])
+		}
+	}
+	return newArray(shape, strides, a.offset, a.data)
+}
+
+// View: ExpandDims inserts a size-1 dimension at axis (negative counts from the
+// end). The result shares data.
+func (a *Array[T]) ExpandDims(axis int) *Array[T] {
+	ax := axis
+	if ax < 0 {
+		ax += len(a.shape) + 1
+	}
+	if ax < 0 || ax > len(a.shape) {
+		panicAxis(axis, len(a.shape))
+	}
+	return newArray(
+		slices.Insert(slices.Clone(a.shape), ax, 1),
+		slices.Insert(slices.Clone(a.strides), ax, 0),
+		a.offset, a.data)
+}
+
+// View: SwapAxes exchanges dimensions i and j (negative allowed). The result
+// shares data.
+func (a *Array[T]) SwapAxes(i, j int) *Array[T] {
+	i, j = a.resolveAxis(i), a.resolveAxis(j)
+	axes := make([]int, len(a.shape))
+	for k := range axes {
+		axes[k] = k
+	}
+	axes[i], axes[j] = axes[j], axes[i]
+	l := nditer.Permute(a.layout(), axes)
+	return newArray(l.Shape, l.Strides, l.Offset, a.data)
+}
+
+// View: Ravel flattens to 1-D in C order. A contiguous array returns a view
+// sharing data; a non-contiguous array is copied first, so sharing is not
+// guaranteed.
+func (a *Array[T]) Ravel() *Array[T] {
+	return a.Reshape(a.Size())
+}
+
+// View: BroadcastTo expands the array to shape with stride-0 dimensions. The
+// shape must be right-align-compatible: every trailing dimension is equal to the
+// input's or the input dimension is one. The result shares data, and writes
+// through it alias across expanded slots — numpy's broadcast_to is read-only,
+// but this package cannot enforce that, so treat the result as read-only.
+func (a *Array[T]) BroadcastTo(shape ...int) *Array[T] {
+	if len(shape) < len(a.shape) {
+		panicBroadcast(a.shape, shape)
+	}
+	lead := len(shape) - len(a.shape)
+	for i, d := range a.shape {
+		if d != 1 && shape[lead+i] != d {
+			panicBroadcast(a.shape, shape)
+		}
+	}
+	strides := make([]int, len(shape))
+	for i, d := range a.shape {
+		if d != 1 {
+			strides[lead+i] = a.strides[i]
+		}
+	}
+	return newArray(slices.Clone(shape), strides, a.offset, a.data)
+}
+
+// resolveAxis normalizes a possibly negative axis against the array's rank.
+func (a *Array[T]) resolveAxis(axis int) int {
+	if axis < 0 {
+		axis += len(a.shape)
+	}
+	if axis < 0 || axis >= len(a.shape) {
+		panicAxis(axis, len(a.shape))
+	}
+	return axis
+}
+
+// axesOrAll maps an optional-axes argument: empty means every axis.
+func (a *Array[T]) axesOrAll(axes []int) []int {
+	if len(axes) == 0 {
+		return allAxes(len(a.shape))
+	}
+	return axes
 }

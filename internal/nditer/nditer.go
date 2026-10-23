@@ -192,6 +192,9 @@ func Zip[T any](dst *Layout, dstData []T, srcs []*Layout, srcData [][]T,
 // The caller prefills out with the identity value.
 func Reduce[T any](l *Layout, data []T, axes []int, out []T,
 	fn func(acc *T, v T)) {
+	if Size(l.Shape) == 0 {
+		return
+	}
 	ndim := len(l.Shape)
 	reduced := make([]bool, ndim)
 	for _, ax := range axes {
@@ -243,4 +246,114 @@ func shapeString(shape []int) string {
 		parts[i] = fmt.Sprint(d)
 	}
 	return "(" + strings.Join(parts, ",") + ")"
+}
+
+// ReduceAxis folds along a single axis, handing fn the C-order kept slot, the
+// coordinate along axis and the element. It exists so argmax-style operations
+// can report positions without doing index arithmetic themselves.
+func ReduceAxis[T any](l *Layout, data []T, axis int, fn func(slot, coord int, v T)) {
+	if Size(l.Shape) == 0 {
+		return
+	}
+	ndim := len(l.Shape)
+	if axis < 0 {
+		axis += ndim
+	}
+	if axis < 0 || axis >= ndim {
+		return
+	}
+	idx := make([]int, ndim)
+	for {
+		slot := 0
+		for i := range idx {
+			if i != axis {
+				slot = slot*l.Shape[i] + idx[i]
+			}
+		}
+		fn(slot, idx[axis], data[Index(l, idx)])
+		k := ndim - 1
+		for k >= 0 {
+			idx[k]++
+			if idx[k] < l.Shape[k] {
+				break
+			}
+			idx[k] = 0
+			k--
+		}
+		if k < 0 {
+			return
+		}
+	}
+}
+
+// Accumulate folds along axes in C-order prefix style (cumsum semantics): out
+// has the same element count as input; within each channel (all non-axes
+// coords fixed), out[.., i_k, ..] holds the fold of data[.., 0..i_k, ..]. Axes
+// are normalized (negative allowed) like Reduce.
+func Accumulate[T any](l *Layout, data []T, axes []int, out []T,
+	fn func(acc *T, v T)) {
+	if Size(l.Shape) == 0 {
+		return
+	}
+	ndim := len(l.Shape)
+	folded := make([]bool, ndim)
+	for _, ax := range axes {
+		if ax < 0 {
+			ax += ndim
+		}
+		if ax >= 0 && ax < ndim {
+			folded[ax] = true
+		}
+	}
+	idx := make([]int, ndim)
+	prev := make([]int, ndim)
+	// Odometer weights over the folded axes only: the prefix chain runs in
+	// C-order restricted to the folded coordinates, so a channel's first
+	// element is the one whose folded counter is zero.
+	foldStride := make([]int, ndim)
+	s := 1
+	for i := ndim - 1; i >= 0; i-- {
+		foldStride[i] = s
+		if folded[i] {
+			s *= l.Shape[i]
+		}
+	}
+	for {
+		// acc carries the fold from out at the predecessor coordinate (folded
+		// counter minus one); counter zero means empty prefix.
+		foldPos := 0
+		for i := range idx {
+			if folded[i] {
+				foldPos += idx[i] * foldStride[i]
+			}
+			prev[i] = idx[i]
+		}
+		acc := data[Index(l, idx)]
+		if foldPos > 0 {
+			foldPos--
+			for i := ndim - 1; i >= 0; i-- {
+				if !folded[i] {
+					continue
+				}
+				prev[i] = foldPos / foldStride[i]
+				foldPos %= foldStride[i]
+			}
+			acc = out[Index(l, prev)]
+			fn(&acc, data[Index(l, idx)])
+		}
+		out[Index(l, idx)] = acc
+		// Advance idx as a full C-order odometer over every coordinate.
+		k := len(idx) - 1
+		for k >= 0 {
+			idx[k]++
+			if idx[k] < l.Shape[k] {
+				break
+			}
+			idx[k] = 0
+			k--
+		}
+		if k < 0 {
+			return
+		}
+	}
 }

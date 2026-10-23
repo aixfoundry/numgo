@@ -147,3 +147,53 @@ func TestReduce(t *testing.T) {
 		}
 	}
 }
+
+func TestAccumulateAxis0(t *testing.T) {
+	// [[1 2 3]      [[1 2 3]
+	//  [4 5 6]]  ->  [5 7 9]]
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	Accumulate(l, data, []int{0}, out, func(acc *float64, v float64) { *acc += v })
+	want := []float64{1, 2, 3, 5, 7, 9}
+	if !reflect.DeepEqual(out, want) {
+		t.Fatalf("got %v, want %v", out, want)
+	}
+}
+
+func TestAccumulateAxis1(t *testing.T) {
+	// [[1 2 3]      [[1 3 6]
+	//  [4 5 6]]  ->  [4 9 15]]
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	Accumulate(l, data, []int{1}, out, func(acc *float64, v float64) { *acc += v })
+	want := []float64{1, 3, 6, 4, 9, 15}
+	if !reflect.DeepEqual(out, want) {
+		t.Fatalf("got %v, want %v", out, want)
+	}
+}
+
+func TestAccumulateAxisNegative(t *testing.T) {
+	// Axis -1 on a 2x3 must match axis 1.
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	Accumulate(l, data, []int{-1}, out, func(acc *float64, v float64) { *acc += v })
+	want := []float64{1, 3, 6, 4, 9, 15}
+	if !reflect.DeepEqual(out, want) {
+		t.Fatalf("got %v, want %v", out, want)
+	}
+}
+
+func TestAccumulateAllAxes(t *testing.T) {
+	// Folding over both axes prefixes the raveled data.
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	Accumulate(l, data, []int{0, 1}, out, func(acc *float64, v float64) { *acc += v })
+	want := []float64{1, 3, 6, 10, 15, 21}
+	if !reflect.DeepEqual(out, want) {
+		t.Fatalf("got %v, want %v", out, want)
+	}
+}

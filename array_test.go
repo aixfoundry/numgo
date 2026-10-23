@@ -145,3 +145,86 @@ func TestDivByZeroIsInf(t *testing.T) {
 		t.Fatalf("got %v", []float64{q.At(0), q.At(1), q.At(2)})
 	}
 }
+
+func TestSqueezeExpandDimsSwapAxes(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4}, 2, 1, 2)
+	s := a.Squeeze()
+	if !slices.Equal(s.Shape(), []int{2, 2}) || s.At(1, 1) != 4 {
+		t.Fatalf("squeeze all shape=%v", s.Shape())
+	}
+	s1 := a.Squeeze(1)
+	if !slices.Equal(s1.Shape(), []int{2, 2}) {
+		t.Fatalf("squeeze 1 shape=%v", s1.Shape())
+	}
+	mustPanic(t, "numgo: cannot select an axis to squeeze out which has size not equal to one",
+		func() { a.Squeeze(0) })
+	mustPanic(t, "numgo: axis 5 is out of bounds for 3-d array", func() { a.Squeeze(5) })
+
+	e := a.Squeeze().ExpandDims(1)
+	if !slices.Equal(e.Shape(), []int{2, 1, 2}) || e.At(1, 0, 1) != 4 {
+		t.Fatalf("expand shape=%v", e.Shape())
+	}
+	if !slices.Equal(a.Squeeze().ExpandDims(-1).Shape(), []int{2, 2, 1}) {
+		t.Fatal("expand -1")
+	}
+	mustPanic(t, "numgo: axis 3 is out of bounds for 2-d array", func() { a.Squeeze().ExpandDims(3) })
+
+	sw := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3).SwapAxes(0, 1)
+	if !slices.Equal(sw.Shape(), []int{3, 2}) || sw.At(2, 1) != 6 {
+		t.Fatalf("swap shape=%v at(2,1)=%v", sw.Shape(), sw.At(2, 1))
+	}
+	mustPanic(t, "numgo: axis 2 is out of bounds for 2-d array", func() { sw.SwapAxes(0, 2) })
+}
+
+func TestSqueezeExpandShareData(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4}, 2, 1, 2)
+	a.Squeeze(1).Set([]int{1, 1}, 99)
+	if a.At(1, 0, 1) != 99 {
+		t.Fatal("Squeeze does not share data")
+	}
+	e := a.Squeeze().ExpandDims(1) // still a view
+	e.Set([]int{0, 0, 1}, 42)
+	if a.At(0, 0, 1) != 42 {
+		t.Fatal("ExpandDims does not share data")
+	}
+}
+
+func TestRavelViewVsCopy(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	r := a.Ravel()
+	if !slices.Equal(r.Shape(), []int{6}) || r.At(4) != 5 {
+		t.Fatalf("ravel shape=%v", r.Shape())
+	}
+	r.Set([]int{0}, 99)
+	if a.At(0, 0) != 99 {
+		t.Fatal("contiguous Ravel is not a view")
+	}
+	v := a.Transpose() // non-contiguous
+	rv := v.Ravel()
+	rv.Set([]int{1}, 77)
+	if v.At(0, 1) == 77 && v.At(1, 0) != 77 {
+		t.Fatal("unexpected transpose sharing")
+	}
+	if v.Ravel().At(1) != 4 {
+		t.Fatalf("ravel of transposed = %v", v.Ravel().At(1))
+	}
+}
+
+func TestBroadcastTo(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3}, 1, 3)
+	b := a.BroadcastTo(2, 3, 3)
+	if !slices.Equal(b.Shape(), []int{2, 3, 3}) || b.At(0, 0, 2) != 3 || b.At(1, 0, 2) != 3 {
+		t.Fatalf("shape=%v at(1,0,2)=%v", b.Shape(), b.At(1, 0, 2))
+	}
+	if !slices.Equal(a.BroadcastTo(4, 3).Shape(), []int{4, 3}) {
+		t.Fatal("same-rank broadcast")
+	}
+	mustPanic(t, "numgo: operands could not be broadcast together with shapes (1,3) (2)",
+		func() { a.BroadcastTo(2) })
+	// stride-0 aliasing: writing through the view hits every expanded slot.
+	c := FromSlice([]float64{7}, 1).BroadcastTo(3)
+	c.Set([]int{0}, 9)
+	if c.At(1) != 9 || c.At(2) != 9 {
+		t.Fatal("stride-0 expansion does not alias")
+	}
+}

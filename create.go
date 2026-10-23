@@ -116,3 +116,51 @@ func New2DArray[T Number](rows [][]T) *Array[T] {
 	}
 	return FromSlice(data, len(rows), cols)
 }
+
+// Pure: Identity returns the n-by-n matrix with ones on the diagonal. Eye with a
+// single argument; no Empty constructor exists because Go's make already zeroes.
+func Identity[T Number](n int) *Array[T] {
+	return Eye[T](n)
+}
+
+// Pure: FromFunction fills a new array in C order, calling f with the coordinates
+// of each element.
+func FromFunction[T Number](shape []int, f func(coords ...int) T) *Array[T] {
+	a := Zeros[T](shape...)
+	if a.Size() == 0 {
+		return a
+	}
+	coords := make([]int, len(a.shape))
+	for i := range a.data {
+		a.data[i] = f(coords...)
+		for k := len(coords) - 1; k >= 0; k-- {
+			coords[k]++
+			if coords[k] < a.shape[k] {
+				break
+			}
+			coords[k] = 0
+		}
+	}
+	return a
+}
+
+// Pure: MeshGrid returns len(as) arrays with 'ij' (matrix) indexing semantics:
+// result[k] has shape len(as[0]) × … × len(as[n-1]) and varies only along
+// dimension k, taking as[k]'s values there.
+func MeshGrid[T Number](as ...*Array[T]) []*Array[T] {
+	shape := make([]int, len(as))
+	for k, a := range as {
+		if a.Ndim() != 1 {
+			panicMeshGrid()
+		}
+		shape[k] = a.Size()
+	}
+	out := make([]*Array[T], len(as))
+	for k, a := range as {
+		v := a // capture for the closure below
+		out[k] = FromFunction(shape, func(coords ...int) T {
+			return v.At(coords[k])
+		})
+	}
+	return out
+}

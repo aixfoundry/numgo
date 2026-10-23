@@ -78,3 +78,44 @@ func panicZeroStep() {
 func panicSamples(num int) {
 	panic(fmt.Sprintf("numgo: number of samples, %d, must be non-negative", num))
 }
+
+// panicNoArrays reports an operation that received no input arrays.
+func panicNoArrays() {
+	panic("numgo: need at least one array to concatenate")
+}
+
+// panicConcatenateShapes reports Concatenate inputs whose non-axis dimensions differ.
+func panicConcatenateShapes() {
+	panic("numgo: all the input array dimensions except for the concatenation axis must match exactly")
+}
+
+// panicStackShapes reports Stack inputs of differing shapes.
+func panicStackShapes() {
+	panic("numgo: all input arrays must have the same shape")
+}
+
+// panicSqueeze reports squeezing an axis whose size is not one.
+func panicSqueeze() {
+	panic("numgo: cannot select an axis to squeeze out which has size not equal to one")
+}
+
+// panicSplitIndices reports out-of-order or out-of-bounds Split boundaries.
+func panicSplitIndices() {
+	panic("numgo: split indices must be ascending and within the axis bounds")
+}
+
+// panicRepeat reports a negative repeat count.
+func panicRepeat(count int) {
+	panic(fmt.Sprintf("numgo: repeat count %d must be non-negative", count))
+}
+
+// panicMeshGrid reports a MeshGrid input that is not 1-D.
+func panicMeshGrid() {
+	panic("numgo: MeshGrid inputs must be 1-D")
+}
+
+// panicComplexStat reports a statistical reduction that is undefined for
+// complex element types (numpy raises TypeError for the same reason).
+func panicComplexStat(op string) {
+	panic(fmt.Sprintf("numgo: %s are not defined for complex arrays", op))
+}
