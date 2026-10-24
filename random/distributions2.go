@@ -95,7 +95,7 @@ func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 		}
 		lo := U + U
 		hi := 2.0 - U - U
-		var sign float64 = 1.0
+		sign := 1.0
 		if U >= 0.5 {
 			sign = -1.0
 		}
@@ -941,11 +941,6 @@ func expm1G(x float64) float64 {
 	var xsb uint32
 	ux := math.Float64bits(x)
 	xsb = uint32(ux >> 63)
-	if xsb == 0 {
-		y = x
-	} else {
-		y = -x
-	}
 	hx := uint32(ux>>32) & 0x7fffffff
 	if hx >= 0x4043687A {
 		if hx >= 0x40862E42 {
@@ -1022,7 +1017,6 @@ func expm1G(x float64) float64 {
 		y = math.Float64frombits(math.Float64bits(y) + uint64(int64(k)<<52))
 		return y - 1.0
 	}
-	t = 1.0
 	if k < 20 {
 		// SET_HIGH_WORD replaces only the high 32 bits (low word of 1.0 is 0).
 		t = math.Float64frombits(uint64(0x3ff00000-(0x200000>>uint(k))) << 32)

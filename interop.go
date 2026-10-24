@@ -20,6 +20,9 @@ import (
 // The pointer stays valid while a is reachable (the GC keeps the backing
 // array alive) and its data is not resized.
 func (a *Array[T]) UnsafeData() unsafe.Pointer {
+	if a.Size() == 0 {
+		return nil
+	}
 	if !a.IsContiguous() {
 		panic("numgo: UnsafeData: array is not C-order contiguous; use Copy or Ravel first")
 	}
@@ -73,6 +76,7 @@ func FromByteSlice[T Number](b []byte, shape ...int) *Array[T] {
 			unsafe.Slice((*T)(ptr), n))
 	}
 	elems := make([]T, n)
-	copy(elems, unsafe.Slice((*T)(ptr), n))
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(unsafe.SliceData(elems))), len(b))
+	copy(dst, b)
 	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), 0, elems)
 }

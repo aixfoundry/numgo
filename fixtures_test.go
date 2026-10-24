@@ -143,7 +143,6 @@ func fatalIf(t *testing.T, err error, format string, a ...any) {
 	}
 }
 
-func floats(args []any, i int) []float64 { return args[i].([]float64) }
 func ints(args []any, i int) []int       { return args[i].([]int) }
 func boolean(args []any, i int) []bool   { return args[i].([]bool) }
 func num(args []any, i int) float64      { return args[i].(float64) }

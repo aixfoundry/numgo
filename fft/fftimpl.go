@@ -84,8 +84,9 @@ func bluesteinScratch(m int) (w []complex128, put func()) {
 	if !loaded {
 		noteCacheEntry()
 	}
-	w = p.(*sync.Pool).Get().([]complex128)
-	return w, func() { p.(*sync.Pool).Put(w) }
+	v := p.(*sync.Pool).Get()
+	w = v.([]complex128)
+	return w, func() { p.(*sync.Pool).Put(v) }
 }
 
 // bluesteinKernel holds the per-(n, sign) reusable chirp and the FFT of the

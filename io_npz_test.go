@@ -173,7 +173,7 @@ func TestLoadNpzCorruptAndEmpty(t *testing.T) {
 	if _, err := zw.Create("readme.txt"); err != nil {
 		t.Fatal(err)
 	}
-	zw.Close()
+	_ = zw.Close()
 	if _, err := LoadNpz(bytes.NewReader(empty.Bytes())); err == nil {
 		t.Fatal("expected error on zip without .npy members")
 	}
@@ -202,7 +202,7 @@ func TestSaveZNpyMembersLoadable(t *testing.T) {
 		t.Fatalf("savez must store uncompressed, got method %v", zr.File[0].Method)
 	}
 	rc, _ := zr.File[0].Open()
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	a, err := Load(rc)
 	if err != nil {
 		t.Fatal(err)

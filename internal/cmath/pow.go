@@ -186,7 +186,6 @@ func Pow(x, y float64) float64 {
 			x2 := x * x
 			if ix>>63 != 0 && checkint(iy) == 1 {
 				x2 = -x2
-				signBias = 1
 			}
 			if 2*ix == 0 && iy>>63 != 0 {
 				// pow(±0, -y) = +Inf

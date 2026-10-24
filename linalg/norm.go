@@ -598,20 +598,6 @@ func ones(n int) []int {
 	return out
 }
 
-// slotIndex maps batch coords (with axis ax collapsed) into the dropped
-// shape's flat index.
-func slotIndex(outShape, batch []int, ax int) int {
-	coords := make([]int, len(outShape))
-	li := 0
-	for i := range batch {
-		if i != ax {
-			coords[li] = batch[i]
-			li++
-		}
-	}
-	return linearIndex(outShape, coords)
-}
-
 // slotIndex2 maps lead coords into the doubly-dropped shape.
 func slotIndex2(outShape, lead []int) int {
 	if len(outShape) == 0 {

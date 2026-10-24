@@ -2,7 +2,6 @@ package linalg
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/aixfoundry/numgo"
 )
@@ -74,28 +73,4 @@ func shapeString(shape []int) string {
 		parts += fmt.Sprint(d)
 	}
 	return "(" + parts + ")"
-}
-
-// lapackNorm is the linalg-side norm selector for the internal kernels.
-type lapackNorm int
-
-const (
-	normFro lapackNorm = iota
-	normOne
-	normInf
-	normMax
-)
-
-// matrixNorm computes a row-major matrix norm with the own kernels.
-func matrixNorm(norm lapackNorm, m, n int, a []float64, _ int) float64 {
-	switch norm {
-	case normMax:
-		best := 0.0
-		for _, v := range a {
-			best = math.Max(best, math.Abs(v))
-		}
-		return best
-	default:
-		return 0
-	}
 }

@@ -156,12 +156,6 @@ func panicMatmulShape(op string, a, b []int) {
 	panic(fmt.Sprintf("numgo: %s: shape mismatch %s x %s", op, shapeString(a), shapeString(b)))
 }
 
-// panicDotLead reports N-D dot operands whose leading dimensions differ and
-// neither operand is 2-D.
-func panicDotLead(a, b []int) {
-	panic(fmt.Sprintf("numgo: dot: leading dimensions differ %s x %s", shapeString(a), shapeString(b)))
-}
-
 // panicEinsumLabelCount reports an operand whose subscript label count differs
 // from its dimension count.
 func panicEinsumLabelCount(labels, ndim int) {

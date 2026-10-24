@@ -78,15 +78,6 @@ func reducedCount[T Number](a *Array[T], axes []int) int {
 	return n
 }
 
-// keptShape returns the input shape with the reduced axes set to 1 (keepdims).
-func keptShape(shape, axes []int) []int {
-	out := slices.Clone(shape)
-	for _, ax := range axes {
-		out[ax] = 1
-	}
-	return out
-}
-
 // reduceKeepdims folds along axes and re-shapes the result with the reduced
 // axes as size 1.
 func reduceKeepdims[T Number](a *Array[T], fold func(axes ...int) *Array[T], axes ...int) *Array[T] {

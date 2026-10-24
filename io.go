@@ -40,7 +40,7 @@ func SaveFile[T Number](path string, a *Array[T]) error {
 		return err
 	}
 	if err := Save(f, a); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	return f.Close()
@@ -103,7 +103,7 @@ func LoadFile(path string) (AnyArray, error) {
 	if err != nil {
 		return AnyArray{}, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	br := bufio.NewReader(f)
 	if magic, _ := br.Peek(4); !bytes.Equal(magic, []byte("PK\x03\x04")) {
 		a, err := Load(br)
@@ -157,7 +157,7 @@ func SaveTxtFile[T Number](path string, a *Array[T], format string) error {
 		return err
 	}
 	if err := SaveTxt(f, a, format); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	return f.Close()
@@ -206,7 +206,7 @@ func LoadTxtFile(path string) (*Array[float64], error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	return LoadTxt(f)
 }
 

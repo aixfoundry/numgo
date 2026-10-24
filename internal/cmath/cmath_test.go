@@ -118,7 +118,7 @@ func TestSpecialCases(t *testing.T) {
 	if !math.IsNaN(Exp(math.NaN())) || Exp(math.Inf(1)) != math.Inf(1) || Exp(math.Inf(-1)) != 0 {
 		t.Error("Exp inf/nan")
 	}
-	if Log(0) != math.Inf(-1) || Log(-0.0) != math.Inf(-1) {
+	if Log(0) != math.Inf(-1) || Log(math.Copysign(0, -1)) != math.Inf(-1) {
 		t.Error("Log(±0)")
 	}
 	if !math.IsNaN(Log(-1)) || Log(math.Inf(1)) != math.Inf(1) || !math.IsNaN(Log(math.NaN())) {

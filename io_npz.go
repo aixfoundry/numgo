@@ -43,7 +43,7 @@ func SaveZFile(path string, compressed bool, arrays map[string]AnyArray) error {
 		return err
 	}
 	if err := saveZ(f, compressed, arrays); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
 	return f.Close()
@@ -126,7 +126,7 @@ func LoadNpz(r io.Reader) (map[string]AnyArray, error) {
 			return nil, fmt.Errorf("numgo: LoadNpz: %s: %w", f.Name, err)
 		}
 		a, err := Load(rc)
-		rc.Close()
+		_ = rc.Close()
 		if err != nil {
 			return nil, fmt.Errorf("numgo: LoadNpz: %s: %w", f.Name, err)
 		}
@@ -144,7 +144,7 @@ func LoadNpzFile(path string) (map[string]AnyArray, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	return LoadNpz(f)
 }
 

@@ -123,4 +123,3 @@ func TestIrfftHalfSpectrum(t *testing.T) {
 	}
 }
 
-func randNew(seed int64) *rand.Rand { return rand.New(rand.NewSource(seed)) }

@@ -132,16 +132,10 @@ func Einsum[T Number](subscript string, as ...*Array[T]) *Array[T] {
 	if err != nil {
 		panic(err)
 	}
-	unionShape := make([]int, 0, len(union)+len(ellShape))
-	for _, l := range union {
-		unionShape = append(unionShape, dims[l])
-	}
-	unionShape = append(unionShape, ellShape...)
-
 	// Build each operand's view over [union labels..., ellipsis dims...]:
 	// missing labels become size-1 axes, and the operand's ellipsis axes sit
-	// last so the whole view right-aligns against unionShape for a single
-	// BroadcastTo.
+	// last so the whole view right-aligns against the union layout for a
+	// single BroadcastTo.
 	views := make([]*Array[T], len(ops))
 	for i, op := range ops {
 		pos := map[rune]int{}

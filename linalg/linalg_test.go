@@ -15,8 +15,6 @@ import (
 
 const tol = 1e-9
 
-func f64data(vs ...float64) []float64 { return vs }
-
 func arr2(vs [][]float64) *numgo.Array[float64] { return numgo.New2DArray(vs) }
 
 func eqSlice(t *testing.T, name string, got []float64, want []float64) {

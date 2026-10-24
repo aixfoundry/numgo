@@ -68,7 +68,7 @@ func TestSearch(t *testing.T) {
 
 	panicked := false
 	func() {
-		defer func() { recover(); panicked = true }()
+		defer func() { _ = recover(); panicked = true }()
 		a.Index("zz", 0)
 	}()
 	if !panicked {
@@ -76,7 +76,7 @@ func TestSearch(t *testing.T) {
 	}
 	panicked = false
 	func() {
-		defer func() { recover(); panicked = true }()
+		defer func() { _ = recover(); panicked = true }()
 		a.RIndex("zz", -1)
 	}()
 	if !panicked {
@@ -177,7 +177,7 @@ func TestRepeatSliceVal(t *testing.T) {
 	eq(t, "SliceValEmpty", a.SliceVal(5, 2), slice2x3("", "", "", "", "", ""))
 	panicked := false
 	func() {
-		defer func() { recover(); panicked = true }()
+		defer func() { _ = recover(); panicked = true }()
 		a.Repeat(-1)
 	}()
 	if !panicked {
@@ -220,7 +220,7 @@ func TestViewSemantics(t *testing.T) {
 	}
 	// At bounds.
 	func() {
-		defer func() { recover() }()
+		defer func() { _ = recover() }()
 		base.At(2, 0)
 		t.Fatal("At(2,0) out of bounds did not panic")
 	}()
@@ -242,7 +242,7 @@ func TestConcatenate(t *testing.T) {
 	}
 	// Mismatch panic.
 	func() {
-		defer func() { recover() }()
+		defer func() { _ = recover() }()
 		Concatenate(0, a, FromSlice([]string{"x", "y", "z"}))
 		t.Fatal("Concatenate mismatch did not panic")
 	}()

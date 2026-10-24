@@ -6,7 +6,6 @@ import "errors"
 
 func panicNegDeg()           { panic("deg must be non-negative") }
 func panicNegPower()         { panic("Power must be a non-negative integer.") }
-func panicNegOrder()         { panic("The order of derivation must be non-negative") }
 func panicZeroDivide()       { panic(errors.New("polynomial division by zero")) }
 func panicTol()              { panic("tol must be non-negative") }
 func panicTruncate()         { panic("size must be a positive integer") }

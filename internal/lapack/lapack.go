@@ -967,7 +967,6 @@ func eigVectorReal(h []float64, n int, lambda complex128) []complex128 {
 			piv[k] = p
 			if best == 0 {
 				lu[k*n+k] = complex(eps, 0)
-				p = k
 			} else if p != k {
 				for j := 0; j < n; j++ {
 					lu[k*n+j], lu[p*n+j] = lu[p*n+j], lu[k*n+j]

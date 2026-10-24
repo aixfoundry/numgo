@@ -357,7 +357,6 @@ func Powf(x, y float32) float32 {
 			x2 := x * x
 			if ix&0x80000000 != 0 && powfCheckint(iy) == 1 {
 				x2 = -x2
-				signBias = 1
 			}
 			if iy&0x80000000 != 0 {
 				return 1 / x2

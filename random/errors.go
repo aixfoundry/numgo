@@ -27,8 +27,6 @@ func panicSampleTooLarge() {
 }
 func panicFewerNonZero()     { panic("Fewer non-zero entries in p than size") }
 func panicAPositive()        { panic("a must be a positive integer unless no samples are taken") }
-func panicChoiceInt()        { panic("a must be greater than 0 unless no samples are taken") }
 func panicSeedSequenceSize() { panic("The size of the entropy pool should be at least 4") }
 func panicNegativeEntropy()  { panic("expected non-negative integer") }
 func panicChildren()         { panic("n_children must be non-negative") }
-func panicUfuncDtype()       { panic("Unsupported dtype for integers") }

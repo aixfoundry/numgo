@@ -65,12 +65,6 @@ func TestLUSingular(t *testing.T) {
 	}
 }
 
-// A^T @ B helper for the kernel tests.
-func attB(a, b []float64, m, k, n int) []float64 {
-	at := transpose(a, m, k)
-	return matmul(at, b, k, m, n)
-}
-
 func TestLUInvert(t *testing.T) {
 	orig := []float64{2.1416476008704612, -0.4064150163846156, 0.6159794225754956, 1.1289722927208916}
 	lu := append([]float64(nil), orig...)
