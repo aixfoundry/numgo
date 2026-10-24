@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -326,6 +325,3 @@ func panicNilArray(op string) {
 func npyUnsupportedDtype(descr string) error {
 	return fmt.Errorf("numgo: unsupported npy dtype: %q", descr)
 }
-
-// errNpz is returned for zip-magic files.
-var errNpz = errors.New("numgo: npz archives not supported yet")

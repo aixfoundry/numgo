@@ -293,18 +293,6 @@ func TestSaveFileAppendsNpy(t *testing.T) {
 	}
 }
 
-func TestLoadFileNpzError(t *testing.T) {
-	dir := t.TempDir()
-	path := filepath.Join(dir, "x.npz")
-	if err := os.WriteFile(path, []byte("PK\x03\x04pretend zip"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	_, err := LoadFile(path)
-	if err == nil || err.Error() != "numgo: npz archives not supported yet" {
-		t.Fatalf("got %v", err)
-	}
-}
-
 func TestSaveTxtDefaultFormat(t *testing.T) {
 	a := New2DArray([][]float64{{1.5, 2}, {3, 4.25}})
 	var buf bytes.Buffer

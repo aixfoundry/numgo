@@ -96,8 +96,8 @@ func Load(r io.Reader) (AnyArray, error) {
 	return h.decode(raw)
 }
 
-// LoadFile reads path as .npy; a zip-magic file is reported as the
-// unsupported-npz error (numpy np.load would open an archive).
+// LoadFile reads path as .npy; a zip-magic file (.npz) is an error pointing
+// at LoadNpzFile, since archives hold multiple arrays.
 func LoadFile(path string) (AnyArray, error) {
 	f, err := os.Open(path)
 	if err != nil {
