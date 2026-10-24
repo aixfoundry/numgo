@@ -3,9 +3,9 @@ package random
 import (
 	"math"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/cmath"
-	"github.com/kaisawind/numgo/internal/lapack"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/cmath"
+	"github.com/aixfoundry/numgo/internal/lapack"
 )
 
 // Second batch of Generator distributions, ported 1:1 from

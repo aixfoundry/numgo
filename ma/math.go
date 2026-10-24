@@ -4,7 +4,7 @@ import (
 	"math"
 	"math/cmplx"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Math functions with domain masking (numpy ma): positions where the real

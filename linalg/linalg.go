@@ -33,7 +33,7 @@ package linalg
 import (
 	"reflect"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // isComplex reports whether T is a complex element type. Complex support is

@@ -1,7 +1,7 @@
 package numgo
 
 import (
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Matrix products: Matmul, Vdot and Dot. All are pure (new data / value) and

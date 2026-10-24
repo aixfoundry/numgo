@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 const tol10 = 1e-10

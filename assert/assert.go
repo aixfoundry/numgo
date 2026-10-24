@@ -29,7 +29,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Equal asserts deep equality of scalars or slices via reflect.DeepEqual,

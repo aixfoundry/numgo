@@ -3,7 +3,7 @@ package ma
 import (
 	"math"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Element-wise operations (numpy ma: mask = OR of operand masks). All are

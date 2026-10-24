@@ -3,7 +3,7 @@ package random
 import (
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Parity of the second distribution batch against numpy 2.5.1

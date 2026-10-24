@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // This file holds the NaN-skipping variants of the reductions (numpy's

@@ -1,8 +1,8 @@
 package ma
 
 import (
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Small index/shape helpers shared by the operations.

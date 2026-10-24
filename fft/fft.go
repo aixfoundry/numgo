@@ -17,7 +17,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Norm selects the normalization of a forward/backward transform pair,

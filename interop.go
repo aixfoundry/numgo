@@ -4,7 +4,7 @@ import (
 	"slices"
 	"unsafe"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Interop primitives for handing array memory to foreign code (cgo, syscalls,

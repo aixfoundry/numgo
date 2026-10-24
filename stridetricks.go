@@ -3,7 +3,7 @@ package numgo
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // This file ports numpy.lib.stride_tricks: sliding_window_view, as_strided and

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/lapack"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/lapack"
 )
 
 // Solvers and determinant functions: Solve, Inv, Det, Slogdet, Lstsq.

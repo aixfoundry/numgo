@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // HermiteE is the probabilists' Hermite series c[0]*He0 + c[1]*He1 + ...

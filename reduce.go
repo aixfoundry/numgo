@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // This file holds reductions. Every reduction is Pure (new data). A

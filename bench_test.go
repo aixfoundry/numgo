@@ -3,7 +3,7 @@ package numgo_test
 import (
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Performance baseline benchmarks (Phase 5, before-optimization).

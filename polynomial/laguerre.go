@@ -3,7 +3,7 @@ package polynomial
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Laguerre is the Laguerre series c[0]*L0 + c[1]*L1 + ... (numpy

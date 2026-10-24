@@ -1,11 +1,11 @@
 package random
 
 import (
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 	"math"
 	"math/bits"
 
-	"github.com/kaisawind/numgo/internal/cmath"
+	"github.com/aixfoundry/numgo/internal/cmath"
 )
 
 // arrayF aliases the root float64 array.

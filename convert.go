@@ -3,7 +3,7 @@ package numgo
 import (
 	"reflect"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Pure: AsType returns a new array with every element converted to P. Real values

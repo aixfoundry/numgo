@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Legendre is the Legendre series c[0]*P0 + c[1]*P1 + ... (numpy

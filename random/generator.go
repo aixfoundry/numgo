@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Generator is the numpy.random.Generator equivalent: a distribution layer

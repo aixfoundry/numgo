@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Hermite is the physicists' Hermite series c[0]*H0 + c[1]*H1 + ...

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // This file holds the numpy lib function_base / histogram statistics:

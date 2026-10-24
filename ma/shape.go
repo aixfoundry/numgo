@@ -3,7 +3,7 @@ package ma
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Shape operations: pure ops that rebuild the mask for the new shape. There

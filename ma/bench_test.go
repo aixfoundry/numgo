@@ -3,7 +3,7 @@ package ma
 import (
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Performance baseline benchmark (Phase 5, before-optimization); size matches

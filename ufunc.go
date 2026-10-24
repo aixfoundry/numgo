@@ -3,7 +3,7 @@ package numgo
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Pure: Add returns a new array with the element-wise sum of a and b, broadcasting

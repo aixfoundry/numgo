@@ -4,7 +4,7 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // This file holds ordering operations: sorts, partitions and uniqueness.

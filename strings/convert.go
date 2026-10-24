@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Conversions bridging StrArray and numeric arrays (numpy's str→num ufuncs and

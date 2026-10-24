@@ -3,7 +3,7 @@ package polynomial
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Polynomial is the power-basis series c[0] + c[1]*x + ... (numpy

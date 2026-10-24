@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // mockT records Errorf calls so failing assertions can be tested. The

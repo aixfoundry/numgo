@@ -3,7 +3,7 @@ package numgo
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Into: CopyInto mutates dst by filling it with src broadcast to dst's shape.

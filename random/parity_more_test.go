@@ -3,7 +3,7 @@ package random
 import (
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Parity of SeedSequence internals, spawn, advance/jump, and the

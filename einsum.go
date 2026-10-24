@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Einsum evaluates the Einstein summation convention on one or more arrays.

@@ -29,8 +29,8 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Masked is a data array plus an element mask. mask[i] true means element i

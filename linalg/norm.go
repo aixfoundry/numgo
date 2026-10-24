@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Norms, condition numbers, ranks and pseudo-inverses.

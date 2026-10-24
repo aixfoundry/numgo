@@ -3,8 +3,8 @@ package linalg
 import (
 	"fmt"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/lapack"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/lapack"
 )
 
 // Matrix decompositions: Cholesky, QR, SVD, Eig/Eigvals, Eigh/Eigvalsh.

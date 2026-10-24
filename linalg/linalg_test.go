@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	numgo "github.com/kaisawind/numgo"
+	numgo "github.com/aixfoundry/numgo"
 )
 
 // Tolerance convention: 1e-9 absolute/relative against numpy-computed

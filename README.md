@@ -34,7 +34,7 @@ package main
 import (
     "os"
 
-    "github.com/kaisawind/numgo"
+    "github.com/aixfoundry/numgo"
 )
 
 func main() {

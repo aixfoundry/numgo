@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // LoadJSON reads a JSON fixture from testdata/<path> into v.

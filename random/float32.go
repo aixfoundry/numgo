@@ -3,8 +3,8 @@ package random
 import (
 	"math"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/cmath"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/cmath"
 )
 
 // float32 sampling paths, ported from

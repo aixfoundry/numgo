@@ -3,7 +3,7 @@ package ma
 import (
 	"math"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Constructors and masked-value helpers (numpy ma masked_* family).

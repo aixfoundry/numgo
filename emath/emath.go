@@ -15,7 +15,7 @@ import (
 	"math"
 	"math/cmplx"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // mapC converts a to complex128 and applies f to every element.

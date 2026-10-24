@@ -3,7 +3,7 @@ package ma
 import (
 	"math"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Reductions: masked elements are ignored. A channel with no unmasked

@@ -3,7 +3,7 @@ package numgo
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Number is the element type constraint for Array. Integers are excluded:

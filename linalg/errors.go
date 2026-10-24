@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // NumberFromFloat converts a float64 to any real Number element type.

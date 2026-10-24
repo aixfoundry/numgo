@@ -1,7 +1,7 @@
 package linalg
 
 import (
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Tensor products, matrix powers and small structural helpers: MultiDot,

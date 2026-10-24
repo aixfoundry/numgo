@@ -17,8 +17,8 @@ package strings
 import (
 	"slices"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // StrArray is an N-dimensional strided view over a flat data slice of strings.

@@ -5,8 +5,8 @@ import (
 	"math"
 	"slices"
 
-	"github.com/kaisawind/numgo"
-	"github.com/kaisawind/numgo/linalg"
+	"github.com/aixfoundry/numgo"
+	"github.com/aixfoundry/numgo/linalg"
 )
 
 // Base holds the state shared by the six polynomial classes: coefficients

@@ -3,7 +3,7 @@ package numgo
 import (
 	"math"
 
-	"github.com/kaisawind/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
 // Range is one slice axis. A zero Range means the whole axis. Step 0 is treated

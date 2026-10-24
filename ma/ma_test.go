@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/kaisawind/numgo"
+	"github.com/aixfoundry/numgo"
 )
 
 // Golden tests against numpy 2.5.1 ma semantics (values generated with
