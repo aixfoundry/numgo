@@ -237,3 +237,56 @@ func panicSampleLength() {
 func panicEmptyXP() {
 	panic("numgo: array of sample points is empty")
 }
+
+// panicWindowNegative reports a negative sliding-window size (numpy ValueError
+// "`window_shape` cannot contain negative values").
+func panicWindowNegative() {
+	panic("numgo: `window_shape` cannot contain negative values")
+}
+
+// panicWindowCount reports a window_shape length that does not match the
+// array's dimension count (numpy ValueError "Since axis is `None`, must
+// provide window_shape for all dimensions of `x`; got N window_shape
+// elements and `x.ndim` is M.").
+func panicWindowCount(got, ndim int) {
+	panic(fmt.Sprintf("numgo: since axis is `None`, must provide window_shape for all dimensions of `x`; got %d window_shape elements and `x.ndim` is %d", got, ndim))
+}
+
+// panicWindowTooLarge reports a window larger than its axis (numpy ValueError
+// "window shape cannot be larger than input array shape").
+func panicWindowTooLarge() {
+	panic("numgo: window shape cannot be larger than input array shape")
+}
+
+// panicAsStridedDims reports AsStrided shape/strides of different lengths.
+func panicAsStridedDims() {
+	panic("numgo: as_strided: shape and strides must have the same length")
+}
+
+// panicAsStridedNegDim reports a negative AsStrided dimension.
+func panicAsStridedNegDim() {
+	panic("numgo: as_strided: negative dimensions are not allowed")
+}
+
+// panicAsStridedBounds reports an AsStrided view that can reach outside the
+// backing data (a deliberate safety check numpy's as_strided lacks).
+func panicAsStridedBounds() {
+	panic("numgo: as_strided: view exceeds data bounds")
+}
+
+// panicBroadcastArrays reports BroadcastArrays inputs that cannot broadcast
+// together (numpy wording listing every operand shape).
+func panicBroadcastArrays(shapes [][]int) {
+	var b strings.Builder
+	b.WriteString("numgo: operands could not be broadcast together with shapes")
+	for _, s := range shapes {
+		b.WriteString(" " + shapeString(s))
+	}
+	panic(b.String())
+}
+
+// panicRealIfClose reports RealIfClose on an array with significant imaginary
+// parts (deviation from numpy, which returns the complex array).
+func panicRealIfClose() {
+	panic("numgo: RealIfClose: array has significant imaginary parts")
+}
