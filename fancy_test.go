@@ -154,6 +154,157 @@ func TestSetMask3DShapeMismatchPanic(t *testing.T) {
 		func() { a.SetMask(make([]bool, 10), 1) })
 }
 
+func TestIndexOneListRows(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	got := a.Index([]int{1, 0, 1})
+	if !slices.Equal(got.Shape(), []int{3, 3}) {
+		t.Fatalf("shape = %v, want [3 3]", got.Shape())
+	}
+	want := []float64{4, 5, 6, 1, 2, 3, 4, 5, 6}
+	for k, w := range want {
+		if v := got.data[k]; v != w {
+			t.Errorf("data[%d] = %v, want %v", k, v, w)
+		}
+	}
+}
+
+func TestIndexTwoListsBroadcast3x2(t *testing.T) {
+	// Non-square 3x2: a[i,j] = 10*i + j.
+	a := FromSlice([]float64{0, 1, 10, 11, 20, 21}, 3, 2)
+	// rows [0,1,2] x cols [1,0,1] (equal lengths, no repeat).
+	got := a.Index([]int{0, 1, 2}, []int{1, 0, 1})
+	if !slices.Equal(got.Shape(), []int{3}) {
+		t.Fatalf("shape = %v, want [3]", got.Shape())
+	}
+	want := []float64{1, 10, 21}
+	for k, w := range want {
+		if v := got.data[k]; v != w {
+			t.Errorf("data[%d] = %v, want %v", k, v, w)
+		}
+	}
+	// len-1 col list broadcasts: rows [0,2] x col [1].
+	got = a.Index([]int{0, 2}, []int{1})
+	if !slices.Equal(got.Shape(), []int{2}) {
+		t.Fatalf("shape = %v, want [2]", got.Shape())
+	}
+	if got.At(0) != 1 || got.At(1) != 21 {
+		t.Errorf("broadcast pick = %v, %v, want 1, 21", got.At(0), got.At(1))
+	}
+}
+
+func TestIndexNegativeRepeated2x3(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	got := a.Index([]int{-1, -2, 0})
+	if !slices.Equal(got.Shape(), []int{3, 3}) {
+		t.Fatalf("shape = %v, want [3 3]", got.Shape())
+	}
+	want := []float64{4, 5, 6, 1, 2, 3, 1, 2, 3}
+	for k, w := range want {
+		if v := got.data[k]; v != w {
+			t.Errorf("data[%d] = %v, want %v", k, v, w)
+		}
+	}
+}
+
+func TestIndexTailAxisRetention3D(t *testing.T) {
+	// a[i,j,k] = 100*i + 10*j + k, non-square 2x3x4.
+	a := FromFunction([]int{2, 3, 4}, func(coords ...int) float64 {
+		return float64(100*coords[0] + 10*coords[1] + coords[2])
+	})
+	got := a.Index([]int{1, 0}, []int{2, 2})
+	if !slices.Equal(got.Shape(), []int{2, 4}) {
+		t.Fatalf("shape = %v, want [2 4]", got.Shape())
+	}
+	for i := 0; i < 2; i++ {
+		for k := 0; k < 4; k++ {
+			if v, w := got.At(i, k), a.At([]int{1, 0}[i], 2, k); v != w {
+				t.Errorf("At(%d,%d) = %v, want %v", i, k, v, w)
+			}
+		}
+	}
+}
+
+func TestIndexOutOfBoundsPanic(t *testing.T) {
+	a := Zeros[float64](2, 3)
+	mustPanic(t, "numgo: index 5 is out of bounds for axis 0 with size 2",
+		func() { a.Index([]int{1, 5}) })
+	mustPanic(t, "numgo: index -4 is out of bounds for axis 1 with size 3",
+		func() { a.Index([]int{0}, []int{-4}) })
+}
+
+func TestIndexTooManyListsPanic(t *testing.T) {
+	a := Zeros[float64](2, 3)
+	mustPanic(t, "numgo: expected 2 ranges for a 2-d array, got 3",
+		func() { a.Index([]int{0}, []int{0}, []int{0}) })
+}
+
+func TestPutIndicesBroadcastInto(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	// rows [0,1] x col [2]: values 1-d of len 2 broadcast over tail axis.
+	if got := a.PutIndices(New1DArray([]float64{7, 8}), []int{0, 1}, []int{2}); got != a {
+		t.Fatal("PutIndices did not return the receiver")
+	}
+	if a.At(0, 2) != 7 || a.At(1, 2) != 8 {
+		t.Errorf("At col 2 = %v, %v, want 7, 8", a.At(0, 2), a.At(1, 2))
+	}
+	if a.At(0, 0) != 1 || a.At(1, 0) != 4 {
+		t.Errorf("other elements changed: %v, %v", a.At(0, 0), a.At(1, 0))
+	}
+}
+
+func TestPutIndicesRepeatedUntouchedOnPanic(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	mustPanic(t, "numgo: index 3 is out of bounds for axis 0 with size 2",
+		func() { a.PutIndices(New1DArray([]float64{9}), []int{0, 3}) })
+	if a.At(0, 0) != 1 {
+		t.Errorf("receiver mutated before panic: At(0,0) = %v", a.At(0, 0))
+	}
+	// Repeated index: last write wins.
+	a.PutIndices(New1DArray([]float64{42}), []int{1, 1})
+	if a.At(1, 0) != 42 {
+		t.Errorf("repeated scatter At(1,0) = %v, want 42", a.At(1, 0))
+	}
+}
+
+func TestMaskSelectFlatOrder(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	got := a.MaskSelect([]bool{false, true, false, false, true, true})
+	if !slices.Equal(got.Shape(), []int{3}) {
+		t.Fatalf("shape = %v, want [3]", got.Shape())
+	}
+	want := []float64{2, 5, 6}
+	for k, w := range want {
+		if v := got.data[k]; v != w {
+			t.Errorf("data[%d] = %v, want %v", k, v, w)
+		}
+	}
+}
+
+func TestMaskSelectLengthPanic(t *testing.T) {
+	a := Zeros[float32](2, 3, 4)
+	mustPanic(t, "numgo: mask length 10 does not match selection size 24",
+		func() { a.MaskSelect(make([]bool, 10)) })
+}
+
+func TestIndexOnTransposeView(t *testing.T) {
+	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
+	ta := a.Transpose() // 3x2 view
+	got := ta.Index([]int{0, 2, 1})
+	if !slices.Equal(got.Shape(), []int{3, 2}) {
+		t.Fatalf("shape = %v, want [3 2]", got.Shape())
+	}
+	want := []float64{1, 4, 3, 6, 2, 5}
+	for k, w := range want {
+		if v := got.data[k]; v != w {
+			t.Errorf("data[%d] = %v, want %v", k, v, w)
+		}
+	}
+	got.Set([]int{0, 0}, 99)
+	if a.At(0, 0) != 1 {
+		t.Fatal("Index result aliases the source view")
+	}
+}
+
 func TestTakeOnTransposeView(t *testing.T) {
 	a := FromSlice([]float64{1, 2, 3, 4, 5, 6}, 2, 3)
 	ta := a.Transpose() // 3x2 view of the same data
