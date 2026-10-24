@@ -328,10 +328,22 @@ func shiftAxes[T numgo.Number](a *numgo.Array[T], axes []int) []int {
 
 // conjAll returns a pure complex-conjugated copy of a.
 func conjAll(a *numgo.Array[complex128]) *numgo.Array[complex128] {
+	if a.IsContiguous() {
+		src := a.Data()[:a.Size()]
+		return numgo.New1DArray(conjInto(src, make([]complex128, len(src))))
+	}
 	return numgo.FromFunction(a.Shape(), func(coords ...int) complex128 {
 		c := a.At(coords...)
 		return complex(real(c), -imag(c))
 	})
+}
+
+// conjInto conjugates every element of src into dst (same lengths).
+func conjInto(src, dst []complex128) []complex128 {
+	for i, c := range src {
+		dst[i] = complex(real(c), -imag(c))
+	}
+	return dst
 }
 
 // fullAxis transforms one resolved axis of a C-order complex array. m may be
@@ -346,6 +358,8 @@ func fullAxis(in *numgo.Array[complex128], n, axis int, forward bool, fct float6
 		return out
 	}
 	seq := make([]complex128, n)
+	res := make([]complex128, n)
+	scratch := make([]complex128, 2*n)
 	line := make([]int, len(inShape))
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
@@ -356,11 +370,10 @@ func fullAxis(in *numgo.Array[complex128], n, axis int, forward bool, fct float6
 		for i := m; i < n; i++ {
 			seq[i] = 0
 		}
-		res := make([]complex128, n)
 		if forward {
-			fftC(res, seq, false)
+			fftScratch(res, seq, false, scratch)
 		} else {
-			fftC(res, seq, true)
+			fftScratch(res, seq, true, scratch)
 		}
 		if fct != 1 {
 			f := complex(fct, 0)
@@ -388,6 +401,9 @@ func halfAxisForward(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		return out
 	}
 	seq := make([]complex128, n)
+	full := make([]complex128, n)
+	res := make([]complex128, n/2+1)
+	scratch := make([]complex128, 2*n)
 	line := make([]int, len(inShape))
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
@@ -398,9 +414,7 @@ func halfAxisForward(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		for i := m; i < n; i++ {
 			seq[i] = 0
 		}
-		res := make([]complex128, n/2+1)
-		full := make([]complex128, n)
-		fftC(full, seq, false)
+		fftScratch(full, seq, false, scratch)
 		copy(res, full[:n/2+1])
 		if fct != 1 {
 			f := complex(fct, 0)
@@ -429,7 +443,30 @@ func halfAxisInverse(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		return out
 	}
 	coeff := make([]complex128, half)
+	full := make([]complex128, n)
+	res := make([]float64, n)
+	scratch := make([]complex128, 2*n)
+	inData := in.Data()
 	line := make([]int, len(inShape))
+	if len(inShape) == 1 {
+		// 1-D fast path: the transform line IS the data slice — read from
+		// inData directly and write res back as one copy (no At/Set, no
+		// per-line iteration).
+		for i := 0; i < m && i < half; i++ {
+			coeff[i] = inData[i]
+		}
+		for i := m; i < half; i++ {
+			coeff[i] = 0
+		}
+		irfftUnnormBuf(res, coeff, full, scratch)
+		if fct != 1 {
+			for i := range res {
+				res[i] *= fct
+			}
+		}
+		copy(out.Data(), res)
+		return out
+	}
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
 		for i := 0; i < m && i < half; i++ {
@@ -439,8 +476,7 @@ func halfAxisInverse(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		for i := m; i < half; i++ {
 			coeff[i] = 0
 		}
-		res := make([]float64, n)
-		irfftUnnorm(res, coeff)
+		irfftUnnormBuf(res, coeff, full, scratch)
 		if fct != 1 {
 			for i := range res {
 				res[i] *= fct

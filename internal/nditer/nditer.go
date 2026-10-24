@@ -194,6 +194,68 @@ func Zip[T any](dst *Layout, dstData []T, srcs []*Layout, srcData [][]T,
 	}
 	idx := make([]int, len(dst.Shape))
 	src := make([][]T, len(srcs))
+
+	// Row fast path: dst C-contiguous and every src's last axis either
+	// unit-stride with matching width or stride 0 (broadcast). Each last-axis
+	// run is then one callback: unit-stride srcs feed zero-copy runs, stride-0
+	// srcs feed a reused buffer holding w copies of the single value. This
+	// kills the per-element odometer for the dominant row-broadcast case.
+	nd := len(dst.Shape)
+	w := dst.Shape[nd-1]
+	if nd > 0 && w > 0 && contiguousSame(dst, dst.Shape) && len(dstData) >= n+dst.Offset {
+		runOK := true
+		for _, s := range srcs {
+			if len(s.Shape) != nd {
+				runOK = false
+				break
+			}
+			if !(s.Shape[nd-1] == w && s.Strides[nd-1] == 1) && s.Strides[nd-1] != 0 {
+				runOK = false
+				break
+			}
+		}
+		if runOK {
+			runs := make([][]T, len(srcs))
+			bufs := make([][]T, len(srcs))
+			for j, s := range srcs {
+				if !(s.Shape[nd-1] == w && s.Strides[nd-1] == 1) {
+					bufs[j] = make([]T, w)
+				}
+			}
+			pidx := idx[:nd-1]
+			dPos := dst.Offset
+			for {
+				for j, s := range srcs {
+					p := Index(s, pidx)
+					if bufs[j] != nil {
+						v := srcData[j][p]
+						for i := range bufs[j] {
+							bufs[j][i] = v
+						}
+						runs[j] = bufs[j]
+					} else {
+						runs[j] = srcData[j][p : p+w]
+					}
+				}
+				fn(dstData[dPos:dPos+w], runs)
+				dPos += w
+				// Increment the prefix idx in C order.
+				k := len(pidx) - 1
+				for k >= 0 {
+					pidx[k]++
+					if pidx[k] < dst.Shape[k] {
+						break
+					}
+					pidx[k] = 0
+					k--
+				}
+				if k < 0 {
+					return
+				}
+			}
+		}
+	}
+
 	for {
 		dstPos := Index(dst, idx)
 		for j, s := range srcs {

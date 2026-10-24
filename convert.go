@@ -9,9 +9,17 @@ import (
 // Pure: AsType returns a new array with every element converted to P. Real values
 // converted to a complex type get a zero imaginary part; a complex value
 // converted to a real type drops its imaginary part.
+//
+// The conversion dispatches once per call on the concrete slice type and runs
+// a typed copy loop (compiler-vectorizable); named types under Number keep the
+// generic parts/scalarFromParts path. Same conversions as the generic path —
+// bit-identical by construction.
 func AsType[F, P Number](a *Array[F]) *Array[P] {
 	out := newArray(a.Shape(), nditer.COrderStrides(a.shape), 0, make([]P, a.Size()))
 	if out.Size() == 0 {
+		return out
+	}
+	if a.IsContiguous() && convertTyped(out.data, a.Data()[:a.Size()]) {
 		return out
 	}
 	src := make([]P, len(a.data))
@@ -26,6 +34,93 @@ func AsType[F, P Number](a *Array[F]) *Array[P] {
 			}
 		})
 	return out
+}
+
+// convertTyped fills dst from src with the plain per-type conversion when both
+// concrete types match one of the built-in Number cases; it reports whether it
+// handled the pair (named types fall back to the reflect path).
+func convertTyped[F, P Number](dst []P, src []F) bool {
+	switch s := any(src).(type) {
+	case []float64:
+		switch d := any(dst).(type) {
+		case []float64:
+			copy(d, s)
+		case []float32:
+			for i, v := range s {
+				d[i] = float32(v)
+			}
+		case []complex64:
+			for i, v := range s {
+				d[i] = complex64(complex(v, 0))
+			}
+		case []complex128:
+			for i, v := range s {
+				d[i] = complex(v, 0)
+			}
+		default:
+			return false
+		}
+	case []float32:
+		switch d := any(dst).(type) {
+		case []float64:
+			for i, v := range s {
+				d[i] = float64(v)
+			}
+		case []float32:
+			copy(d, s)
+		case []complex64:
+			for i, v := range s {
+				d[i] = complex64(complex(v, 0))
+			}
+		case []complex128:
+			for i, v := range s {
+				d[i] = complex128(complex(v, 0))
+			}
+		default:
+			return false
+		}
+	case []complex128:
+		switch d := any(dst).(type) {
+		case []float64:
+			for i, v := range s {
+				d[i] = real(v)
+			}
+		case []float32:
+			for i, v := range s {
+				d[i] = float32(real(v))
+			}
+		case []complex64:
+			for i, v := range s {
+				d[i] = complex64(v)
+			}
+		case []complex128:
+			copy(d, s)
+		default:
+			return false
+		}
+	case []complex64:
+		switch d := any(dst).(type) {
+		case []float64:
+			for i, v := range s {
+				d[i] = float64(real(v))
+			}
+		case []float32:
+			for i, v := range s {
+				d[i] = real(v)
+			}
+		case []complex64:
+			copy(d, s)
+		case []complex128:
+			for i, v := range s {
+				d[i] = complex128(v)
+			}
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+	return true
 }
 
 // Pure: AsArray returns a new array holding a copy of data, shaped as given. It is

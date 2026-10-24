@@ -40,6 +40,58 @@ func cmpNumber[T Number](a, b T) int {
 	return 0
 }
 
+// sortTyped sorts one channel slice in place with the concrete numeric
+// comparator when T is a built-in type (NaN last, complex by real then imag —
+// same total order as cmpNumber); false means "use the generic path" (named
+// types). Bit-identical placement because the order is the same.
+func sortTyped[S ~float32 | ~float64 | ~complex64 | ~complex128](ch []S) bool {
+	switch s := any(ch).(type) {
+	case []float64:
+		slices.SortFunc(s, func(a, b float64) int {
+			na, nb := math.IsNaN(a), math.IsNaN(b)
+			if na || nb {
+				if nb && !na {
+					return -1
+				}
+				if na && !nb {
+					return 1
+				}
+				return 0
+			}
+			switch {
+			case a < b:
+				return -1
+			case a > b:
+				return 1
+			}
+			return 0
+		})
+	case []float32:
+		slices.SortFunc(s, func(a, b float32) int {
+			na, nb := math.IsNaN(float64(a)), math.IsNaN(float64(b))
+			if na || nb {
+				if nb && !na {
+					return -1
+				}
+				if na && !nb {
+					return 1
+				}
+				return 0
+			}
+			switch {
+			case a < b:
+				return -1
+			case a > b:
+				return 1
+			}
+			return 0
+		})
+	default:
+		return false
+	}
+	return true
+}
+
 // sortAxis sorts the channels along one axis of a in place. Channels are
 // collected with ReduceAxis; the sorted values go back through Zip, which
 // handles arbitrary strides.
@@ -47,6 +99,19 @@ func sortAxis[T Number](a *Array[T], axis int) {
 	ax := a.resolveAxis(axis)
 	n := a.shape[ax]
 	if n < 2 || a.Size() == 0 {
+		return
+	}
+	// Contiguous last-axis fast path: sort each row slice in place — no
+	// channel collection, no scatter back. Sorting is a permutation, so the
+	// values (and NaN placement, same comparator) are identical to the
+	// generic path.
+	if ax == len(a.shape)-1 && a.IsContiguous() {
+		d := a.Data()[:a.Size()]
+		for i := 0; i < len(d); i += n {
+			if !sortTyped(d[i : i+n]) {
+				slices.SortFunc(d[i:i+n], cmpNumber[T])
+			}
+		}
 		return
 	}
 	channels := make([][]T, a.Size()/n)

@@ -11,16 +11,47 @@ import (
 
 // zip2 applies op element-wise over a and b with right-aligned broadcasting;
 // the result mask ORs the operand masks.
+//
+// Fast path: both data arrays contiguous with the full result shape — the
+// per-coordinate walk collapses to two flat slices (data via the root zip
+// engine, masks as a plain byte-wise OR). The generic walk stays for strided
+// or broadcast layouts. Data results are bit-identical (same op on the same
+// values); the mask OR is order-independent.
 func zip2[T numgo.Number](a, b *Masked[T], op func(x, y T) T) *Masked[T] {
 	shape := broadcastShape(a.Shape(), b.Shape())
+	n := sizeOf(shape)
 	out := numgo.Zeros[T](shape...)
-	mask := make([]bool, sizeOf(shape))
+	mask := make([]bool, n)
+	if slicesEqual(shape, a.a.Shape()) && a.a.IsContiguous() &&
+		slicesEqual(shape, b.a.Shape()) && b.a.IsContiguous() && n > 0 {
+		ad, bd, od := a.a.Data()[:n], b.a.Data()[:n], out.Data()[:n]
+		for i := range od {
+			od[i] = op(ad[i], bd[i])
+		}
+		for i := range mask {
+			mask[i] = a.mask[i] || b.mask[i]
+		}
+		return newMasked(out, mask)
+	}
 	walk(shape, func(coords []int) {
 		i := flat(shape, coords)
 		out.Set(coords, op(valueAt(a.a, coords), valueAt(b.a, coords)))
 		mask[i] = maskAtB(a.mask, a.Shape(), coords) || maskAtB(b.mask, b.Shape(), coords)
 	})
 	return newMasked(out, mask)
+}
+
+// slicesEqual reports identical shapes.
+func slicesEqual(x, y []int) bool {
+	if len(x) != len(y) {
+		return false
+	}
+	for i := range x {
+		if x[i] != y[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // Pure: Add returns the element-wise sum with the masks ORed.

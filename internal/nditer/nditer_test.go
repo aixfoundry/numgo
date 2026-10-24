@@ -251,7 +251,11 @@ func TestZipFastPathBroadcastAndOffset(t *testing.T) {
 	out := make([]int, 6)
 	a := &Layout{Shape: []int{1, 3}, Strides: []int{0, 1}}
 	Zip(dst, out, []*Layout{a}, [][]int{{1, 2, 3}},
-		func(d []int, src [][]int) { d[0] = src[0][0] })
+		func(d []int, src [][]int) {
+			for i := range d {
+				d[i] = src[0][i]
+			}
+		})
 	if !reflect.DeepEqual(out, []int{1, 2, 3, 1, 2, 3}) {
 		t.Fatalf("broadcast zip = %v", out)
 	}
