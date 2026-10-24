@@ -194,3 +194,46 @@ func panicEinsumOutputEllipsis() {
 func panicEinsumBadChar(r rune, where string) {
 	panic(fmt.Sprintf("numgo: einsum: invalid subscript %q in %s, subscripts must be letters", r, where))
 }
+
+// panicAllNaN reports an all-NaN slice passed to an operation numpy raises on
+// (nanargmax/nanargmin raise ValueError "All-NaN slice encountered").
+func panicAllNaN() {
+	panic("numgo: All-NaN slice encountered")
+}
+
+// panicQRange reports a percentile/quantile outside its range (numpy
+// ValueError "Percentiles must be in the range [0, 100]").
+func panicQRange(kind string, hi float64) {
+	panic(fmt.Sprintf("numgo: %s must be in the range [0, %g]", kind, hi))
+}
+
+// panicGradient reports an axis too short for numpy's default gradient
+// (edge_order 1 needs two points per axis).
+func panicGradient() {
+	panic("numgo: shape of array too small to calculate a numerical gradient, at least 2 elements are required")
+}
+
+// panicPadWidth reports a negative pad width (numpy ValueError "index can't
+// contain negative values").
+func panicPadWidth() {
+	panic("numgo: pad widths cannot be negative")
+}
+
+// panicHistBins reports a non-positive histogram bin count (numpy ValueError
+// "`bins` must be positive, when an integer").
+func panicHistBins() {
+	panic("numgo: `bins` must be positive, when an integer")
+}
+
+// panicSampleLength reports histogram2d x/y lengths (or interp xp/fp lengths)
+// that differ (numpy: "x and y must have the same length." / "xp and fp are
+// not of same length").
+func panicSampleLength() {
+	panic("numgo: sample point and value lengths differ")
+}
+
+// panicEmptyXP reports interp called without sample points (numpy ValueError
+// "array of sample points is empty").
+func panicEmptyXP() {
+	panic("numgo: array of sample points is empty")
+}
