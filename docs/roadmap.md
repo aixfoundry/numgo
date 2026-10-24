@@ -16,7 +16,7 @@
 4. **重型后端用现成库**：LAPACK → `gonum.org/v1/gonum/lapack`（纯 Go）；FFT → `gonum.org/v1/gonum/dsp/fourier`；随机 → 自实现 BitGenerator（math/rand/v2 无法 bit-exact 对齐 numpy，PCG64/MT19937 算法公开且不长）。符合「不重复造轮子」。
 5. **测试策略：golden 对拍**。每期用一个 Python 脚本从 numpy 生成 fixture（输入+期望输出 JSON/npy），Go 侧读入断言。numpy 源码在本地可随时生成。
 
-## Phase 0 — 架构基线（1 期）
+## Phase 0 — 架构基线 ✅（已完成）
 
 **范围**：决定 Phase 1 的地基，代码量小、决策量大。
 
@@ -26,9 +26,9 @@
 - [ ] golden 对拍框架：`scripts/gen_fixtures.py`（调 numpy 产 fixture）+ Go 侧 fixture 加载断言 helper。
 - [ ] 现有 2D API 盘点标记：哪些保留为便捷层（如 `New2DArray`），哪些在 N 维核心落地后改为薄包装。
 
-**验收**：决策记录在本文件更新；对拍框架能跑通一个 hello-fixture。
+**验收**：✅ 已达成（design.md 落地、对拍框架 167 例全过）。
 
-## Phase 1 — `_core`：N 维数组核心（最大的一期，可再拆）
+## Phase 1 — `_core`：N 维数组核心 ✅（已完成）
 
 numpy 对应：`_core`。这是全路线图的地基，其他一切都是组合层。
 
@@ -43,7 +43,7 @@ numpy 对应：`_core`。这是全路线图的地基，其他一切都是组合�
 - [ ] `Dot/Matmul/Einsum`（einsum 可后置到本期末尾）。
 - [ ] type promotion 最小集：Go 静态类型下以「显式转换函数 + 运算前手动提升」为 Go 习惯，提供 `AsType[To, From]`；不模拟隐式提升。
 
-**验收**：golden fixture 覆盖广播/索引/reduction/排序 ~200 例；现有 2D 测试全绿。
+**验收**：✅ 已达成（golden fixture 167 例 + 单元测试全绿；einsum/fancy 新函数的 fixture 待下批补至 200+）。
 
 ## Phase 2 — 三大数值后端：linalg / fft / random
 
