@@ -1,0 +1,318 @@
+package polynomial
+
+import (
+	"math"
+	"slices"
+
+	"github.com/kaisawind/numgo"
+)
+
+// Hermite is the physicists' Hermite series c[0]*H0 + c[1]*H1 + ...
+// (numpy polynomial.hermite, class Hermite). Default domain and window [-1,1].
+type Hermite[T numgo.Float] struct{ Base[T] }
+
+// hermOps ports numpy polynomial.hermite's coefficient kernels.
+type hermOps[T numgo.Float] struct{}
+
+// NewHermite builds a Hermite series from coefficients, lowest degree first.
+func NewHermite[T numgo.Float](coef []T) *Hermite[T] {
+	return &Hermite[T]{newBase(hermOps[T]{}, coef)}
+}
+
+// NewHermiteDomain is NewHermite with an explicit domain and window.
+func NewHermiteDomain[T numgo.Float](coef []T, domain, window [2]T) *Hermite[T] {
+	h := NewHermite(coef)
+	h.domain, h.window = domain, window
+	return h
+}
+
+// NewHermiteFromRoots builds the monic Hermite series with the given roots.
+func NewHermiteFromRoots[T numgo.Float](roots []T) *Hermite[T] {
+	return &Hermite[T]{newBaseFromRoots(hermOps[T]{}, roots)}
+}
+
+func (h *Hermite[T]) derived(coef []T) *Hermite[T] { return &Hermite[T]{h.Base.with(coef)} }
+
+func (hermOps[T]) domainWindow() ([2]T, [2]T) { return [2]T{-1, 1}, [2]T{-1, 1} }
+func (hermOps[T]) basisName() string          { return "Hermite" }
+
+// val is hermval: Clenshaw recurrence in x2 = 2x.
+func (hermOps[T]) val(x, c []T) []T {
+	out := make([]T, len(x))
+	n := len(c)
+	for i, xv := range x {
+		x2 := 2 * xv
+		var c0, c1 T
+		switch {
+		case n == 1:
+			c0 = c[0]
+		case n == 2:
+			c0, c1 = c[0], c[1]
+		default:
+			nd := n
+			c0, c1 = c[n-2], c[n-1]
+			for k := 3; k <= n; k++ {
+				tmp := c0
+				nd--
+				c0 = c[n-k] - c1*2*T(nd-1)
+				c1 = tmp + c1*x2
+			}
+		}
+		out[i] = c0 + c1*x2
+	}
+	return out
+}
+
+// vander is hermvander: v[k] = 2x*v[k-1] - 2(k-1)*v[k-2], v[1] = 2x.
+func (hermOps[T]) vander(x []T, deg int) []T {
+	if deg < 0 {
+		panicNegDeg()
+	}
+	dof := deg + 1
+	v := make([]T, len(x)*dof)
+	for i, xv := range x {
+		v[i*dof] = 1
+		if deg > 0 {
+			x2 := 2 * xv
+			v[i*dof+1] = x2
+			for d := 2; d <= deg; d++ {
+				v[i*dof+d] = v[i*dof+d-1]*x2 - v[i*dof+d-2]*2*T(d-1)
+			}
+		}
+	}
+	return v
+}
+
+func (hermOps[T]) add(c1, c2 []T) []T { return coefAdd(c1, c2) }
+func (hermOps[T]) sub(c1, c2 []T) []T { return coefSub(c1, c2) }
+
+// mulx is hermmulx: x times a Hermite series (factor 1/2 recurrence).
+func (hermOps[T]) mulx(c []T) []T {
+	if len(c) == 1 && c[0] == 0 {
+		return c
+	}
+	prd := make([]T, len(c)+1)
+	prd[1] = c[0] / 2
+	for i := 1; i < len(c); i++ {
+		prd[i+1] += c[i] / 2
+		prd[i-1] += c[i] * T(i)
+	}
+	return prd
+}
+
+// mul is hermmul.
+func (z hermOps[T]) mul(c1, c2 []T) []T {
+	c1 = trimseq(slices.Clone(c1))
+	c2 = trimseq(slices.Clone(c2))
+	c, xs := c1, c2
+	if len(c1) > len(c2) {
+		c, xs = c2, c1
+	}
+	var c0, c1s []T
+	switch len(c) {
+	case 1:
+		c0, c1s = scale(xs, c[0]), []T{0}
+	case 2:
+		c0, c1s = scale(xs, c[0]), scale(xs, c[1])
+	default:
+		nd := len(c)
+		c0, c1s = scale(xs, c[len(c)-2]), scale(xs, c[len(c)-1])
+		for i := 3; i <= len(c); i++ {
+			tmp := c0
+			nd--
+			c0 = z.sub(scale(xs, c[len(c)-i]), scale(c1s, 2*T(nd-1)))
+			c1s = z.add(tmp, scale(z.mulx(c1s), 2))
+		}
+	}
+	return z.add(c0, scale(z.mulx(c1s), 2))
+}
+
+func (z hermOps[T]) div(c1, c2 []T) (quo, rem []T) { return divByMul(z.mul, c1, c2) }
+func (z hermOps[T]) pow(c []T, n int) []T          { return powCoef(z.mul, c, n) }
+
+// der is hermder: c'[j] = 2(j+1)*c[j+1].
+func (hermOps[T]) der(c []T, m int, scl T) []T {
+	c = slices.Clone(c)
+	n := len(c)
+	if m == 0 {
+		return c
+	}
+	if m >= n {
+		return []T{0}
+	}
+	for range m {
+		n--
+		for j := range c {
+			c[j] *= scl
+		}
+		dst := make([]T, n)
+		for j := n; j >= 1; j-- {
+			dst[j-1] = 2 * T(j) * c[j]
+		}
+		c = dst
+	}
+	return c
+}
+
+// integ is hermint.
+func (z hermOps[T]) integ(c []T, m int, k []T, lbnd, scl T) []T {
+	c = slices.Clone(c)
+	for i := range m {
+		n := len(c)
+		for j := range c {
+			c[j] *= scl
+		}
+		if n == 1 && c[0] == 0 {
+			c[0] += k[i]
+			continue
+		}
+		tmp := make([]T, n+1)
+		tmp[1] = c[0] / 2
+		for j := 1; j < n; j++ {
+			tmp[j+1] = c[j] / (2 * T(j+1))
+		}
+		tmp[0] += k[i] - z.val([]T{lbnd}, tmp)[0]
+		c = tmp
+	}
+	return c
+}
+
+// line is hermline: off + scl*x = off + (scl/2)*H1.
+func (hermOps[T]) line(off, scl T) []T {
+	if scl != 0 {
+		return []T{off, scl / 2}
+	}
+	return []T{off}
+}
+
+// companion is hermcompanion.
+func (hermOps[T]) companion(c []T) []T {
+	c = trimseq(slices.Clone(c))
+	n := len(c) - 1
+	if n < 1 {
+		panicDegAtLeast1()
+	}
+	if n == 1 {
+		return []T{-c[0] / (2 * c[1])}
+	}
+	mat := make([]T, n*n)
+	// top[k] = sqrt(k/2) at (k, k+1), k = 0..n-2; bot is the same shifted down.
+	for k := 0; k <= n-2; k++ {
+		v := T(math.Sqrt(0.5 * f64(T(k+1))))
+		mat[k*n+k+1] = v   // top[k]
+		mat[(k+1)*n+k] = v // bot[k]
+	}
+	// scl = [1, 1/sqrt(2(n-1)), (1/sqrt(2(n-1)))(1/sqrt(2(n-2))), ...] reversed
+	// (numpy hstack(1, 1/sqrt(2*arange(n-1,0,-1))) then cumprod, reversed).
+	scl := make([]float64, n)
+	scl[n-1] = 1
+	acc := 1.0
+	for i := 1; i < n; i++ {
+		acc /= math.Sqrt(2 * f64(T(n-i)))
+		scl[n-1-i] = acc
+	}
+	for i := range n {
+		mat[i*n+n-1] -= T(scl[i]) * c[i] / (2 * c[n])
+	}
+	return mat
+}
+
+func (z hermOps[T]) fromroots(roots []T) []T { return fromRootsCoef(z.line, z.mul, roots) }
+
+// roots is hermroots: eigenvalues of the rotated companion matrix.
+func (z hermOps[T]) roots(c []T) []complex128 {
+	c = trimseq(slices.Clone(c))
+	switch len(c) {
+	case 0, 1:
+		return nil
+	case 2:
+		return []complex128{-cx(c[0] / c[1] / 2)}
+	}
+	return rootsEig(rot180(z.companion(c)), len(c)-1)
+}
+
+// compose advances the Hermite recurrence with the series L.
+func (z hermOps[T]) compose(c []T, off, scl T) []T {
+	L := z.line(off, scl) // off + (scl/2)*H1 = the series off + scl*x
+	acc := []T{c[0]}
+	if len(c) > 1 {
+		acc = coefAdd(acc, z.mul([]T{c[1]}, L))
+	}
+	v2, v1 := []T{T(1)}, L
+	for d := 2; d < len(c); d++ {
+		v := coefSub(z.mul(v1, scale(L, 2)), scale(v2, 2*T(d-1)))
+		acc = coefAdd(acc, z.mul([]T{c[d]}, v))
+		v2, v1 = v1, v
+	}
+	return acc
+}
+
+// Add returns h + o in the Hermite basis.
+func (h *Hermite[T]) Add(o *Hermite[T]) *Hermite[T] {
+	return h.derived(coefAdd(h.coef, o.coef))
+}
+
+// Sub returns h - o in the Hermite basis.
+func (h *Hermite[T]) Sub(o *Hermite[T]) *Hermite[T] {
+	return h.derived(coefSub(h.coef, o.coef))
+}
+
+// Mul returns the Hermite product.
+func (h *Hermite[T]) Mul(o *Hermite[T]) *Hermite[T] {
+	return h.derived(h.ops.mul(h.coef, o.coef))
+}
+
+// Div returns the quotient and remainder of h / o.
+func (h *Hermite[T]) Div(o *Hermite[T]) (*Hermite[T], *Hermite[T]) {
+	q, r := h.ops.div(h.coef, o.coef)
+	return h.derived(q), h.derived(r)
+}
+
+// Pow raises the series to the n-th power.
+func (h *Hermite[T]) Pow(n int) *Hermite[T] { return h.derived(h.ops.pow(h.coef, n)) }
+
+// Deriv returns the m-th derivative (m >= 1).
+func (h *Hermite[T]) Deriv(m int) *Hermite[T] {
+	_, scl := mapparms(h.domain, h.window)
+	return h.derived(h.ops.der(h.coef, m, scl))
+}
+
+// Integ returns the m-th integral with integration constants k.
+func (h *Hermite[T]) Integ(m int, k ...T) *Hermite[T] {
+	off, scl := mapparms(h.domain, h.window)
+	return h.derived(h.ops.integ(h.coef, m, padConsts(m, k), off, 1/scl))
+}
+
+// Trim drops trailing coefficients with |c| <= tol.
+func (h *Hermite[T]) Trim(tol T) *Hermite[T] { return h.derived(trimcoef(h.coef, tol)) }
+
+// Truncate drops coefficients beyond the first size.
+func (h *Hermite[T]) Truncate(size int) *Hermite[T] {
+	trimTruncate(size)
+	if size >= len(h.coef) {
+		return h.Copy()
+	}
+	return h.derived(slices.Clone(h.coef[:size]))
+}
+
+// Convert re-parameterizes the same function onto domain/window.
+func (h *Hermite[T]) Convert(domain, window [2]T) *Hermite[T] {
+	off, scl := h.convertParms(domain, window)
+	q := h.derived(h.ops.compose(h.coef, off, scl))
+	q.domain, q.window = domain, window
+	return q
+}
+
+// Copy returns a deep copy.
+func (h *Hermite[T]) Copy() *Hermite[T] { return h.derived(slices.Clone(h.coef)) }
+
+// Fit least-squares fits degree deg to (x, y) with numpy default domain.
+func (h *Hermite[T]) Fit(x, y *numgo.Array[T], deg int) *Hermite[T] {
+	if x.Ndim() != 1 {
+		panicDim1D("x")
+	}
+	coef, domain := fitCoef(h.ops, x.Copy().Data(), y.Copy().Data(), deg)
+	q := h.derived(coef)
+	q.domain = domain
+	return q
+}
