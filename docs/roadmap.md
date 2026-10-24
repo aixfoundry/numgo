@@ -13,7 +13,7 @@
    - `longdouble/clongdouble` 降级为 float64/complex128；`float16` 软件实现，排后期。
 2. **语义对拍 numpy**：广播规则、类型提升、NaN/Inf 传播、轴语义（axis 归约后该维消失/保留为 1 由 `keepdims` 显式控制）逐条对齐。错误消息沿用 numpy 措辞（`operands could not be broadcast together...`、`Singular matrix`）+ Go panic（非法输入=编程错误；IEEE 特例如除零走 Inf/NaN 不抛）。
 3. **命名**：保留 numpy 名字首字母大写（`Arange/Tensordot/NanMean`——Go 导出规则），不用 Go 重命名发明新词汇；概念对齐降低迁移心智成本，这就是 Go 生态的惯例（如 gonum 对标 BLAS 命名）。
-4. **重型后端用现成库**：LAPACK → `gonum.org/v1/gonum/lapack`（纯 Go）；FFT → `gonum.org/v1/gonum/dsp/fourier`；随机 → 自实现 BitGenerator（math/rand/v2 无法 bit-exact 对齐 numpy，PCG64/MT19937 算法公开且不长）。符合「不重复造轮子」。
+4. **零外部依赖**（用户定案 2026-10-24）：LAPACK → 自实现 `internal/lapack`（LU/Cholesky/QR/Jacobi-SVD/Hessenberg+QR 特征值）；FFT → 自实现 mixed-radix + Bluestein；随机 → 自实现；libm 位对齐 → 自实现 `internal/cmath`（glibc 算法移植）。go.mod 保持只有 stdlib。
 5. **测试策略：golden 对拍**。每期用一个 Python 脚本从 numpy 生成 fixture（输入+期望输出 JSON/npy），Go 侧读入断言。numpy 源码在本地可随时生成。
 
 ## Phase 0 — 架构基线 ✅（已完成）
@@ -45,16 +45,16 @@ numpy 对应：`_core`。这是全路线图的地基，其他一切都是组合�
 
 **验收**：✅ 已达成（golden fixture 167 例 + 单元测试全绿；einsum/fancy 新函数的 fixture 待下批补至 200+）。
 
-## Phase 2 — 三大数值后端：linalg / fft / random
+## Phase 2 — 三大数值后端：linalg / fft / random ✅（PCG64 完成，MT19937/float32 路径与分布扩展待补）
 
 numpy 对应：`linalg`、`fft`、`random`。相互独立，可三车道并行。
 
-**linalg**（后端 gonum/lapack，纯 Go）：
+**linalg**（自实现 internal/lapack，零依赖）：
 - [ ] `Solve/Inv/Det/Slogdet/Cholesky/QR(Lstsq)/SVD/Eig/Eigh/Norm/Cond/MatrixRank/MultiDot/TensorSolve/TensorInv/MatrixPower`
 - [ ] 批处理矩阵栈（numpy gufunc 语义：`(…,M,K)@(…,K,N)`）——依赖 Phase 1 广播。
 - [ ] 具名结果类型（`SVDResult` 等）→ Go 习惯是具名 struct，直接对齐。
 
-**fft**（后端 gonum/dsp/fourier 或自实现 pocketfft 移植）：
+**fft**（自实现 mixed-radix Cooley-Tukey + Bluestein）：
 - [ ] `FFT/IFFT/RFFT/IRFFT/HFFT/IHFFT` + 2D/nD 族 + `FFTFreq/FFTShift`；`norm` 三模式。
 
 **random**（自实现，对齐 bit-exact）：
