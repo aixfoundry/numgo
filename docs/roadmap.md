@@ -45,7 +45,7 @@ numpy 对应：`_core`。这是全路线图的地基，其他一切都是组合�
 
 **验收**：✅ 已达成（golden fixture 167 例 + 单元测试全绿；einsum/fancy 新函数的 fixture 待下批补至 200+）。
 
-## Phase 2 — 三大数值后端：linalg / fft / random ✅（PCG64 完成，MT19937/float32 路径与分布扩展待补）
+## Phase 2 — 三大数值后端：linalg / fft / random ✅（已完成）
 
 numpy 对应：`linalg`、`fft`、`random`。相互独立，可三车道并行。
 
@@ -64,7 +64,7 @@ numpy 对应：`linalg`、`fft`、`random`。相互独立，可三车道并行�
 
 **验收**：linalg 对拍 LAPACK 例程 ~40 例；fft 精度对拍 1e-12；random 同种子序列逐位一致。
 
-## Phase 3 — lib 工具层 + polynomial（纯组合层，快速推进）
+## Phase 3 — lib 工具层 + polynomial（进行中：IO/NaN 族/统计/Pad ✅，polynomial 待做）
 
 numpy 对应：`lib`（第二梯队全部）、`polynomial`。核心稳定后机械推进，可多车道并行。
 
