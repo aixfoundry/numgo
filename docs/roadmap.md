@@ -78,7 +78,7 @@ numpy 对应：`lib`（第二梯队全部）、`polynomial`。核心稳定后机
 
 **验收**：对拍 fixture 覆盖每子模块代表性函数；`.npy` 文件与 numpy 双向读写一致。
 
-## Phase 4 — 数组变体（按需启动，真需求驱动）
+## Phase 4 — 数组变体 ✅（strings/ma 已完成；rec 按 roadmap 决策不做，提供 []struct 转换待需求触发）
 
 numpy 对应：`ma`、`strings`/`char`、`rec`。
 
