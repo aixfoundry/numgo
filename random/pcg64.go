@@ -117,6 +117,12 @@ func (p *PCG64) Advance(delta uint64) {
 	p.stateHi, p.stateLo = hi, lo
 }
 
+// NextDouble: pcg64_next_double (numpy _pcg64.pyx:41) — uint64_to_double of
+// the next 64-bit draw.
+func (p *PCG64) NextDouble() float64 {
+	return float64(p.Next64()>>11) * (1.0 / 9007199254740992.0)
+}
+
 // Jumped returns a new generator advanced by the golden-ratio jump constant
 // (numpy PCG64.jumped: step = 0x9e3779b97f4a7c15f39cc0605cedc835).
 func (p *PCG64) Jumped() BitGenerator {

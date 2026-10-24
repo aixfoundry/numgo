@@ -42,9 +42,10 @@ func sizeOr1(size []int) int {
 
 var signDouble = [2]float64{1.0, -1.0}
 
-// nextDouble: (next64 >> 11) * 2^-53 (numpy _common.pxd uint64_to_double).
+// nextDouble: the bit generator's next_double slot (numpy bitgen.h:15) —
+// PCG64: (next64 >> 11) * 2^-53; MT19937: mt19937_next_double (mt19937.h:56).
 func (g *Generator) nextDouble() float64 {
-	return float64(g.bg.Next64()>>11) * (1.0 / 9007199254740992.0)
+	return g.bg.NextDouble()
 }
 
 // StandardUniform returns a double in [0, 1)

@@ -36,6 +36,24 @@ func NewGenerator(ss *SeedSequence) *Generator {
 	return &Generator{bg: NewPCG64(ss), ss: ss}
 }
 
+// NewGeneratorMT builds a Generator over an MT19937 engine seeded from ss
+// (numpy Generator(MT19937(SeedSequence(...)))).
+func NewGeneratorMT(ss *SeedSequence) *Generator {
+	return &Generator{bg: NewMT19937(ss), ss: ss}
+}
+
+// MT19937Rng is the MT19937 analogue of DefaultRng: a Generator over
+// MT19937(SeedSequence(seed...)).
+func MT19937Rng(seed ...uint64) *Generator {
+	var ss *SeedSequence
+	if len(seed) == 0 {
+		ss = NewSeedSequence(0)
+	} else {
+		ss = NewSeedSequence(seed...)
+	}
+	return NewGeneratorMT(ss)
+}
+
 // BitGenerator returns the underlying engine (numpy .bit_generator).
 func (g *Generator) BitGenerator() BitGenerator { return g.bg }
 
