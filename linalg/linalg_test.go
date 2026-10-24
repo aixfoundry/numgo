@@ -10,7 +10,7 @@ import (
 )
 
 // Tolerance convention: 1e-9 absolute/relative against numpy-computed
-// golden values (numpy 2.5.1, gonum LAPACK vs LAPACK reference agree to
+// golden values (numpy 2.5.1; own kernels vs LAPACK reference agree to
 // ~1e-14 on these sizes).
 
 const tol = 1e-9

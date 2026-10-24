@@ -5,13 +5,13 @@ import (
 	"math"
 
 	"github.com/kaisawind/numgo"
-	"gonum.org/v1/gonum/lapack"
+	"github.com/kaisawind/numgo/internal/lapack"
 )
 
 // Solvers and determinant functions: Solve, Inv, Det, Slogdet, Lstsq.
-// Backend: LU via gonum's Dgesv/Dgetrf+Dgetri. Batched systems loop over the
-// leading dimensions (shortcut: batched BLAS later). Gonum buffers are
-// row-major (C order), matching numgo layout directly.
+// Backend: own pure-Go LU kernels (internal/lapack: LU + LuSolve/LuInvert).
+// Batched systems loop over the leading dimensions (shortcut: batched BLAS
+// later). Kernel buffers are row-major (C order), matching numgo layout.
 
 // Solve solves the linear system a @ x = b. a is (..., M, M); b is either a
 // (M,) vector, shared across every batch, or (..., M, N) with leading
@@ -70,21 +70,21 @@ func Solve[T numgo.Number](a, b *numgo.Array[T]) *numgo.Array[T] {
 	return out
 }
 
-// gesvJob wraps one Dgesv call on a single square system with nrhs
+// gesvJob wraps one LU + solve on a single square system with nrhs
 // right-hand sides row-major in b (n×nrhs). a and b are overwritten.
-// Returns false when the matrix is exactly singular. Gonum's LAPACK buffers
-// are C-order: a has leading dimension n (row stride) and b has leading
+// Returns false when the matrix is exactly singular. Kernel buffers are
+// C-order: a has leading dimension n (row stride) and b has leading
 // dimension nrhs.
 func gesvJob(n, nrhs int, a, b []float64) bool {
 	ipiv := make([]int, n)
-	return lapack64().Dgesv(n, nrhs, a, n, ipiv, b, max(nrhs, 1))
+	if lapack.LU(a, n, n, ipiv) != 0 {
+		return false
+	}
+	return lapack.LuSolve(a, n, n, ipiv, b, nrhs)
 }
 
-// lapack64 is the shared gonum LAPACK implementation.
-func lapack64() gonumImpl { return gonumImpl{} }
-
 // Inv computes the multiplicative inverse of a (..., M, M). Singular input
-// panics. Backend: LAPACK Dgetrf + Dgetri.
+// panics. Backend: own kernels LU + LuInvert.
 func Inv[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 	const op = "inv"
 	af := f64(a)
@@ -97,17 +97,13 @@ func Inv[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 		panicSquare(op, shape)
 	}
 	out := numgo.Zeros[T](shape...)
-	impl := gonumImpl{}
 	eachBatch(shape, func(batch []int) {
 		mat := aMatrixAt(af, batch, m, n)
 		ipiv := make([]int, m)
-		if !impl.Dgetrf(m, m, mat, m, ipiv) {
+		if lapack.LU(mat, m, m, ipiv) != 0 {
 			panicSingular()
 		}
-		work := []float64{0}
-		impl.Dgetri(m, mat, m, ipiv, work, -1)
-		work = make([]float64, int(work[0]))
-		if !impl.Dgetri(m, mat, m, ipiv, work, len(work)) {
+		if !lapack.LuInvert(mat, m, m, ipiv) {
 			panicSingular()
 		}
 		setMatAt(out, batch, m, m, mat)
@@ -164,12 +160,11 @@ func Slogdet[T numgo.Number](a *numgo.Array[T]) SlogdetResult[T] {
 	return SlogdetResult[T]{Sign: scalarOf[T](s), LogAbsDet: scalarOf[T](ld)}
 }
 
-// luLogDet computes (sign, log|det|) of the matrix at batch via Dgetrf.
+// luLogDet computes (sign, log|det|) of the matrix at batch via the LU kernel.
 func luLogDet(a *numgo.Array[float64], batch []int, m int) (sign, logabs float64) {
 	mat := aMatrixAt(a, batch, m, m)
 	ipiv := make([]int, m)
-	impl := gonumImpl{}
-	if !impl.Dgetrf(m, m, mat, m, ipiv) {
+	if lapack.LU(mat, m, m, ipiv) != 0 {
 		// Exactly singular: numpy reports sign 0, log|det| -inf.
 		return 0, math.Inf(-1)
 	}
@@ -306,19 +301,16 @@ type LstsqResult[T numgo.Number] struct {
 	SingularValues *numgo.Array[T]
 }
 
-// svdMatrix runs LAPACK Dgesvd (thin SVD) on a row-major m×n matrix,
-// returning row-major U (m×minmn), s (minmn, descending) and Vt (minmn×n).
+// svdMatrix runs the own Jacobi SVD kernel (thin factors) on a row-major
+// m×n matrix, returning row-major U (m×minmn), s (minmn, descending) and
+// Vt (minmn×n).
 func svdMatrix(a []float64, m, n int) (u, s, vt []float64) {
 	minmn := min(m, n)
 	cm := append([]float64(nil), a...)
 	uCM := make([]float64, m*minmn)
 	vtCM := make([]float64, minmn*n)
 	sv := make([]float64, minmn)
-	impl := gonumImpl{}
-	work := []float64{0}
-	impl.Dgesvd(lapack.SVDStore, lapack.SVDStore, m, n, cm, n, sv, uCM, minmn, vtCM, n, work, -1)
-	work = make([]float64, int(work[0]))
-	if !impl.Dgesvd(lapack.SVDStore, lapack.SVDStore, m, n, cm, n, sv, uCM, minmn, vtCM, n, work, len(work)) {
+	if !lapack.Svd(cm, m, n, lapack.SVDThin, lapack.SVDThin, uCM, sv, vtCM) {
 		panicConvergence("svd")
 	}
 	return uCM, sv, vtCM

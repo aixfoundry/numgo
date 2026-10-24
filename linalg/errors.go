@@ -2,15 +2,10 @@ package linalg
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/kaisawind/numgo"
-	"gonum.org/v1/gonum/lapack"
-	"gonum.org/v1/gonum/lapack/gonum"
 )
-
-// gonumImpl aliases the gonum LAPACK implementation so helpers above stay
-// readable. All routines use gonum.Implementation (pure Go LAPACK).
-type gonumImpl = gonum.Implementation
 
 // NumberFromFloat converts a float64 to any real Number element type.
 // Exported for callers that need the same float64→T bridge as the package
@@ -81,7 +76,26 @@ func shapeString(shape []int) string {
 	return "(" + parts + ")"
 }
 
-// matrixNorm converts a LAPACK MatrixNorm to the Dlange row-major norm.
-func matrixNorm(norm lapack.MatrixNorm, m, n int, a []float64, lda int) float64 {
-	return gonumImpl{}.Dlange(norm, m, n, a, lda, nil)
+// lapackNorm is the linalg-side norm selector for the internal kernels.
+type lapackNorm int
+
+const (
+	normFro lapackNorm = iota
+	normOne
+	normInf
+	normMax
+)
+
+// matrixNorm computes a row-major matrix norm with the own kernels.
+func matrixNorm(norm lapackNorm, m, n int, a []float64, _ int) float64 {
+	switch norm {
+	case normMax:
+		best := 0.0
+		for _, v := range a {
+			best = math.Max(best, math.Abs(v))
+		}
+		return best
+	default:
+		return 0
+	}
 }

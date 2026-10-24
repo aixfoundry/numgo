@@ -4,7 +4,7 @@
 // Element type is generic over numgo.Number; compute happens in float64
 // internally (via numgo.AsType) and results convert back to T. Complex element
 // types are accepted for forward compatibility but panic at run time:
-// complex LAPACK (Z-prefix) routines are not wired up yet
+// complex kernels (Z-prefix) are not wired up yet
 // (numgo/linalg: complex dtypes not supported yet).
 //
 // Real general eigenproblems (Eig/Eigvals) intrinsically produce complex
@@ -14,20 +14,19 @@
 // All stacked-matrix operations loop over the leading batch dimensions
 // (numpy gufunc semantics for the matrix axes). Batched BLAS is deferred.
 //
-// Backend choices (gonum.org/v1/gonum, pure-Go LAPACK work-alike in
-// lapack/gonum, called directly from gonum.Implementation):
+// Backend: own pure-Go kernels in internal/lapack (no external LAPACK):
 //
-//	Solve/Inv/Det/Slogdet   Dgesv / Dgetrf+Dgetri (LU)
-//	Cholesky                Dpotrf
-//	QR (reduced)            Dgeqrf + Dorgqr
-//	SVD                     Dgesvd
-//	Eig/Eigvals             Dgeev
-//	Eigh/Eigvalsh           Dsyev
-//	Lstsq/Pinv/Cond/Rank    via Dgesvd
-//	Norm                    direct reduction loops (no LAPACK dependency)
+//	Solve/Inv/Det/Slogdet   LU (partial pivoting) + LuSolve/LuInvert
+//	Cholesky                Potrf (lower)
+//	QR (reduced/complete)   Geqrf + Orgqr (Householder)
+//	SVD                     one-sided Jacobi (Hestenes)
+//	Eig/Eigvals             Hessenberg + shifted QR + inverse iteration
+//	Eigh/Eigvalsh           cyclic Jacobi
+//	Lstsq/Pinv/Cond/Rank    via the Jacobi SVD
+//	Norm                    direct reduction loops (no kernel dependency)
 //
-// Gonum's LAPACK buffers are C-order (row-major) with the leading dimension
-// as the row stride, so numgo's C-order rows pass straight through with no
+// Kernel buffers are C-order (row-major) with the leading dimension as the
+// row stride, so numgo's C-order rows pass straight through with no
 // transposition.
 package linalg
 

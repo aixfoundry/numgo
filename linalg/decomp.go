@@ -4,18 +4,19 @@ import (
 	"fmt"
 
 	"github.com/kaisawind/numgo"
-	"gonum.org/v1/gonum/blas"
-	"gonum.org/v1/gonum/lapack"
+	"github.com/kaisawind/numgo/internal/lapack"
 )
 
 // Matrix decompositions: Cholesky, QR, SVD, Eig/Eigvals, Eigh/Eigvalsh.
-// Backend: gonum's Dpotrf, Dgeqrf+Dorgqr, Dgesvd, Dgeev, Dsyev. Batched
-// inputs loop over leading dims (shortcut: batched BLAS later). Gonum
-// buffers are row-major (C order), matching numgo layout.
+// Backend: own pure-Go kernels (internal/lapack): Potrf, Geqrf+Orgqr,
+// one-sided Jacobi Svd, Eig (Hessenberg + shifted QR + inverse iteration),
+// cyclic-Jacobi Syev. Batched inputs loop over leading dims (shortcut:
+// batched BLAS later). Kernel buffers are row-major (C order), matching
+// numgo layout.
 
 // Cholesky returns the lower-triangular Cholesky factor L of a (..., M, M)
 // with a = L @ L.T. Non-positive-definite input panics (Singular matrix).
-// Backend: LAPACK Dpotrf (lower triangle).
+// Backend: own kernel Potrf (lower triangle).
 func Cholesky[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 	af := f64(a)
 	shape := af.Shape()
@@ -24,10 +25,9 @@ func Cholesky[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 		panicSquare("cholesky", shape)
 	}
 	out := numgo.Zeros[T](shape...)
-	impl := gonumImpl{}
 	eachBatch(shape, func(batch []int) {
 		mat := aMatrixAt(af, batch, m, m)
-		if !impl.Dpotrf(blas.Lower, m, mat, m) {
+		if !lapack.Potrf(mat, m) {
 			panicSingular()
 		}
 		// Zero the upper triangle.
@@ -64,8 +64,8 @@ type QRResult[T numgo.Number] struct {
 }
 
 // QR computes the QR factorization of a (..., M, N) with M >= N. Backend:
-// LAPACK Dgeqrf + Dorgqr (complete: Dorgqr over all m columns; reduced: the
-// first k columns). shortcut: wide matrices (m < n) need the LQ path —
+// own kernels Geqrf + Orgqr (complete: Orgqr over all m columns; reduced:
+// the first k columns). shortcut: wide matrices (m < n) need the LQ path —
 // not implemented this phase and panic.
 func QR[T numgo.Number](a *numgo.Array[T], mode QRMode) QRResult[T] {
 	af := f64(a)
@@ -84,14 +84,10 @@ func QR[T numgo.Number](a *numgo.Array[T], mode QRMode) QRResult[T] {
 		qOut = numgo.Zeros[T](append(append([]int(nil), batchShape(shape)...), k)...)
 	}
 	rOut := numgo.Zeros[T](append(append([]int(nil), batchShape(shape)...), rRows, n)...)
-	impl := gonumImpl{}
 	eachBatch(shape, func(batch []int) {
 		mat := aMatrixAt(af, batch, m, n)
 		tau := make([]float64, n)
-		work := []float64{0}
-		impl.Dgeqrf(m, n, mat, n, tau, work, -1)
-		work = make([]float64, int(work[0]))
-		impl.Dgeqrf(m, n, mat, n, tau, work, len(work))
+		lapack.Geqrf(mat, m, n, n, tau)
 		switch mode {
 		case QRRaw:
 			// numpy's mode='raw' returns (H, tau): H carries R in its upper
@@ -104,22 +100,10 @@ func QR[T numgo.Number](a *numgo.Array[T], mode QRMode) QRResult[T] {
 			setMatAt(rOut, batch, k, n, h)
 			setVecAt(qOut, batch, tau)
 		default:
-			// Build Q from the reflectors. Dorgqr expects an m×qCols matrix
-			// in C order (leading dim qCols >= k), so copy row slices of
-			// length qCols from mat (leading dim n). For complete mode
-			// qCols == m >= n and the missing reflector columns are zero.
+			// Build Q from the reflectors: q is m×qCols with row stride
+			// qCols; the Orgqr kernel maps the m×n factor buffer directly.
 			qMat := make([]float64, m*qCols)
-			for i := 0; i < m; i++ {
-				for j := 0; j < qCols; j++ {
-					if j < n {
-						qMat[i*qCols+j] = mat[i*n+j]
-					}
-				}
-			}
-			work2 := []float64{0}
-			impl.Dorgqr(m, qCols, k, qMat, qCols, tau, work2, -1)
-			work2 = make([]float64, int(work2[0]))
-			impl.Dorgqr(m, qCols, k, qMat, qCols, tau, work2, len(work2))
+			lapack.Orgqr(mat, m, n, k, tau, qMat, qCols)
 			setMatAt(qOut, batch, m, qCols, qMat)
 			// R: upper rRows×n part of mat with zeros below the diagonal.
 			r := make([]float64, rRows*n)
@@ -146,7 +130,7 @@ type SVDResult[T numgo.Number] struct {
 // a (..., M, N). S has shape (..., K) with K = min(M,N) in descending order.
 // With fullMatrices, U is (..., M, M) and Vt is (..., N, N); otherwise the
 // thin factors (..., M, K) and (..., K, N). With computeUV false only S is
-// populated. Backend: LAPACK Dgesvd.
+// populated. Backend: own one-sided Jacobi kernel Svd.
 func Svd[T numgo.Number](a *numgo.Array[T], fullMatrices bool, computeUV bool) SVDResult[T] {
 	af := f64(a)
 	shape := af.Shape()
@@ -166,35 +150,25 @@ func Svd[T numgo.Number](a *numgo.Array[T], fullMatrices bool, computeUV bool) S
 		uOut = numgo.Zeros[T](append(append([]int(nil), batchShape(shape)...), m, uCols)...)
 		vtOut = numgo.Zeros[T](append(append([]int(nil), batchShape(shape)...), vtRows, n)...)
 	}
-	impl := gonumImpl{}
 	jobU, jobVT := lapack.SVDNone, lapack.SVDNone
 	if computeUV {
 		if fullMatrices {
-			jobU, jobVT = lapack.SVDAll, lapack.SVDAll
+			jobU, jobVT = lapack.SVDFull, lapack.SVDFull
 		} else {
-			jobU, jobVT = lapack.SVDStore, lapack.SVDStore
+			jobU, jobVT = lapack.SVDThin, lapack.SVDThin
 		}
 	}
 	eachBatch(shape, func(batch []int) {
 		cm := aMatrixAt(af, batch, m, n)
 		sv := make([]float64, k)
 		var uMat, vtMat []float64
-		ldu, ldvt := 1, 1
 		if computeUV {
 			uMat = make([]float64, m*uCols)
 			vtMat = make([]float64, vtRows*n)
-			// C-order leading dims: U rows stride uCols, Vt rows stride n.
-			// Dgesvd with SVDStore wants ldu >= minmn rows of U; with
-			// SVDAll ldu >= m.
-			ldu = uCols
-			ldvt = n
 		} else {
 			uMat, vtMat = make([]float64, 1), make([]float64, 1)
 		}
-		work := []float64{0}
-		impl.Dgesvd(jobU, jobVT, m, n, cm, n, sv, uMat, ldu, vtMat, ldvt, work, -1)
-		work = make([]float64, int(work[0]))
-		if !impl.Dgesvd(jobU, jobVT, m, n, cm, n, sv, uMat, ldu, vtMat, ldvt, work, len(work)) {
+		if !lapack.Svd(cm, m, n, jobU, jobVT, uMat, sv, vtMat) {
 			panicConvergence("svd")
 		}
 		base := linearIndex(sShape, append(append([]int(nil), batch...), 0))
@@ -220,7 +194,8 @@ type EigResult[T numgo.Number] struct {
 // Eig computes the right eigenvalues and eigenvectors of a general square
 // (..., M, M) matrix. Results are complex128 even for real T because real
 // matrices may have complex conjugate eigen pairs. With computeVectors false
-// Vectors is nil. Backend: LAPACK Dgeev.
+// Vectors is nil. Backend: own kernel Eig (Hessenberg + shifted QR +
+// inverse iteration).
 func Eig[T numgo.Number](a *numgo.Array[T], computeVectors bool) EigResult[T] {
 	af := f64(a)
 	shape := af.Shape()
@@ -228,11 +203,8 @@ func Eig[T numgo.Number](a *numgo.Array[T], computeVectors bool) EigResult[T] {
 	if af.Ndim() < 2 || m != n {
 		panicSquare("eig", shape)
 	}
-	impl := gonumImpl{}
-	jobvr := lapack.RightEVNone
 	var vOut *numgo.Array[complex128]
 	if computeVectors {
-		jobvr = lapack.RightEVCompute
 		vOut = numgo.Zeros[complex128](shape...)
 	}
 	wOut := numgo.Zeros[complex128](append(append([]int(nil), batchShape(shape)...), m)...)
@@ -243,11 +215,7 @@ func Eig[T numgo.Number](a *numgo.Array[T], computeVectors bool) EigResult[T] {
 		if computeVectors {
 			vr = make([]float64, m*m)
 		}
-		work := []float64{0}
-		impl.Dgeev(lapack.LeftEVNone, jobvr, m, cm, m, wr, wi, nil, max(m, 1), vr, max(m, 1), work, -1)
-		work = make([]float64, int(work[0]))
-		first := impl.Dgeev(lapack.LeftEVNone, jobvr, m, cm, m, wr, wi, nil, max(m, 1), vr, max(m, 1), work, len(work))
-		if first != 0 {
+		if !lapack.Eig(cm, m, wr, wi, computeVectors, vr) {
 			panicConvergence("eig")
 		}
 		wb := linearIndex(wOut.Shape(), append(append([]int(nil), batch...), 0))
@@ -255,9 +223,9 @@ func Eig[T numgo.Number](a *numgo.Array[T], computeVectors bool) EigResult[T] {
 			wOut.Data()[wb+i] = complex(wr[i], wi[i])
 		}
 		if computeVectors {
-			// LAPACK packs conjugate pairs: v_j = VR[:,j] + i*VR[:,j+1] and
-			// v_{j+1} = VR[:,j] - i*VR[:,j+1]. VR is stored row-major with
-			// leading dim m, so column j is vr[j*m:(j+1)*m].
+			// Kernel packs conjugate pairs LAPACK-style: v_j = VR[:,j] +
+			// i·VR[:,j+1] and v_{j+1} = VR[:,j] − i·VR[:,j+1]. VR is
+			// row-major with leading dim m, so column j is vr[j*m:(j+1)*m].
 			for j := 0; j < m; j++ {
 				if wi[j] == 0 {
 					for i := 0; i < m; i++ {
@@ -288,22 +256,22 @@ func Eigvals[T numgo.Number](a *numgo.Array[T]) *numgo.Array[complex128] {
 }
 
 // eighUplo validates the UPLO selector ("L" lower — the default — or "U").
-func eighUplo(uplo string) blas.Uplo {
+func eighUplo(uplo string) bool {
 	switch uplo {
 	case "L", "l", "":
-		return blas.Lower
+		return false
 	case "U", "u":
-		return blas.Upper
+		return true
 	default:
 		panicDims("eigh", fmt.Sprintf("UPLO must be 'L' or 'U', got %q", uplo))
-		return 0
+		return false
 	}
 }
 
 // Eigh computes the eigenvalues and eigenvectors of a real symmetric
 // (..., M, M) matrix, reading only the selected triangle (uplo "L" or "U").
 // Eigenvalues are ascending. Values and Vectors keep element type T.
-// Backend: LAPACK Dsyev.
+// Backend: own cyclic-Jacobi kernel Syev.
 func Eigh[T numgo.Number](a *numgo.Array[T], computeVectors bool, uplo string) EighResult[T] {
 	af := f64(a)
 	shape := af.Shape()
@@ -311,22 +279,19 @@ func Eigh[T numgo.Number](a *numgo.Array[T], computeVectors bool, uplo string) E
 	if af.Ndim() < 2 || m != n {
 		panicSquare("eigh", shape)
 	}
-	impl := gonumImpl{}
-	up := eighUplo(uplo)
-	jobz := lapack.EVNone
+	upper := eighUplo(uplo)
 	var vOut *numgo.Array[T]
 	if computeVectors {
-		jobz = lapack.EVCompute
 		vOut = numgo.Zeros[T](shape...)
 	}
 	wOut := numgo.Zeros[T](append(append([]int(nil), batchShape(shape)...), m)...)
 	eachBatch(shape, func(batch []int) {
 		cm := aMatrixAt(af, batch, m, m)
+		if upper {
+			symmetrizeUpper(cm, m)
+		}
 		w := make([]float64, m)
-		work := []float64{0}
-		impl.Dsyev(jobz, up, m, cm, m, w, work, -1)
-		work = make([]float64, int(work[0]))
-		if !impl.Dsyev(jobz, up, m, cm, m, w, work, len(work)) {
+		if !lapack.Syev(cm, m, w, computeVectors) {
 			panicConvergence("eigh")
 		}
 		wb := linearIndex(wOut.Shape(), append(append([]int(nil), batch...), 0))
@@ -338,6 +303,16 @@ func Eigh[T numgo.Number](a *numgo.Array[T], computeVectors bool, uplo string) E
 		}
 	})
 	return EighResult[T]{Values: wOut, Vectors: vOut}
+}
+
+// symmetrizeUpper mirrors the upper triangle onto the lower one in place so
+// the kernels (which read the lower part) see the selected UPLO='U' data.
+func symmetrizeUpper(a []float64, n int) {
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			a[j*n+i] = a[i*n+j]
+		}
+	}
 }
 
 // EighResult holds the symmetric eigen decomposition outputs.
