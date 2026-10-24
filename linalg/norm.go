@@ -243,9 +243,9 @@ func matrixNormAxes(a *numgo.Array[float64], ord any, r1, r2 int, keepdims bool)
 		}
 		m, n := shape[r1], shape[r2]
 		mat := make([]float64, m*n)
-		for i := 0; i < m; i++ {
+		for i := range m {
 			coords[r1] = i
-			for j := 0; j < n; j++ {
+			for j := range n {
 				coords[r2] = j
 				mat[i*n+j] = a.At(coords...)
 			}
@@ -325,9 +325,9 @@ func frobenius(m, n int, mat []float64) float64 {
 
 func maxColSum(m, n int, mat []float64) float64 {
 	best := 0.0
-	for j := 0; j < n; j++ {
+	for j := range n {
 		s := 0.0
-		for i := 0; i < m; i++ {
+		for i := range m {
 			s += math.Abs(mat[i*n+j])
 		}
 		best = math.Max(best, s)
@@ -337,9 +337,9 @@ func maxColSum(m, n int, mat []float64) float64 {
 
 func minColSum(m, n int, mat []float64) float64 {
 	best := math.Inf(1)
-	for j := 0; j < n; j++ {
+	for j := range n {
 		s := 0.0
-		for i := 0; i < m; i++ {
+		for i := range m {
 			s += math.Abs(mat[i*n+j])
 		}
 		best = math.Min(best, s)
@@ -349,9 +349,9 @@ func minColSum(m, n int, mat []float64) float64 {
 
 func maxRowSum(m, n int, mat []float64) float64 {
 	best := 0.0
-	for i := 0; i < m; i++ {
+	for i := range m {
 		s := 0.0
-		for j := 0; j < n; j++ {
+		for j := range n {
 			s += math.Abs(mat[i*n+j])
 		}
 		best = math.Max(best, s)
@@ -361,9 +361,9 @@ func maxRowSum(m, n int, mat []float64) float64 {
 
 func minRowSum(m, n int, mat []float64) float64 {
 	best := math.Inf(1)
-	for i := 0; i < m; i++ {
+	for i := range m {
 		s := 0.0
-		for j := 0; j < n; j++ {
+		for j := range n {
 			s += math.Abs(mat[i*n+j])
 		}
 		best = math.Min(best, s)
@@ -519,16 +519,16 @@ func Pinv[T numgo.Number](a *numgo.Array[T], rcond float64) *numgo.Array[T] {
 		// pinv = Vt^T diag(cut) U^T (row-major n×m):
 		// pinv[row, col] = Σ_i vt[i*n+row] * cut_i * u[col*k+i].
 		pinv := make([]float64, n*m)
-		for i := 0; i < k; i++ {
+		for i := range k {
 			s := sv[i]
 			if s > rcond*sv[0] && s > 0 {
 				s = 1 / s
 			} else {
 				s = 0
 			}
-			for row := 0; row < n; row++ {
+			for row := range n {
 				vc := vt[i*n+row] * s
-				for col := 0; col < m; col++ {
+				for col := range m {
 					pinv[row*m+col] += vc * u[col*k+i]
 				}
 			}

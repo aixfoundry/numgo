@@ -91,7 +91,7 @@ func (fa fixtureArr) array(t *testing.T) *Array[float64] {
 // axes/shapes); arity is checked exactly when there is no '*'.
 func decodeArgs(t *testing.T, raws []json.RawMessage, spec string) []any {
 	t.Helper()
-	if rest := strings.TrimSuffix(spec, "*"); rest != spec {
+	if rest, ok := strings.CutSuffix(spec, "*"); ok {
 		if len(raws) < len(rest) {
 			t.Fatalf("spec %q needs >=%d args, case has %d", spec, len(rest), len(raws))
 		}
@@ -458,7 +458,6 @@ func TestFixtures(t *testing.T) {
 		domain := e.Name()
 		t.Run(domain, func(t *testing.T) {
 			for _, c := range cases {
-				c := c
 				total++
 				t.Run(c.Name, func(t *testing.T) {
 					t.Parallel()

@@ -170,9 +170,9 @@ func fftRadix(a []complex128, r int, inverse bool, scratch []complex128) {
 	buf := scratch[:n]
 	// Gather and sub-transform each column in place in buf: bin b of column
 	// j lands at buf[j·m + b mod m].
-	for j := 0; j < r; j++ {
+	for j := range r {
 		off := j * m
-		for k := 0; k < m; k++ {
+		for k := range m {
 			buf[off+k] = a[j+k*r]
 		}
 		if m > 1 {
@@ -180,9 +180,9 @@ func fftRadix(a []complex128, r int, inverse bool, scratch []complex128) {
 		}
 	}
 	// Combine: X[k + q·m] = Σ_j buf[j·m+k]·cis(sign·j·(k+q·m)).
-	for b := 0; b < n; b++ {
+	for b := range n {
 		var s complex128
-		for j := 0; j < r; j++ {
+		for j := range r {
 			s += buf[j*m+b%m] * tw[j*b]
 		}
 		a[b] = s

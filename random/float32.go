@@ -39,7 +39,7 @@ func (g *Generator) StandardUniform32() float32 { return g.nextFloat() }
 func (g *Generator) Random32(size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.nextFloat()
 	}
 	return out
@@ -76,7 +76,7 @@ func (g *Generator) StandardExponential32Scalar() float32 {
 func (g *Generator) StandardExponential32(size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardExponential32Scalar()
 	}
 	return out
@@ -121,7 +121,7 @@ func (g *Generator) StandardNormal32Scalar() float32 {
 func (g *Generator) StandardNormal32(size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardNormal32Scalar()
 	}
 	return out
@@ -187,7 +187,7 @@ func sqrtf(x float32) float32 { return float32(math.Sqrt(float64(x))) }
 func (g *Generator) StandardGamma32(shape float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardGamma32Scalar(shape)
 	}
 	return out
@@ -213,7 +213,7 @@ func (g *Generator) Integers32(low, high int32, size ...int) *arrayI {
 	rng := uint32(highClosed) - uint32(low)
 	off := uint32(low)
 	mask := uint32(genMask(uint64(rng)))
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		out.Data()[i] = int64(boundedUint32(off, rng, mask, g))
 	}
 	return out
@@ -237,7 +237,7 @@ func boundedUint32(off, rng, mask uint32, g *Generator) uint32 {
 func (g *Generator) Normal32(mu, sigma float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = mu + sigma*g.StandardNormal32Scalar()
 	}
 	return out
@@ -249,7 +249,7 @@ func (g *Generator) Uniform32(low, high float32, size ...int) *arrayF32 {
 	rng := high - low
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = low + rng*g.nextFloat()
 	}
 	return out
@@ -263,7 +263,7 @@ func (g *Generator) Uniform32(low, high float32, size ...int) *arrayF32 {
 func (g *Generator) Gamma32(shape, scale float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = scale * g.StandardGamma32Scalar(shape)
 	}
 	return out

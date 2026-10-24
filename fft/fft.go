@@ -189,7 +189,7 @@ func FFTFreq(n int, d float64) *numgo.Array[float64] {
 	val := 1 / (float64(n) * d)
 	half := (n-1)/2 + 1
 	data := make([]float64, n)
-	for i := 0; i < half; i++ {
+	for i := range half {
 		data[i] = float64(i) * val
 	}
 	for i := half; i < n; i++ {

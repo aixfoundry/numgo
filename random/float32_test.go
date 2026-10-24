@@ -19,19 +19,19 @@ func eqBits32(t *testing.T, name string, got []float32, want []uint64) {
 
 func TestMT19937Parity(t *testing.T) {
 	m := NewMT19937(NewSeedSequence(12345))
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		if got := m.Next32(); got != uint32(mtRef["mt_raw32"][i]) {
 			t.Fatalf("raw32[%d]: %x != %x", i, got, mtRef["mt_raw32"][i])
 		}
 	}
 	m = NewMT19937(NewSeedSequence(12345))
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if got := m.Next64(); got != mtRef["mt_raw64"][i] {
 			t.Fatalf("raw64[%d]: %x != %x", i, got, mtRef["mt_raw64"][i])
 		}
 	}
 	j := NewMT19937(NewSeedSequence(12345)).Jumped().(*MT19937)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if got := j.Next32(); got != uint32(mtRef["mt_jump_raw"][i]) {
 			t.Fatalf("jump[%d]: %x != %x", i, got, mtRef["mt_jump_raw"][i])
 		}
@@ -41,7 +41,7 @@ func TestMT19937Parity(t *testing.T) {
 func TestMT19937LegacySeeding(t *testing.T) {
 	// RandomState(12345): mt19937_seed path
 	l := NewMT19937LegacySeeding(12345, nil)
-	for i := 0; i < 624; i++ {
+	for i := range 624 {
 		if l.key[i] != uint32(mtRef["seed12345_key"][i]) {
 			t.Fatalf("seed12345 key[%d]: %x != %x", i, l.key[i], mtRef["seed12345_key"][i])
 		}
@@ -51,7 +51,7 @@ func TestMT19937LegacySeeding(t *testing.T) {
 	}
 	// RandomState([1,2,3]): init_by_array path
 	la := mt19937InitByArray([]uint32{1, 2, 3})
-	for i := 0; i < mtN; i++ {
+	for i := range mtN {
 		if la.key[i] != uint32(mtRef["array123_key"][i]) {
 			t.Fatalf("array123 key[%d]: %x != %x", i, la.key[i], mtRef["array123_key"][i])
 		}

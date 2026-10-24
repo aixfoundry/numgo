@@ -140,7 +140,7 @@ func TestMeanVarStd(t *testing.T) {
 	}
 	// Var of a 2x3 along axis 0 = [2.25 2.25 2.25]
 	v0 := a.Var(0)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if v0.At(i) != 2.25 {
 			t.Errorf("Var(0)[%d] = %v, want 2.25", i, v0.At(i))
 		}

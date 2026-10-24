@@ -280,7 +280,7 @@ func TestSvdThin(t *testing.T) {
 	eqSlice(t, "sv", s.S.Data()[:3], []float64{1.8480530273112223, 1.5994429913922052, 0.7343665761277535})
 	// Reconstruction: U @ diag(S) @ Vt ≈ A (thin U is 3x3, Vt is 3x5).
 	diag := numgo.Zeros[float64](3, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		diag.Set([]int{i, i}, s.S.At(i))
 	}
 	recon := s.U.Matmul(diag).Matmul(s.Vt)
@@ -327,12 +327,12 @@ func TestEigGeneralComplex(t *testing.T) {
 	// Eigenvector property: A @ V = V @ diag(w).
 	ac := numgo.AsType[float64, complex128](a)
 	vd := numgo.Zeros[complex128](3, 3)
-	for j := 0; j < 3; j++ {
+	for j := range 3 {
 		vd.Set([]int{j, j}, r.Values.At(j))
 	}
 	lhs := eigMatmul(ac, r.Vectors)
 	rhs := eigMatmul(r.Vectors, vd)
-	for i := 0; i < 9; i++ {
+	for i := range 9 {
 		if cmplx.Abs(lhs.Data()[i]-rhs.Data()[i]) > tol {
 			t.Fatalf("eigvec residual[%d] = %v vs %v", i, lhs.Data()[i], rhs.Data()[i])
 		}
@@ -381,10 +381,10 @@ func eigMatmul(a, b *numgo.Array[complex128]) *numgo.Array[complex128] {
 	shape := a.Shape()
 	m := shape[len(shape)-2]
 	out := numgo.Zeros[complex128](shape...)
-	for i := 0; i < m; i++ {
-		for j := 0; j < m; j++ {
+	for i := range m {
+		for j := range m {
 			var sum complex128
-			for k := 0; k < m; k++ {
+			for k := range m {
 				sum += a.At(i, k) * b.At(k, j)
 			}
 			out.Set([]int{i, j}, sum)
@@ -399,7 +399,7 @@ func TestEighSymmetric(t *testing.T) {
 	eqSlice(t, "eigh w", r.Values.Data()[:3], []float64{0.5857864376269051, 1.9999999999999998, 3.414213562373095})
 	// Eigenvector property: A @ V = V @ diag(w).
 	diag := numgo.Zeros[float64](3, 3)
-	for j := 0; j < 3; j++ {
+	for j := range 3 {
 		diag.Set([]int{j, j}, r.Values.At(j))
 	}
 	lhs := sym.Matmul(r.Vectors)

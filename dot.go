@@ -24,7 +24,7 @@ func matmulKernel[T Number](a, b, c []T, M, K, N int) {
 		c3 := c[(i0+3)*N:]
 		for j0 := 0; j0 < N8; j0 += 8 {
 			var r [4][8]T
-			for k := 0; k < K; k++ {
+			for k := range K {
 				bk := b[k*N+j0 : k*N+j0+8 : k*N+j0+8]
 				a0, a1 := a[(i0+0)*K+k], a[(i0+1)*K+k]
 				a2, a3 := a[(i0+2)*K+k], a[(i0+3)*K+k]
@@ -67,7 +67,7 @@ func matmulKernel[T Number](a, b, c []T, M, K, N int) {
 			b1 := c1[j0 : j0+8 : j0+8]
 			b2 := c2[j0 : j0+8 : j0+8]
 			b3 := c3[j0 : j0+8 : j0+8]
-			for jj := 0; jj < 8; jj++ {
+			for jj := range 8 {
 				b0[jj] = r[0][jj]
 				b1[jj] = r[1][jj]
 				b2[jj] = r[2][jj]
@@ -77,19 +77,19 @@ func matmulKernel[T Number](a, b, c []T, M, K, N int) {
 	}
 	// Edge columns/rows outside the 4×8 panels: plain k-ascending dot per
 	// element (same accumulation order, bit-identical).
-	for i := 0; i < M; i++ {
+	for i := range M {
 		for j := N8; j < N; j++ {
 			var sum T
-			for k := 0; k < K; k++ {
+			for k := range K {
 				sum += a[i*K+k] * b[k*N+j]
 			}
 			c[i*N+j] = sum
 		}
 	}
 	for i := M4; i < M; i++ {
-		for j := 0; j < N8; j++ {
+		for j := range N8 {
 			var sum T
-			for k := 0; k < K; k++ {
+			for k := range K {
 				sum += a[i*K+k] * b[k*N+j]
 			}
 			c[i*N+j] = sum
@@ -310,12 +310,12 @@ func (a *Array[T]) Dot(b *Array[T]) *Array[T] {
 		odometer(b.Shape()[:bc], func(jb []int) {
 			copy(bcIdx, jb)
 			copy(ocIdx[ac+1:ac+1+bc], jb)
-			for i := 0; i < M; i++ {
+			for i := range M {
 				acIdx[ac], acIdx[ac+1] = i, 0
 				ocIdx[ac] = i // a's row index sits after a's leads
-				for j := 0; j < N; j++ {
+				for j := range N {
 					var sum T
-					for k := 0; k < K; k++ {
+					for k := range K {
 						acIdx[ac+1] = k
 						bcIdx[bc], bcIdx[bc+1] = k, j
 						sum += a.At(append([]int(nil), acIdx...)...) * b.At(append([]int(nil), bcIdx...)...)

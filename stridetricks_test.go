@@ -65,7 +65,7 @@ func TestSlidingWindowIdentity(t *testing.T) {
 	if !slices.Equal(v.Shape(), []int{5, 1}) {
 		t.Fatalf("shape = %v, want [5 1]", v.Shape())
 	}
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if v.At(i, 0) != float64(i+1) {
 			t.Fatalf("At(%d,0) = %v", i, v.At(i, 0))
 		}
@@ -90,8 +90,8 @@ func TestAsStridedIdentity(t *testing.T) {
 	if !slices.Equal(v.Shape(), []int{2, 3}) {
 		t.Fatalf("shape = %v", v.Shape())
 	}
-	for i := 0; i < 2; i++ {
-		for j := 0; j < 3; j++ {
+	for i := range 2 {
+		for j := range 3 {
 			if v.At(i, j) != float64(3*i+j+1) {
 				t.Fatalf("At(%d,%d) = %v", i, j, v.At(i, j))
 			}

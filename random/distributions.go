@@ -56,7 +56,7 @@ func (g *Generator) StandardUniform() float64 { return g.nextDouble() }
 func (g *Generator) Random(size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.nextDouble()
 	}
 	return out
@@ -107,7 +107,7 @@ func (g *Generator) StandardNormalScalar() float64 {
 func (g *Generator) StandardNormal(size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardNormalScalar()
 	}
 	return out
@@ -129,7 +129,7 @@ func (g *Generator) StandardExponentialScalar() float64 {
 func (g *Generator) StandardExponential(size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardExponentialScalar()
 	}
 	return out
@@ -139,7 +139,7 @@ func (g *Generator) StandardExponential(size ...int) *arrayF {
 func (g *Generator) Normal(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = loc + scale*g.StandardNormalScalar()
 	}
 	return out
@@ -151,7 +151,7 @@ func (g *Generator) Uniform(lower, high float64, size ...int) *arrayF {
 	rng := high - lower
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = lower + rng*g.nextDouble()
 	}
 	return out
@@ -161,7 +161,7 @@ func (g *Generator) Uniform(lower, high float64, size ...int) *arrayF {
 func (g *Generator) Exponential(scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = scale * g.StandardExponentialScalar()
 	}
 	return out
@@ -220,7 +220,7 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 func (g *Generator) StandardGamma(shape float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardGammaScalar(shape)
 	}
 	return out
@@ -230,7 +230,7 @@ func (g *Generator) StandardGamma(shape float64, size ...int) *arrayF {
 func (g *Generator) Gamma(shape, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = scale * g.StandardGammaScalar(shape)
 	}
 	return out
@@ -243,7 +243,7 @@ const betaTinyThreshold = 3e-103
 func (g *Generator) Beta(a, b float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.betaScalar(a, b)
 	}
 	return out
@@ -362,7 +362,7 @@ func (g *Generator) poissonPTRS(lam float64) int64 {
 func (g *Generator) Poisson(lam float64, size ...int) *arrayI {
 	n := sizeOr1(size)
 	out := newI(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		switch {
 		case lam >= 10:
 			out.Data()[i] = g.poissonPTRS(lam)
@@ -550,7 +550,7 @@ func (g *Generator) Binomial(n int64, p float64, size ...int) *arrayI {
 	cnt := sizeOr1(size)
 	out := newI(cnt)
 	st := &binomialState{}
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		out.Data()[i] = g.binomialScalar(n, p, st)
 	}
 	return out
@@ -714,7 +714,7 @@ func (g *Generator) integersRange(low, high int64, closed bool, size ...int) *ar
 	rng := uint64(high) - uint64(low)
 	off := uint64(low)
 	mask := genMask(rng)
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		out.Data()[i] = int64(g.randomBoundedUint64(off, rng, mask, false))
 	}
 	return out

@@ -167,7 +167,7 @@ func TestSpecialCases(t *testing.T) {
 // range) so a build that accidentally drops tables still fails loudly.
 func TestInvariants(t *testing.T) {
 	x := 1.0
-	for i := 0; i < 20000; i++ {
+	for range 20000 {
 		x *= 1.001
 		if math.IsInf(Exp(x), 0) && x < 709 {
 			t.Fatalf("Exp overflowed early at %v", x)

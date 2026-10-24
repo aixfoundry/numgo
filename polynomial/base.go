@@ -230,7 +230,7 @@ func fromRootsCoef[T numgo.Float](line func(off, scl T) []T, mul func(c1, c2 []T
 		m := n / 2
 		r := n % 2
 		tmp := make([][]T, m)
-		for i := 0; i < m; i++ {
+		for i := range m {
 			tmp[i] = mul(p[i], p[i+m])
 		}
 		if r != 0 {

@@ -77,7 +77,7 @@ func Linspace[T Number](start, stop T, num int) *Array[T] {
 // Pure: Eye returns the n-by-n identity matrix.
 func Eye[T Number](n int) *Array[T] {
 	a := Zeros[T](n, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		a.data[nditer.Index(a.layout(), []int{i, i})] = 1
 	}
 	return a

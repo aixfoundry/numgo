@@ -185,7 +185,7 @@ func readNpyHeader(br *bufio.Reader) (*npyHeader, error) {
 	}
 	// Fields are "2" or "2, 3"; the trailing comma of 1-D tuples and any
 	// Python-2 long suffixes are stripped.
-	for _, f := range strings.Split(sm[1], ",") {
+	for f := range strings.SplitSeq(sm[1], ",") {
 		f = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(f), "L"))
 		if f == "" {
 			continue

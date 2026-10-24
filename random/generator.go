@@ -106,7 +106,7 @@ func (g *Generator) Choice(a int, size int, replace bool, p []float64) *arrayI {
 			for i := range cdf {
 				cdf[i] /= last
 			}
-			for i := 0; i < size; i++ {
+			for i := range size {
 				u := g.nextDouble()
 				// searchsorted(cdf, u, side='right')
 				out.Data()[i] = int64(sort.SearchFloat64s(cdf, u))

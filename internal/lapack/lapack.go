@@ -22,7 +22,7 @@ const eps = 2.220446049250313e-16
 // convention). It returns info = 0 on success or k+1 when a[k][k] is exactly
 // singular (U has a zero pivot; L and U are still partially defined).
 func LU(a []float64, n, lda int, piv []int) (info int) {
-	for k := 0; k < n; k++ {
+	for k := range n {
 		// Pivot: largest |entry| in column k at or below the diagonal.
 		p := k
 		best := math.Abs(a[k*lda+k])
@@ -37,7 +37,7 @@ func LU(a []float64, n, lda int, piv []int) (info int) {
 			return k + 1
 		}
 		if p != k {
-			for j := 0; j < n; j++ {
+			for j := range n {
 				a[k*lda+j], a[p*lda+j] = a[p*lda+j], a[k*lda+j]
 			}
 		}
@@ -60,9 +60,9 @@ func LU(a []float64, n, lda int, piv []int) (info int) {
 // interchanges, then forward- and back-substitutes. Returns false when lu
 // carries a singular factorization (info != 0 from LU).
 func LuSolve(lu []float64, n, lda int, piv []int, b []float64, nrhs int) bool {
-	for k := 0; k < n; k++ {
+	for k := range n {
 		if p := piv[k]; p != k {
-			for j := 0; j < nrhs; j++ {
+			for j := range nrhs {
 				b[k*nrhs+j], b[p*nrhs+j] = b[p*nrhs+j], b[k*nrhs+j]
 			}
 		}
@@ -72,7 +72,7 @@ func LuSolve(lu []float64, n, lda int, piv []int, b []float64, nrhs int) bool {
 		for j := 0; j < i; j++ {
 			l := lu[i*lda+j]
 			if l != 0 {
-				for c := 0; c < nrhs; c++ {
+				for c := range nrhs {
 					b[i*nrhs+c] -= l * b[j*nrhs+c]
 				}
 			}
@@ -84,13 +84,13 @@ func LuSolve(lu []float64, n, lda int, piv []int, b []float64, nrhs int) bool {
 		if u == 0 {
 			return false
 		}
-		for c := 0; c < nrhs; c++ {
+		for c := range nrhs {
 			b[i*nrhs+c] /= u
 		}
 		for r := 0; r < i; r++ {
 			u2 := lu[r*lda+i]
 			if u2 != 0 {
-				for c := 0; c < nrhs; c++ {
+				for c := range nrhs {
 					b[r*nrhs+c] -= u2 * b[i*nrhs+c]
 				}
 			}
@@ -105,11 +105,11 @@ func LuSolve(lu []float64, n, lda int, piv []int, b []float64, nrhs int) bool {
 // output overwrites them in place. Returns false when singular.
 func LuInvert(lu []float64, n, lda int, piv []int) bool {
 	fac := make([]float64, n*n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		copy(fac[i*lda:i*lda+n], lu[i*lda:i*lda+n])
 	}
 	b := make([]float64, n)
-	for j := 0; j < n; j++ {
+	for j := range n {
 		for i := range b {
 			b[i] = 0
 		}
@@ -117,7 +117,7 @@ func LuInvert(lu []float64, n, lda int, piv []int) bool {
 		if !LuSolve(fac, n, lda, piv, b, 1) {
 			return false
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			lu[i*lda+j] = b[i]
 		}
 	}
@@ -129,7 +129,7 @@ func LuInvert(lu []float64, n, lda int, piv []int) bool {
 // triangle of the row-major n×n buffer a. It returns false when a leading
 // minor is not positive definite.
 func Potrf(a []float64, n int) bool {
-	for j := 0; j < n; j++ {
+	for j := range n {
 		d := a[j*n+j]
 		for k := 0; k < j; k++ {
 			d -= a[j*n+k] * a[j*n+k]
@@ -161,7 +161,7 @@ func Potrf(a []float64, n int) bool {
 // reflector is H_i = I - tau_i v vᵀ. This is the same (H, tau) convention
 // numpy's mode='raw' exposes.
 func Geqrf(a []float64, m, n, lda int, tau []float64) {
-	for k := 0; k < n; k++ {
+	for k := range n {
 		// Norm of the active column below (and including) the diagonal.
 		normx := 0.0
 		for i := k; i < m; i++ {
@@ -205,8 +205,8 @@ func Geqrf(a []float64, m, n, lda int, tau []float64) {
 func Orgqr(a []float64, m, n, k int, tau []float64, q []float64, qCols int) {
 	// Start from identity, then post-multiply reflectors H_k .. H_0 so that
 	// Q = H_0 H_1 ... H_{k-1}.
-	for i := 0; i < m; i++ {
-		for j := 0; j < qCols; j++ {
+	for i := range m {
+		for j := range qCols {
 			q[i*qCols+j] = 0
 		}
 		if i < qCols {
@@ -218,7 +218,7 @@ func Orgqr(a []float64, m, n, k int, tau []float64, q []float64, qCols int) {
 		if tc == 0 {
 			continue
 		}
-		for j := 0; j < qCols; j++ {
+		for j := range qCols {
 			// w = vᵀ q[:,j] over rows c..m-1 (v[c] = 1).
 			sum := q[c*qCols+j]
 			for i := c + 1; i < m; i++ {
@@ -264,8 +264,8 @@ func Svd(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool {
 		// The caller's Vt is U2ᵀ (thin k×n / full n×n) and the caller's U is
 		// V2 (m×k thin / m×m full).
 		at := make([]float64, n*m)
-		for i := 0; i < m; i++ {
-			for j := 0; j < n; j++ {
+		for i := range m {
+			for j := range n {
 				at[j*m+i] = a[i*n+j]
 			}
 		}
@@ -296,14 +296,14 @@ func Svd(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool {
 				vtRows = n
 			}
 			for r := 0; r < vtRows; r++ {
-				for c := 0; c < n; c++ {
+				for c := range n {
 					vt[r*n+c] = u2[c*u2Cols+r]
 				}
 			}
 		}
 		// caller U = V2 = (V2ᵀ)ᵀ, m×vt2Rows.
 		if jobVT != SVDNone {
-			for r := 0; r < m; r++ {
+			for r := range m {
 				for c := 0; c < vt2Rows; c++ {
 					u[r*vt2Rows+c] = vt2[c*m+r]
 				}
@@ -330,18 +330,18 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 	b := make([]float64, m*n)
 	copy(b, a)
 	v := make([]float64, n*n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		v[i*n+i] = 1
 	}
 	const maxSweeps = 60
-	for sweep := 0; sweep < maxSweeps; sweep++ {
+	for sweep := range maxSweeps {
 		off := 0.0
 		normB := 0.0
 		for p := 0; p < n-1; p++ {
 			for q := p + 1; q < n; q++ {
 				// Gram entries of columns p, q.
 				var app, aqq, apq float64
-				for i := 0; i < m; i++ {
+				for i := range m {
 					x, y := b[i*n+p], b[i*n+q]
 					app += x * x
 					aqq += y * y
@@ -357,12 +357,12 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 				t := math.Copysign(1, theta) / (math.Abs(theta) + math.Sqrt(theta*theta+1))
 				c := 1 / math.Sqrt(t*t+1)
 				sin := t * c
-				for i := 0; i < m; i++ {
+				for i := range m {
 					bp, bq := b[i*n+p], b[i*n+q]
 					b[i*n+p] = c*bp - sin*bq
 					b[i*n+q] = sin*bp + c*bq
 				}
-				for i := 0; i < n; i++ {
+				for i := range n {
 					vp, vq := v[i*n+p], v[i*n+q]
 					v[i*n+p] = c*vp - sin*vq
 					v[i*n+q] = sin*vp + c*vq
@@ -382,9 +382,9 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 		col int
 	}
 	ord := make([]pair, k)
-	for j := 0; j < n; j++ {
+	for j := range n {
 		nrm := 0.0
-		for i := 0; i < m; i++ {
+		for i := range m {
 			nrm += b[i*n+j] * b[i*n+j]
 		}
 		ord[j] = pair{math.Sqrt(nrm), j}
@@ -399,14 +399,14 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 		s[j] = p.sv
 	}
 	if jobU != SVDNone {
-		for i := 0; i < m; i++ {
+		for i := range m {
 			for j := 0; j < uCols; j++ {
 				u[i*uCols+j] = 0
 			}
 		}
 		for j, p := range ord {
 			nrm := p.sv
-			for i := 0; i < m; i++ {
+			for i := range m {
 				u[i*uCols+j] = b[i*n+p.col] / nrm
 			}
 		}
@@ -418,24 +418,24 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 				// Try identity vector e_e, orthogonalized against used cols.
 				w := make([]float64, m)
 				w[e] = 1
-				for pass := 0; pass < 2; pass++ {
+				for range 2 {
 					for j := 0; j < n+fill; j++ {
 						dot := 0.0
-						for i := 0; i < m; i++ {
+						for i := range m {
 							dot += u[i*uCols+j] * w[i]
 						}
-						for i := 0; i < m; i++ {
+						for i := range m {
 							w[i] -= dot * u[i*uCols+j]
 						}
 					}
 				}
 				nrm := 0.0
-				for i := 0; i < m; i++ {
+				for i := range m {
 					nrm += w[i] * w[i]
 				}
 				nrm = math.Sqrt(nrm)
 				if nrm > 1e-8 {
-					for i := 0; i < m; i++ {
+					for i := range m {
 						u[i*uCols+n+fill] = w[i] / nrm
 					}
 					fill++
@@ -449,13 +449,13 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 			vtRows = n
 		}
 		for i := 0; i < vtRows; i++ {
-			for j := 0; j < n; j++ {
+			for j := range n {
 				vt[i*n+j] = 0
 			}
 		}
 		// Vt rows are the right singular vectors: row j = column ord[j] of V.
 		for r, p := range ord {
-			for i := 0; i < n; i++ {
+			for i := range n {
 				vt[r*n+i] = v[i*n+p.col]
 			}
 		}
@@ -471,12 +471,12 @@ func svdTall(a []float64, m, n int, jobU, jobVT SvdJob, u, s, vt []float64) bool
 func Syev(a []float64, n int, w []float64, wantVec bool) bool {
 	v := make([]float64, n*n)
 	if wantVec {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			v[i*n+i] = 1
 		}
 	}
 	const maxSweeps = 100
-	for sweep := 0; sweep < maxSweeps; sweep++ {
+	for sweep := range maxSweeps {
 		off := 0.0
 		for p := 0; p < n-1; p++ {
 			for q := p + 1; q < n; q++ {
@@ -489,19 +489,19 @@ func Syev(a []float64, n int, w []float64, wantVec bool) bool {
 				t := math.Copysign(1, theta) / (math.Abs(theta) + math.Sqrt(theta*theta+1))
 				c := 1 / math.Sqrt(t*t+1)
 				s := t * c
-				for i := 0; i < n; i++ {
+				for i := range n {
 					aip, aiq := a[i*n+p], a[i*n+q]
 					a[i*n+p] = c*aip - s*aiq
 					a[i*n+q] = s*aip + c*aiq
 				}
-				for i := 0; i < n; i++ {
+				for i := range n {
 					api := a[p*n+i]
 					aqi := a[q*n+i]
 					a[p*n+i] = c*api - s*aqi
 					a[q*n+i] = s*api + c*aqi
 				}
 				if wantVec {
-					for i := 0; i < n; i++ {
+					for i := range n {
 						vp, vq := v[i*n+p], v[i*n+q]
 						v[i*n+p] = c*vp - s*vq
 						v[i*n+q] = s*vp + c*vq
@@ -511,7 +511,7 @@ func Syev(a []float64, n int, w []float64, wantVec bool) bool {
 		}
 		// Convergence: off-diagonal mass below eps² relative to the matrix.
 		diag := 0.0
-		for i := 0; i < n; i++ {
+		for i := range n {
 			diag += a[i*n+i] * a[i*n+i]
 		}
 		if off <= 1e-30*diag {
@@ -521,7 +521,7 @@ func Syev(a []float64, n int, w []float64, wantVec bool) bool {
 			return false
 		}
 	}
-	for i := 0; i < n; i++ {
+	for i := range n {
 		w[i] = a[i*n+i]
 	}
 	if wantVec {
@@ -545,7 +545,7 @@ func Syev(a []float64, n int, w []float64, wantVec bool) bool {
 	if wantVec {
 		out := make([]float64, n*n)
 		for j, id := range idx {
-			for i := 0; i < n; i++ {
+			for i := range n {
 				out[i*n+j] = v[i*n+id]
 			}
 		}
@@ -571,7 +571,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 	var z []float64
 	if wantVec {
 		z = make([]float64, n*n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			z[i*n+i] = 1
 		}
 	}
@@ -601,7 +601,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 		// Left update runs on the original column k too; then the reduced
 		// subdiagonal (beta) is written and the column zeroed — this kernel
 		// keeps no reflector storage.
-		for j := 0; j < n; j++ {
+		for j := range n {
 			sum := v[k+1] * h[(k+1)*n+j]
 			for i := k + 2; i < n; i++ {
 				sum += v[i] * h[i*n+j]
@@ -616,7 +616,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 		for i := k + 2; i < n; i++ {
 			h[i*n+k] = 0
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sum := h[i*n+k+1] * v[k+1]
 			for j := k + 2; j < n; j++ {
 				sum += h[i*n+j] * v[j]
@@ -629,7 +629,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 		}
 		// Accumulate the similarity into the Schur basis: z := z P.
 		if z != nil {
-			for r := 0; r < n; r++ {
+			for r := range n {
 				sum := z[r*n+k+1] * v[k+1]
 				for j := k + 2; j < n; j++ {
 					sum += z[r*n+j] * v[j]
@@ -646,7 +646,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 		return false
 	}
 	// Extract eigenvalues from the triangular blocks.
-	for i := 0; i < n; i++ {
+	for i := range n {
 		wr[i], wi[i] = 0, 0
 	}
 	for i := 0; i < n; i++ {
@@ -697,7 +697,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 	for j := 0; j < n; j++ {
 		if wi[j] == 0 {
 			v := eigVectorReal(h, n, complex(wr[j], 0))
-			for i := 0; i < n; i++ {
+			for i := range n {
 				vr[i*n+j] = realOf(v[i])
 			}
 		} else {
@@ -709,7 +709,7 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 			} else {
 				vPlus = eigVectorReal(h, n, complex(wr[j], -wi[j]))
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				vr[i*n+j] = real(vPlus[i])
 				vr[i*n+j+1] = imag(vPlus[i])
 			}
@@ -719,10 +719,10 @@ func Eig(a []float64, n int, wr, wi []float64, wantVec bool, vr []float64) bool 
 	// Back-transform: eigenvectors of H map to eigenvectors of A via the
 	// Schur vectors Z (columns of the similarity that reduced A to T).
 	out := make([]float64, n*n)
-	for col := 0; col < n; col++ {
-		for i := 0; i < n; i++ {
+	for col := range n {
+		for i := range n {
 			sum := 0.0
-			for kk := 0; kk < n; kk++ {
+			for kk := range n {
 				sum += z[i*n+kk] * vr[kk*n+col]
 			}
 			out[i*n+col] = sum
@@ -791,18 +791,18 @@ func hessenbergQR(h []float64, n int, z []float64) bool {
 			}
 			// Q = [[c, s], [-s, c]]: rows via Qᵀ (c·r_l − s·r_hi),
 			// columns via Q (c·c_l − s·c_hi); z := z Q (same col mix).
-			for j := 0; j < n; j++ {
+			for j := range n {
 				x, y := h[l*n+j], h[hi*n+j]
 				h[l*n+j] = c*x - s*y
 				h[hi*n+j] = s*x + c*y
 			}
-			for i := 0; i < n; i++ {
+			for i := range n {
 				x, y := h[i*n+l], h[i*n+hi]
 				h[i*n+l] = c*x - s*y
 				h[i*n+hi] = s*x + c*y
 			}
 			if z != nil {
-				for i := 0; i < n; i++ {
+				for i := range n {
 					x, y := z[i*n+l], z[i*n+hi]
 					z[i*n+l] = c*x - s*y
 					z[i*n+hi] = s*x + c*y
@@ -852,8 +852,8 @@ func hessenbergQR(h []float64, n int, z []float64) bool {
 		// are applied to h's bordering rows/cols via cs/sn below and to z.
 		sz := hi - l + 1
 		m := make([]float64, sz*sz)
-		for i := 0; i < sz; i++ {
-			for j := 0; j < sz; j++ {
+		for i := range sz {
+			for j := range sz {
 				v := h[(l+i)*n+(l+j)]
 				if i == j {
 					v -= shift
@@ -896,7 +896,7 @@ func hessenbergQR(h []float64, n int, z []float64) bool {
 		// QᵀHQ = RQ + σ — NO shift add-back here.
 		for i := 0; i <= sz-2; i++ {
 			c, s := cs[i], sn[i]
-			for j := 0; j < n; j++ {
+			for j := range n {
 				x, y := h[(l+i)*n+j], h[(l+i+1)*n+j]
 				h[(l+i)*n+j] = c*x + s*y
 				h[(l+i+1)*n+j] = -s*x + c*y
@@ -904,7 +904,7 @@ func hessenbergQR(h []float64, n int, z []float64) bool {
 		}
 		for i := 0; i <= sz-2; i++ {
 			c, s := cs[i], sn[i]
-			for r := 0; r < n; r++ {
+			for r := range n {
 				x, y := h[r*n+l+i], h[r*n+l+i+1]
 				h[r*n+l+i] = c*x + s*y
 				h[r*n+l+i+1] = -s*x + c*y
@@ -914,7 +914,7 @@ func hessenbergQR(h []float64, n int, z []float64) bool {
 		if z != nil {
 			for i := 0; i <= sz-2; i++ {
 				c, s := cs[i], sn[i]
-				for r := 0; r < n; r++ {
+				for r := range n {
 					x, y := z[r*n+l+i], z[r*n+l+i+1]
 					z[r*n+l+i] = c*x + s*y
 					z[r*n+l+i+1] = -s*x + c*y
@@ -939,10 +939,10 @@ func eigVectorReal(h []float64, n int, lambda complex128) []complex128 {
 	shift := lambda + complex(0, eps*1024)
 	// A couple of inverse-iteration passes converge fast for isolated λ.
 	const passes = 3
-	for p := 0; p < passes; p++ {
+	for range passes {
 		m := make([]complex128, n*n)
-		for i := 0; i < n; i++ {
-			for j := 0; j < n; j++ {
+		for i := range n {
+			for j := range n {
 				m[i*n+j] = complex(h[i*n+j], 0)
 				if i == j {
 					m[i*n+j] -= shift
@@ -955,7 +955,7 @@ func eigVectorReal(h []float64, n int, lambda complex128) []complex128 {
 		lu := make([]complex128, n*n)
 		copy(lu, m)
 		piv := make([]int, n)
-		for k := 0; k < n; k++ {
+		for k := range n {
 			p := k
 			best := cmplx.Abs(lu[k*n+k])
 			for i := k + 1; i < n; i++ {
@@ -968,7 +968,7 @@ func eigVectorReal(h []float64, n int, lambda complex128) []complex128 {
 			if best == 0 {
 				lu[k*n+k] = complex(eps, 0)
 			} else if p != k {
-				for j := 0; j < n; j++ {
+				for j := range n {
 					lu[k*n+j], lu[p*n+j] = lu[p*n+j], lu[k*n+j]
 				}
 			}
@@ -982,7 +982,7 @@ func eigVectorReal(h []float64, n int, lambda complex128) []complex128 {
 			}
 		}
 		// Apply the same pivots to x and solve.
-		for k := 0; k < n; k++ {
+		for k := range n {
 			if p := piv[k]; p != k {
 				x[k], x[p] = x[p], x[k]
 			}

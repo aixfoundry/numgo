@@ -341,7 +341,7 @@ func repr[T numgo.Number](a *numgo.Array[T]) string {
 	d := a.Ravel().Data()
 	n := min(len(d), 100)
 	parts := make([]string, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		parts[i] = fnumT(d[i])
 	}
 	if n < len(d) {

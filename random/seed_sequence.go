@@ -125,7 +125,7 @@ func (ss *SeedSequence) GenerateState(nWords int) []uint32 {
 	hashConst := initB
 	state := make([]uint32, nWords)
 	src := 0
-	for i := 0; i < nWords; i++ {
+	for i := range nWords {
 		dataVal := ss.pool[src%ss.poolSize]
 		src++
 		dataVal ^= hashConst
@@ -155,7 +155,7 @@ func (ss *SeedSequence) Spawn(n int) []*SeedSequence {
 		panicChildren()
 	}
 	seqs := make([]*SeedSequence, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		key := append(append([]uint32(nil), ss.spawnKey...), uint32(ss.nChildrenSpawned+i))
 		seqs[i] = newSeedSequence(ss.entropy, key, ss.poolSize)
 	}

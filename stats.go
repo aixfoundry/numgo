@@ -216,8 +216,8 @@ func Cov[T Number](a, b *Array[T]) *Array[float64] {
 	}
 	fact := float64(n - 1)
 	out := Zeros[float64](k, k)
-	for i := 0; i < k; i++ {
-		for j := 0; j < k; j++ {
+	for i := range k {
+		for j := range k {
 			s := 0.0
 			for t := 0; t < n; t++ {
 				s += (rows[i][t] - means[i]) * (rows[j][t] - means[j])
@@ -239,8 +239,8 @@ func CorrCoef[T Number](a, b *Array[T]) *Array[float64] {
 		sd[i] = math.Sqrt(c.At(i, i))
 	}
 	out := Zeros[float64](k, k)
-	for i := 0; i < k; i++ {
-		for j := 0; j < k; j++ {
+	for i := range k {
+		for j := range k {
 			v := c.At(i, j) / sd[i] / sd[j]
 			out.Set([]int{i, j}, min(1, max(-1, v)))
 		}
@@ -359,7 +359,7 @@ func (a *Array[T]) HistogramDD(bins []int, ranges ...[2]float64) (*Array[float64
 	cols := make([][]float64, d)
 	for j := range cols {
 		col := make([]float64, n)
-		for p := 0; p < n; p++ {
+		for p := range n {
 			coords[len(coords)-1] = j
 			col[p] = mustFloat(a.At(coords...))
 			for k := len(coords) - 2; k >= 0; k-- {
@@ -391,7 +391,7 @@ func (a *Array[T]) HistogramDD(bins []int, ranges ...[2]float64) (*Array[float64
 	}
 	hist := Zeros[float64](bins...)
 	point := make([]int, d)
-	for p := 0; p < n; p++ {
+	for p := range n {
 		ok := true
 		for j := 0; j < d; j++ {
 			idx := binIndex(cols[j][p], edges[j])

@@ -139,7 +139,7 @@ func SaveTxt[T Number](w io.Writer, a *Array[T], format string) error {
 		writeRow(a)
 	case 2:
 		n := a.Shape()[0]
-		for i := 0; i < n; i++ {
+		for i := range n {
 			writeRow(a.Slice(R(i, i+1, 1)))
 		}
 	}

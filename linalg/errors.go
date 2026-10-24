@@ -2,6 +2,7 @@ package linalg
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aixfoundry/numgo"
 )
@@ -65,12 +66,12 @@ func panicMatrixNormAxis() {
 
 // shapeString renders a shape as "(2,3)"; the empty shape is "()".
 func shapeString(shape []int) string {
-	parts := ""
+	var parts strings.Builder
 	for i, d := range shape {
 		if i > 0 {
-			parts += ","
+			parts.WriteString(",")
 		}
-		parts += fmt.Sprint(d)
+		parts.WriteString(fmt.Sprint(d))
 	}
-	return "(" + parts + ")"
+	return "(" + parts.String() + ")"
 }

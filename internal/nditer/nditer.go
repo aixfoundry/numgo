@@ -489,7 +489,7 @@ func Accumulate[T any](l *Layout, data []T, axes []int, out []T,
 			if l.Offset+n*w <= len(out) {
 				// acc lives outside the row loop so &acc does not escape per row.
 				var acc T
-				for row := 0; row < n; row++ {
+				for row := range n {
 					base := l.Offset + row*w
 					acc = data[base]
 					for i := base; i < base+w; i++ {

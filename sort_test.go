@@ -49,8 +49,8 @@ func TestSort3DMultiAxis(t *testing.T) {
 	both := a.Sort(1, 0)
 	// Each axis-1 channel of `one` must be ascending (numpy spot-check:
 	// np.sort(a,1) channel (0,1) = [3 10 12 24]-style columns ascending).
-	for r := 0; r < 2; r++ {
-		for k := 0; k < 4; k++ {
+	for r := range 2 {
+		for k := range 4 {
 			x, y, z := one.At(r, 0, k), one.At(r, 1, k), one.At(r, 2, k)
 			if !(x <= y && y <= z) {
 				t.Errorf("Sort(1) channel (%d,%d) = %v %v %v, not ascending", r, k, x, y, z)
@@ -134,9 +134,9 @@ func TestArgsortStableDuplicates(t *testing.T) {
 		t.Fatalf("Argsort(-1) = %v, want %v", got, want)
 	}
 	// Verify round trip: applying the indices sorts the row.
-	for row := 0; row < 2; row++ {
+	for row := range 2 {
 		prev := math.Inf(-1)
-		for k := 0; k < 3; k++ {
+		for k := range 3 {
 			v := a.At(row, got[row*3+k])
 			if v < prev {
 				t.Errorf("row %d not sorted by argsort at k=%d", row, k)
@@ -151,9 +151,9 @@ func TestPartitionContract(t *testing.T) {
 	data := []float64{9, 4, 7, 1, 8, 2, 6, 5, 3, 0, 10, 11, 12, 13}
 	a := FromSlice(data, 2, 7)
 	got := a.Partition(1, -1)
-	for row := 0; row < 2; row++ {
+	for row := range 2 {
 		kthVal := got.At(row, 1)
-		for k := 0; k < 1; k++ {
+		for k := range 1 {
 			if v := got.At(row, k); v > kthVal {
 				t.Errorf("row %d: left element %v > kth %v", row, v, kthVal)
 			}
@@ -175,9 +175,9 @@ func TestArgPartitionContract(t *testing.T) {
 	data := []float64{9, 4, 7, 1, 8, 2, 6, 5, 3, 0, 10, 11, 12, 13}
 	a := FromSlice(data, 2, 7)
 	got := a.ArgPartition(1, -1)
-	for row := 0; row < 2; row++ {
+	for row := range 2 {
 		kthVal := a.At(row, got[row*7+1])
-		for k := 0; k < 1; k++ {
+		for k := range 1 {
 			if a.At(row, got[row*7+k]) > kthVal {
 				t.Errorf("row %d: left via index %d > kth", row, got[row*7+k])
 			}

@@ -215,8 +215,8 @@ func TestIndexTailAxisRetention3D(t *testing.T) {
 	if !slices.Equal(got.Shape(), []int{2, 4}) {
 		t.Fatalf("shape = %v, want [2 4]", got.Shape())
 	}
-	for i := 0; i < 2; i++ {
-		for k := 0; k < 4; k++ {
+	for i := range 2 {
+		for k := range 4 {
 			if v, w := got.At(i, k), a.At([]int{1, 0}[i], 2, k); v != w {
 				t.Errorf("At(%d,%d) = %v, want %v", i, k, v, w)
 			}

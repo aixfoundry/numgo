@@ -31,7 +31,7 @@ func Cholesky[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 			panicSingular()
 		}
 		// Zero the upper triangle.
-		for i := 0; i < m; i++ {
+		for i := range m {
 			for j := i + 1; j < m; j++ {
 				mat[i*m+j] = 0
 			}
@@ -94,7 +94,7 @@ func QR[T numgo.Number](a *numgo.Array[T], mode QRMode) QRResult[T] {
 			// triangle plus the reflector vectors below the diagonal. We
 			// return H (K,N) in R and tau (K) as a vector in Q.
 			h := make([]float64, k*n)
-			for i := 0; i < k; i++ {
+			for i := range k {
 				copy(h[i*n:(i+1)*n], mat[i*n:(i+1)*n])
 			}
 			setMatAt(rOut, batch, k, n, h)
@@ -228,12 +228,12 @@ func Eig[T numgo.Number](a *numgo.Array[T], computeVectors bool) EigResult[T] {
 			// row-major with leading dim m, so column j is vr[j*m:(j+1)*m].
 			for j := 0; j < m; j++ {
 				if wi[j] == 0 {
-					for i := 0; i < m; i++ {
+					for i := range m {
 						setBatch3(vOut, batch, i, j, complex(vr[j*m+i], 0))
 					}
 					continue
 				}
-				for i := 0; i < m; i++ {
+				for i := range m {
 					setBatch3(vOut, batch, i, j, complex(vr[j*m+i], vr[(j+1)*m+i]))
 					setBatch3(vOut, batch, i, j+1, complex(vr[j*m+i], -vr[(j+1)*m+i]))
 				}
@@ -308,7 +308,7 @@ func Eigh[T numgo.Number](a *numgo.Array[T], computeVectors bool, uplo string) E
 // symmetrizeUpper mirrors the upper triangle onto the lower one in place so
 // the kernels (which read the lower part) see the selected UPLO='U' data.
 func symmetrizeUpper(a []float64, n int) {
-	for i := 0; i < n; i++ {
+	for i := range n {
 		for j := i + 1; j < n; j++ {
 			a[j*n+i] = a[i*n+j]
 		}

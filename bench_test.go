@@ -131,7 +131,7 @@ func BenchmarkAtSet(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			r, c := i/1000, i%1000
 			a.Set([]int{r, c}, a.At(r, c)+1)
 		}

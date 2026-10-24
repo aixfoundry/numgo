@@ -12,8 +12,8 @@ import (
 func benchPD(n int) *numgo.Array[float64] {
 	a := numgo.Ones[float64](n, n)
 	s := uint64(12345)
-	for i := 0; i < n; i++ {
-		for j := 0; j < n; j++ {
+	for i := range n {
+		for j := range n {
 			s = s*6364136223846793005 + 1442695040888963407
 			a.Set([]int{i, j}, float64(int64(s>>33)%1000)/1000)
 		}
@@ -63,7 +63,7 @@ func BenchmarkCholesky100(b *testing.B) {
 	// Cholesky requires positive-definite input: use A·Aᵀ + n·I.
 	n := 100
 	aat := a.Matmul(a.Transpose())
-	for i := 0; i < n; i++ {
+	for i := range n {
 		aat.Set([]int{i, i}, aat.At(i, i)+float64(n))
 	}
 	b.ReportAllocs()

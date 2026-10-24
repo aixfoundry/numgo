@@ -60,7 +60,7 @@ func chainOrder(dims [][2]int) [][]int {
 	n := len(dims)
 	p := make([]int, n+1)
 	p[0] = dims[0][0]
-	for i := 0; i < n; i++ {
+	for i := range n {
 		p[i+1] = dims[i][1]
 	}
 	cost := make([][]int, n)
@@ -124,7 +124,7 @@ func IdentityLike[T numgo.Number](a *numgo.Array[T], shape []int) *numgo.Array[T
 	m, _ := last2(shape)
 	out := numgo.Zeros[T](shape...)
 	eachBatch(shape, func(batch []int) {
-		for i := 0; i < m; i++ {
+		for i := range m {
 			coords := append(append([]int(nil), batch...), i, i)
 			out.Set(coords, 1)
 		}
@@ -248,10 +248,7 @@ func Diagonal[T numgo.Number](a *numgo.Array[T], offset int) *numgo.Array[T] {
 	} else {
 		i0 = -offset
 	}
-	d := min(m-i0, n-i1)
-	if d < 0 {
-		d = 0
-	}
+	d := max(min(m-i0, n-i1), 0)
 	outShape := append(append([]int(nil), shape[:a.Ndim()-2]...), d)
 	out := numgo.Zeros[T](outShape...)
 	eachBatch(shape, func(batch []int) {
@@ -436,7 +433,7 @@ func Vecdot[T numgo.Number](a, b *numgo.Array[T], axis int) *numgo.Array[T] {
 	walk = func(d int) {
 		if d == len(lead) {
 			var sum T
-			for c := 0; c < k; c++ {
+			for c := range k {
 				sum += a.At(append(slot[:len(slot):len(slot)], c)...) * b.At(append(slot[:len(slot):len(slot)], c)...)
 			}
 			if len(lead) == 0 {

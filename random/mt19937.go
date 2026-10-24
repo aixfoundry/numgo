@@ -35,7 +35,7 @@ var _ BitGenerator = (*MT19937)(nil)
 func mt19937Seed(seed uint32) *MT19937 {
 	m := &MT19937{}
 	s := seed
-	for pos := 0; pos < mtN; pos++ {
+	for pos := range mtN {
 		m.key[pos] = s
 		s = 1812433253*(s^(s>>30)) + uint32(pos) + 1
 	}
@@ -57,10 +57,7 @@ func mt19937InitByArray(initKey []uint32) *MT19937 {
 	m := &MT19937{}
 	m.initGenrand(19650218)
 	i, j := 1, 0
-	k := mtN
-	if len(initKey) > k {
-		k = len(initKey)
-	}
+	k := max(len(initKey), mtN)
 	for ; k > 0; k-- {
 		m.key[i] = (m.key[i] ^ ((m.key[i-1] ^ (m.key[i-1] >> 30)) * 1664525)) + initKey[j] + uint32(j)
 		i++

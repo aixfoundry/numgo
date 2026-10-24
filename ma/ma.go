@@ -161,7 +161,7 @@ func maskLayout(shape []int) *nditer.Layout {
 func walk(shape []int, fn func(coords []int)) {
 	coords := make([]int, len(shape))
 	n := nditer.Size(shape)
-	for i := 0; i < n; i++ {
+	for range n {
 		fn(coords)
 		for k := len(coords) - 1; k >= 0; k-- {
 			coords[k]++

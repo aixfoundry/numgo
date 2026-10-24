@@ -170,7 +170,7 @@ func luLogDet(a *numgo.Array[float64], batch []int, m int) (sign, logabs float64
 	}
 	sign = 1
 	logabs = 0
-	for i := 0; i < m; i++ {
+	for i := range m {
 		v := mat[i*m+i]
 		if v < 0 {
 			sign = -sign
@@ -232,9 +232,9 @@ func Lstsq[T numgo.Number](a, b *numgo.Array[T], rcond float64) LstsqResult[T] {
 	// x = Vt^T * (sinv * (U^T b))
 	ub := make([]float64, len(s)*bn)
 	for j := 0; j < bn; j++ {
-		for i := 0; i < len(s); i++ {
+		for i := range s {
 			sum := 0.0
-			for r := 0; r < m; r++ {
+			for r := range m {
 				bv := 0.0
 				if bf.Ndim() == 1 {
 					bv = bm[r]
@@ -248,9 +248,9 @@ func Lstsq[T numgo.Number](a, b *numgo.Array[T], rcond float64) LstsqResult[T] {
 	}
 	x := make([]float64, k*bn)
 	for j := 0; j < bn; j++ {
-		for c := 0; c < k; c++ {
+		for c := range k {
 			sum := 0.0
-			for i := 0; i < len(s); i++ {
+			for i := range s {
 				sum += vt[i*k+c] * ub[i*bn+j]
 			}
 			x[c*bn+j] = sum
@@ -263,7 +263,7 @@ func Lstsq[T numgo.Number](a, b *numgo.Array[T], rcond float64) LstsqResult[T] {
 		res = make([]float64, bn)
 		adata := af.Copy().Data()
 		for j := 0; j < bn; j++ {
-			for r := 0; r < m; r++ {
+			for r := range m {
 				bv := 0.0
 				if bf.Ndim() == 1 {
 					bv = bm[r]
@@ -271,7 +271,7 @@ func Lstsq[T numgo.Number](a, b *numgo.Array[T], rcond float64) LstsqResult[T] {
 					bv = bm[r*bn+j]
 				}
 				pred := 0.0
-				for c := 0; c < k; c++ {
+				for c := range k {
 					pred += adata[r*k+c] * x[c*bn+j]
 				}
 				res[j] += (bv - pred) * (bv - pred)

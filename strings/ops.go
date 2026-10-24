@@ -321,8 +321,8 @@ func partitionImpl(a *StrArray, sep string, fromRight bool) [][]string {
 			} else {
 				tail = v
 			}
-		} else if i := strings.Index(v, sep); i >= 0 {
-			head, found, tail = v[:i], sep, v[i+len(sep):]
+		} else if before, after, ok := strings.Cut(v, sep); ok {
+			head, found, tail = before, sep, after
 		} else {
 			head = v
 		}

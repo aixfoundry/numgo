@@ -78,7 +78,7 @@ func TestLoadNpyFixtures(t *testing.T) {
 	if !equalShape(d.Shape, 3, 4) || d.F64 == nil {
 		t.Fatalf("shape=%v", d.Shape)
 	}
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		if got := d.F64.Data()[i]; got != float64(i) {
 			t.Fatalf("v2[%d] = %v", i, got)
 		}
@@ -249,8 +249,8 @@ func TestRoundTripTransposeView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 2; j++ {
+	for i := range 3 {
+		for j := range 2 {
 			if got := back.F64.At(i, j); got != tv.At(i, j) {
 				t.Fatalf("(%d,%d): got %v want %v", i, j, got, tv.At(i, j))
 			}

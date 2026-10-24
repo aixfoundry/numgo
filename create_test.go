@@ -66,8 +66,8 @@ func TestEye(t *testing.T) {
 	if !slices.Equal(a.Shape(), []int{3, 3}) {
 		t.Fatalf("shape = %v", a.Shape())
 	}
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
+	for i := range 3 {
+		for j := range 3 {
 			want := 0.0
 			if i == j {
 				want = 1

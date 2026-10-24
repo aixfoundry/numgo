@@ -2,6 +2,7 @@ package ma
 
 import (
 	"math"
+	"slices"
 
 	"github.com/aixfoundry/numgo"
 )
@@ -398,12 +399,7 @@ func keptCoords(coords, shape []int, norm []int) []int {
 }
 
 func isFolded(norm []int, ax int) bool {
-	for _, a := range norm {
-		if a == ax {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(norm, ax)
 }
 
 // nan builds NaN as T.

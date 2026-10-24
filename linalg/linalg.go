@@ -125,9 +125,9 @@ func aMatrixAt(a *numgo.Array[float64], batch []int, m, n int) []float64 {
 	mat := make([]float64, m*n)
 	coords := append(append([]int(nil), batch...), 0, 0)
 	k := len(batch)
-	for i := 0; i < m; i++ {
+	for i := range m {
 		coords[k] = i
-		for j := 0; j < n; j++ {
+		for j := range n {
 			coords[k+1] = j
 			mat[i*n+j] = a.At(coords...)
 		}
@@ -139,7 +139,7 @@ func aMatrixAt(a *numgo.Array[float64], batch []int, m, n int) []float64 {
 func setVecAt[T numgo.Number](out *numgo.Array[T], batch []int, v []float64) {
 	coords := append(append([]int(nil), batch...), 0)
 	k := len(batch)
-	for i := 0; i < len(v); i++ {
+	for i := range v {
 		coords[k] = i
 		out.Set(coords, scalarOf[T](v[i]))
 	}
@@ -149,9 +149,9 @@ func setVecAt[T numgo.Number](out *numgo.Array[T], batch []int, v []float64) {
 func setMatAt[T numgo.Number](out *numgo.Array[T], batch []int, m, n int, mat []float64) {
 	coords := append(append([]int(nil), batch...), 0, 0)
 	k := len(batch)
-	for i := 0; i < m; i++ {
+	for i := range m {
 		coords[k] = i
-		for j := 0; j < n; j++ {
+		for j := range n {
 			coords[k+1] = j
 			out.Set(coords, scalarOf[T](mat[i*n+j]))
 		}

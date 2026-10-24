@@ -31,7 +31,7 @@ func TestEinsumBatchMatmulEllipsis(t *testing.T) {
 		t.Fatalf("shape = %v", got.Shape())
 	}
 	want := []float64{10, 13, 28, 40, 172, 193, 244, 274}
-	for k := 0; k < 8; k++ {
+	for k := range 8 {
 		if v := got.At(k/4, (k/2)%2, k%2); math.Abs(v-want[k]) > tol {
 			t.Errorf("[%d] = %v, want %v", k, v, want[k])
 		}

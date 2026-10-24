@@ -1,6 +1,8 @@
 package ma
 
 import (
+	"strings"
+
 	"github.com/aixfoundry/numgo"
 	"github.com/aixfoundry/numgo/internal/nditer"
 )
@@ -19,17 +21,18 @@ func broadcastShape(a, b []int) []int {
 }
 
 func shapeString(shape []int) string {
-	s := "("
+	var s strings.Builder
+	s.WriteString("(")
 	for i, d := range shape {
 		if i > 0 {
-			s += ","
+			s.WriteString(",")
 		}
-		s += itoa(d)
+		s.WriteString(itoa(d))
 	}
 	if len(shape) == 1 {
-		s += ","
+		s.WriteString(",")
 	}
-	return s + ")"
+	return s.String() + ")"
 }
 
 func itoa(n int) string {

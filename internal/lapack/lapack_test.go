@@ -23,7 +23,7 @@ func eq(t *testing.T, name string, got, want []float64) {
 
 func id(n int) []float64 {
 	e := make([]float64, n*n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		e[i*n+i] = 1
 	}
 	return e
@@ -31,10 +31,10 @@ func id(n int) []float64 {
 
 func matmul(a, b []float64, m, k, n int) []float64 {
 	out := make([]float64, m*n)
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
+	for i := range m {
+		for j := range n {
 			s := 0.0
-			for c := 0; c < k; c++ {
+			for c := range k {
 				s += a[i*k+c] * b[c*n+j]
 			}
 			out[i*n+j] = s
@@ -111,8 +111,8 @@ func TestGeqrfOrgqr(t *testing.T) {
 
 func transpose(a []float64, m, n int) []float64 {
 	out := make([]float64, m*n)
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
+	for i := range m {
+		for j := range n {
 			out[j*m+i] = a[i*n+j]
 		}
 	}
@@ -191,10 +191,10 @@ func TestSyevKnown(t *testing.T) {
 	eq(t, "syev w", w, []float64{2 - math.Sqrt2, 2, 2 + math.Sqrt2})
 	// Residual: A v = λ v per column.
 	v := a
-	for j := 0; j < 3; j++ {
-		for i := 0; i < 3; i++ {
+	for j := range 3 {
+		for i := range 3 {
 			sum := 0.0
-			for k := 0; k < 3; k++ {
+			for k := range 3 {
 				sum += []float64{2, 1, 0, 1, 2, 1, 0, 1, 2}[i*3+k] * v[k*3+j]
 			}
 			if d := math.Abs(sum - w[j]*v[i*3+j]); d > tol {
@@ -226,7 +226,7 @@ func TestEigResiduals(t *testing.T) {
 		}
 	}
 	// Residual A v = λ v.
-	for j := 0; j < 3; j++ {
+	for j := range 3 {
 		lam := got[j]
 		_ = lam
 	}
@@ -238,9 +238,9 @@ func checkEigVecs(t *testing.T, a []float64, n int, wr, wi, vr []float64) {
 	t.Helper()
 	for j := 0; j < n; j++ {
 		if wi[j] == 0 {
-			for i := 0; i < n; i++ {
+			for i := range n {
 				sum := 0.0
-				for k := 0; k < n; k++ {
+				for k := range n {
 					sum += a[i*n+k] * vr[k*n+j]
 				}
 				if d := math.Abs(sum - wr[j]*vr[i*n+j]); d > tol {
@@ -249,9 +249,9 @@ func checkEigVecs(t *testing.T, a []float64, n int, wr, wi, vr []float64) {
 			}
 			continue
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			sum := 0.0
-			for k := 0; k < n; k++ {
+			for k := range n {
 				sum += a[i*n+k] * vr[k*n+j]
 			}
 			// (A v)_i = λ v_i with λ = wr ± i wi and v = col_j ± i col_{j+1}.
@@ -259,7 +259,7 @@ func checkEigVecs(t *testing.T, a []float64, n int, wr, wi, vr []float64) {
 			lam := complex(wr[j], wi[j])
 			// For the +imag eigenvalue column pair:
 			lhs2 := complex(0, 0)
-			for k := 0; k < n; k++ {
+			for k := range n {
 				lhs2 += complex(a[i*n+k], 0) * complex(vr[k*n+j+1], 0)
 			}
 			res := lhs2 - (lam-0)*0 // placeholder replaced below
@@ -276,9 +276,9 @@ func checkEigVecs(t *testing.T, a []float64, n int, wr, wi, vr []float64) {
 			continue
 		}
 		lam := complex(wr[j], math.Abs(wi[j]))
-		for i := 0; i < n; i++ {
+		for i := range n {
 			var sum complex128
-			for k := 0; k < n; k++ {
+			for k := range n {
 				sum += complex(a[i*n+k], 0) * complex(vr[k*n+j], vr[k*n+j+1])
 			}
 			want := lam * complex(vr[i*n+j], vr[i*n+j+1])
@@ -389,7 +389,7 @@ func TestSvdFull(t *testing.T) {
 	eq(t, "full V^T V", vvt, id(2))
 	// Reconstruction: U[:, :2] diag(s) Vt.
 	us := make([]float64, 6)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		us[i*2+0] = u[i*3+0] * s[0]
 		us[i*2+1] = u[i*3+1] * s[1]
 	}

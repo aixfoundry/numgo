@@ -134,7 +134,7 @@ func TestLoadNpzPythonFixtures(t *testing.T) {
 	if !equalShape(m["f64"].Shape, 2, 3) || m["f64"].Descr != "<f8" {
 		t.Fatalf("f64: %v %s", m["f64"].Shape, m["f64"].Descr)
 	}
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		if got := m["f64"].F64.Data()[i]; got != float64(i) {
 			t.Fatalf("f64[%d]=%v", i, got)
 		}

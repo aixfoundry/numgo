@@ -15,7 +15,7 @@ func refDFT(x []complex128, inverse bool) []complex128 {
 	if inverse {
 		s = -s
 	}
-	for k := 0; k < n; k++ {
+	for k := range n {
 		for j, v := range x {
 			out[k] += v * cmplx.Exp(complex(0, s*float64(j*k)))
 		}

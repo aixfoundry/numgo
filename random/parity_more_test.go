@@ -62,7 +62,7 @@ func TestPCGAdvanceJumpParity(t *testing.T) {
 	}
 	g2 := DefaultRng(12345)
 	j := g2.bg.Jumped()
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if v := j.Next64(); v != moreRef["jmp_raw"][i] {
 			t.Fatalf("jmp_raw[%d]: %d != %d", i, v, moreRef["jmp_raw"][i])
 		}

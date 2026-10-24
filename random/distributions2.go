@@ -19,7 +19,7 @@ import (
 func (g *Generator) Chisquare(df float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = 2.0 * g.StandardGammaScalar(df/2.0)
 	}
 	return out
@@ -29,7 +29,7 @@ func (g *Generator) Chisquare(df float64, size ...int) *arrayF {
 func (g *Generator) F(dfnum, dfden float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		subexpr1 := 2.0 * g.StandardGammaScalar(dfnum/2.0) * dfden
 		subexpr2 := 2.0 * g.StandardGammaScalar(dfden/2.0) * dfnum
 		out.Data()[i] = subexpr1 / subexpr2
@@ -41,7 +41,7 @@ func (g *Generator) F(dfnum, dfden float64, size ...int) *arrayF {
 func (g *Generator) StandardCauchy(size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.StandardNormalScalar() / g.StandardNormalScalar()
 	}
 	return out
@@ -51,7 +51,7 @@ func (g *Generator) StandardCauchy(size ...int) *arrayF {
 func (g *Generator) Pareto(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = expm1G(g.StandardExponentialScalar() / a)
 	}
 	return out
@@ -62,7 +62,7 @@ func (g *Generator) Pareto(a float64, size ...int) *arrayF {
 func (g *Generator) Weibull(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if a == 0.0 {
 			continue
 		}
@@ -75,7 +75,7 @@ func (g *Generator) Weibull(a float64, size ...int) *arrayF {
 func (g *Generator) Power(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = cmath.Pow(-expm1G(-g.StandardExponentialScalar()), 1.0/a)
 	}
 	return out
@@ -85,7 +85,7 @@ func (g *Generator) Power(a float64, size ...int) *arrayF {
 func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		var U float64
 		for {
 			U = g.nextDouble()
@@ -113,7 +113,7 @@ func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 func (g *Generator) Gumbel(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		var U float64
 		for {
 			U = 1.0 - g.nextDouble()
@@ -130,7 +130,7 @@ func (g *Generator) Gumbel(loc, scale float64, size ...int) *arrayF {
 func (g *Generator) Logistic(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		var U float64
 		for {
 			U = g.nextDouble()
@@ -147,7 +147,7 @@ func (g *Generator) Logistic(loc, scale float64, size ...int) *arrayF {
 func (g *Generator) Lognormal(mean, sigma float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = cmath.Exp(mean + sigma*g.StandardNormalScalar())
 	}
 	return out
@@ -157,7 +157,7 @@ func (g *Generator) Lognormal(mean, sigma float64, size ...int) *arrayF {
 func (g *Generator) Rayleigh(scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = scale * math.Sqrt(2.0*g.StandardExponentialScalar())
 	}
 	return out
@@ -167,7 +167,7 @@ func (g *Generator) Rayleigh(scale float64, size ...int) *arrayF {
 func (g *Generator) StandardT(df float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		num := g.StandardNormalScalar()
 		denom := g.StandardGammaScalar(df / 2.0)
 		out.Data()[i] = math.Sqrt(df/2.0) * num / math.Sqrt(denom)
@@ -180,7 +180,7 @@ func (g *Generator) StandardT(df float64, size ...int) *arrayF {
 func (g *Generator) NoncentralChisquare(df, nonc float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if math.IsNaN(nonc) {
 			out.Data()[i] = math.NaN()
 			continue
@@ -206,7 +206,7 @@ func (g *Generator) NoncentralChisquare(df, nonc float64, size ...int) *arrayF {
 func (g *Generator) NoncentralF(dfnum, dfden, nonc float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		chi2 := g.noncentralChisquareScalar(dfnum, nonc)
 		t := chi2 * dfden
 		out.Data()[i] = t / (2.0 * g.StandardGammaScalar(dfden/2.0) * dfnum)
@@ -234,7 +234,7 @@ func (g *Generator) noncentralChisquareScalar(df, nonc float64) float64 {
 func (g *Generator) Wald(mean, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		Y := g.StandardNormalScalar()
 		Y = mean * Y * Y
 		d := 1.0 + math.Sqrt(1.0+4.0*scale/Y)
@@ -255,7 +255,7 @@ func (g *Generator) Wald(mean, scale float64, size ...int) *arrayF {
 func (g *Generator) VonMises(mu, kappa float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.vonMisesScalar(mu, kappa)
 	}
 	return out
@@ -333,7 +333,7 @@ func (g *Generator) Triangular(left, mode, right float64, size ...int) *arrayF {
 	ratio := leftbase / base
 	leftprod := leftbase * base
 	rightprod := (right - mode) * base
-	for i := 0; i < n; i++ {
+	for i := range n {
 		U := g.nextDouble()
 		if U <= ratio {
 			out.Data()[i] = left + math.Sqrt(U*leftprod)
@@ -348,7 +348,7 @@ func (g *Generator) Triangular(left, mode, right float64, size ...int) *arrayF {
 func (g *Generator) Logseries(p float64, size ...int) *arrayI {
 	n := sizeOr1(size)
 	out := newI(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		r := cmath.Log1p(-p)
 		for {
 			V := g.nextDouble()
@@ -409,7 +409,7 @@ func (g *Generator) Geometric(p float64, size ...int) *arrayI {
 	}
 	n := sizeOr1(size)
 	out := newI(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if p >= 0.333333333333333333333333 {
 			out.Data()[i] = g.geometricSearch(p)
 		} else {
@@ -450,7 +450,7 @@ func (g *Generator) Zipf(a float64, size ...int) *arrayI {
 	}
 	n := sizeOr1(size)
 	out := newI(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out.Data()[i] = g.randomZipf(a)
 	}
 	return out
@@ -547,18 +547,9 @@ const (
 // hypergeometricHRUA: random_hypergeometric.c:116 (Stadlober ratio-of-uniforms).
 func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 	popsize := good + bad
-	computedSample := sample
-	if popsize-sample < computedSample {
-		computedSample = popsize - sample
-	}
-	mingoodbad := good
-	if bad < mingoodbad {
-		mingoodbad = bad
-	}
-	maxgoodbad := good
-	if bad > maxgoodbad {
-		maxgoodbad = bad
-	}
+	computedSample := min(popsize-sample, sample)
+	mingoodbad := min(bad, good)
+	maxgoodbad := max(bad, good)
 	p := float64(mingoodbad) / float64(popsize)
 	q := float64(maxgoodbad) / float64(popsize)
 	mu := float64(computedSample) * p
@@ -570,10 +561,7 @@ func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 	gg := logfactorial(m) + logfactorial(int64(mingoodbad)-m) +
 		logfactorial(int64(computedSample)-m) +
 		logfactorial(int64(maxgoodbad)-int64(computedSample)+m)
-	bound := computedSample
-	if mingoodbad < bound {
-		bound = mingoodbad
-	}
+	bound := min(mingoodbad, computedSample)
 	floorA := int64(math.Floor(a + 16*c))
 	if floorA < bound {
 		bound = floorA
@@ -622,7 +610,7 @@ func (g *Generator) Hypergeometric(ngood, nbad, nsample int64, size ...int) *arr
 	}
 	n := sizeOr1(size)
 	out := newI(n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		if nsample >= 10 && nsample <= ngood+nbad-10 {
 			out.Data()[i] = g.hypergeometricHRUA(ngood, nbad, nsample)
 		} else {
@@ -647,7 +635,7 @@ func (g *Generator) NegativeBinomial(n float64, p float64, size ...int) *arrayI 
 	}
 	cnt := sizeOr1(size)
 	out := newI(cnt)
-	for i := 0; i < cnt; i++ {
+	for i := range cnt {
 		Y := (1.0 - p) / p * g.StandardGammaScalar(n)
 		out.Data()[i] = g.poissonScalar(Y)
 	}
@@ -685,7 +673,7 @@ func (g *Generator) Dirichlet(alpha []float64, size ...int) *arrayF {
 			csumArr[j] = csum
 		}
 		if csum > 0 {
-			for i := 0; i < rows; i++ {
+			for i := range rows {
 				acc := 1.0
 				for j := 0; j < k-1; j++ {
 					v := g.betaScalar(alpha[j], csumArr[j+1])
@@ -700,15 +688,15 @@ func (g *Generator) Dirichlet(alpha []float64, size ...int) *arrayF {
 		}
 		return out
 	}
-	for i := 0; i < rows; i++ {
+	for i := range rows {
 		acc := 0.0
-		for j := 0; j < k; j++ {
+		for j := range k {
 			v := g.StandardGammaScalar(alpha[j])
 			data[i*k+j] = v
 			acc = acc + v
 		}
 		invacc := 1.0 / acc
-		for j := 0; j < k; j++ {
+		for j := range k {
 			data[i*k+j] = data[i*k+j] * invacc
 		}
 	}
@@ -740,7 +728,7 @@ func (g *Generator) Multinomial(n int64, pvals []float64, size ...int) *arrayF {
 	out := numgo.Zeros[float64](rows, d)
 	data := out.Data()
 	st := &binomialState{}
-	for i := 0; i < rows; i++ {
+	for i := range rows {
 		remainingP := 1.0
 		dn := n
 		for j := 0; j < d-1; j++ {
@@ -791,10 +779,10 @@ func (g *Generator) MultivariateNormal(mean *numgo.Array[float64], cov *numgo.Ar
 	out := numgo.Zeros[float64](rows, dim)
 	od := out.Data()
 	meanData := mean.Data()
-	for r := 0; r < rows; r++ {
+	for r := range rows {
 		// BLAS dgemm (numpy: x @ L.T) accumulates the dot product first,
 		// then adds the mean; a fused mean-first loop rounds differently.
-		for i := 0; i < dim; i++ {
+		for i := range dim {
 			// dot product with FMA per step, matching OpenBLAS dgemm.
 			v := x[r*dim+0] * covData[i*dim+0]
 			for j := 1; j <= i; j++ {
@@ -862,7 +850,7 @@ func (g *Generator) MultivariateHypergeometric(colors []int64, nsample int64, si
 				v[i+numColors-1] = numToSample
 			}
 			if moreThanHalf {
-				for k := 0; k < numColors; k++ {
+				for k := range numColors {
 					v[i+k] = colors[k] - v[i+k]
 				}
 			}
@@ -884,7 +872,7 @@ func (g *Generator) MultivariateHypergeometric(colors []int64, nsample int64, si
 				v[i+int(choices[j])]++
 			}
 			if moreThanHalf {
-				for k := 0; k < numColors; k++ {
+				for k := range numColors {
 					v[i+k] = colors[k] - v[i+k]
 				}
 			}

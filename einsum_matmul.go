@@ -1,5 +1,7 @@
 package numgo
 
+import "maps"
+
 import "slices"
 
 // einsum-matmul.go: Einsum's matmul fast path. Einsum itself stays in
@@ -271,9 +273,7 @@ func einDenseSide[T Number](src *Array[T], labels []rune, ellShape []int,
 // pairDims merges the fold and op dim maps (max = broadcast winner).
 func pairDims[T Number](fold *einFold[T], op *einOperand[T]) map[rune]int {
 	dims := make(map[rune]int, len(fold.dims)+len(op.dims))
-	for l, d := range fold.dims {
-		dims[l] = d
-	}
+	maps.Copy(dims, fold.dims)
 	for l, d := range op.dims {
 		if d > dims[l] {
 			dims[l] = d
