@@ -87,7 +87,7 @@ numpy 对应：`ma`、`strings`/`char`、`rec`。
 - [ ] `rec`/结构化 dtype：Go 习惯是 `[]struct`，倾向**不做** numpy 式 void dtype，提供 `Array[T] ↔ []struct` 转换即可（在 roadmap review 时再决策）。
 - [ ] `matrixlib`、`char`（弃用 shim）、`emath` 已并入 scimath：不做/已覆盖。
 
-## Phase 5 — 工程配套
+## Phase 5 — 工程配套 ✅（assert/interop/性能基线与热点优化已完成；SIMD 远期 shortcut 注释保留）
 
 - [ ] `testing`：`AssertArrayEqual/AssertAllClose/AssertArrayAlmostEq` 等 17 断言的 Go 版（`*testing.T` 风格）。
 - [ ] `typing`：Go 泛型约束即文档；导出 `NDArray`/`ArrayLike` 别名与 constraint 集，写 API 规范文档。
