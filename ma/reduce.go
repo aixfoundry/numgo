@@ -94,7 +94,9 @@ func (m *Masked[T]) Mean(axes ...int) *Masked[T] {
 		}
 	}
 	return f.finish()
-} // Pure: MeanKeepdims folds the mean keeping reduced axes as size 1.
+}
+
+// Pure: MeanKeepdims folds the mean keeping reduced axes as size 1.
 func (m *Masked[T]) MeanKeepdims(axes ...int) *Masked[T] {
 	return m.keepdims(m.Mean, axes...)
 }

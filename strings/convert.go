@@ -69,10 +69,12 @@ type ElementError struct {
 	Err   error
 }
 
+// Error formats the failure with the element's linear index.
 func (e *ElementError) Error() string {
 	return "numgo/strings: element " + strconv.Itoa(e.Index) + ": " + e.Err.Error()
 }
 
+// Unwrap returns the underlying parse error.
 func (e *ElementError) Unwrap() error { return e.Err }
 
 // Pure: FromFloat formats every element of a with the format verb (a

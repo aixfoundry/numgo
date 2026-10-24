@@ -21,6 +21,8 @@ const (
 	lowerMask uint32 = 0x7fffffff
 )
 
+// MT19937 is the Mersenne Twister bit generator (numpy's legacy default),
+// seeded via SeedSequence. Use it through NewGenerator.
 type MT19937 struct {
 	key [mtN]uint32
 	pos int

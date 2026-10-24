@@ -14,6 +14,9 @@ const (
 	pcgMultLo uint64 = 4865540595714422341
 )
 
+// PCG64 is the permuted-congruential generator (numpy's default bit
+// generator), 128-bit LCG state with 64-bit XSL-RR output. Use it through
+// NewGenerator.
 type PCG64 struct {
 	stateHi, stateLo uint64
 	incHi, incLo     uint64
