@@ -143,11 +143,11 @@ func fatalIf(t *testing.T, err error, format string, a ...any) {
 	}
 }
 
-func ints(args []any, i int) []int       { return args[i].([]int) }
-func boolean(args []any, i int) []bool   { return args[i].([]bool) }
-func num(args []any, i int) float64      { return args[i].(float64) }
-func whole(args []any, i int) int        { return args[i].(int) }
-func rng(args []any, i int) Range        { return args[i].(Range) }
+func ints(args []any, i int) []int     { return args[i].([]int) }
+func boolean(args []any, i int) []bool { return args[i].([]bool) }
+func num(args []any, i int) float64    { return args[i].(float64) }
+func whole(args []any, i int) int      { return args[i].(int) }
+func rng(args []any, i int) Range      { return args[i].(Range) }
 
 // runCase executes one fixture case through the dispatch table and compares
 // the result with the recorded want.

@@ -122,4 +122,3 @@ func TestIrfftHalfSpectrum(t *testing.T) {
 		}
 	}
 }
-
