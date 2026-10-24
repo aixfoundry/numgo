@@ -64,7 +64,7 @@ numpy 对应：`linalg`、`fft`、`random`。相互独立，可三车道并行�
 
 **验收**：linalg 对拍 LAPACK 例程 ~40 例；fft 精度对拍 1e-12；random 同种子序列逐位一致。
 
-## Phase 3 — lib 工具层 + polynomial（进行中：IO/NaN 族/统计/Pad ✅，polynomial 待做）
+## Phase 3 — lib 工具层 + polynomial ✅（已完成）
 
 numpy 对应：`lib`（第二梯队全部）、`polynomial`。核心稳定后机械推进，可多车道并行。
 
