@@ -161,3 +161,36 @@ func panicMatmulShape(op string, a, b []int) {
 func panicDotLead(a, b []int) {
 	panic(fmt.Sprintf("numgo: dot: leading dimensions differ %s x %s", shapeString(a), shapeString(b)))
 }
+
+// panicEinsumLabelCount reports an operand whose subscript label count differs
+// from its dimension count.
+func panicEinsumLabelCount(labels, ndim int) {
+	panic(fmt.Sprintf("numgo: einsum: subscript label count %d does not match array dimension %d",
+		labels, ndim))
+}
+
+// panicEinsumOperands reports a subscript/operand count mismatch.
+func panicEinsumOperands(subs, operands int) {
+	panic(fmt.Sprintf("numgo: einsum: %d subscripts for %d operands", subs, operands))
+}
+
+// panicEinsumOutputLabel reports an output label absent from every input.
+func panicEinsumOutputLabel(l rune) {
+	panic(fmt.Sprintf("numgo: einsum: output label %c does not appear in any input", l))
+}
+
+// panicEinsumOutputRepeat reports an output label written more than once.
+func panicEinsumOutputRepeat(l rune) {
+	panic(fmt.Sprintf("numgo: einsum: output subscript %c appears multiple times", l))
+}
+
+// panicEinsumOutputEllipsis reports "..." in the output while no operand has
+// an ellipsis (numpy: output has more dimensions than subscripts).
+func panicEinsumOutputEllipsis() {
+	panic("numgo: einsum: output has an ellipsis but no operand provides one")
+}
+
+// panicEinsumBadChar reports an invalid subscript character.
+func panicEinsumBadChar(r rune, where string) {
+	panic(fmt.Sprintf("numgo: einsum: invalid subscript %q in %s, subscripts must be letters", r, where))
+}
