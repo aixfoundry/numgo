@@ -19,7 +19,11 @@ jobs:
       - run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
       - run: go vet ./...
       - run: go test -count=1 ./...
+      # -race needs the TSan runtime, which requires cgo for the test
+      # binary only — the library itself stays pure Go (CGO_ENABLED=0 build).
       - run: go test -race ./fft ./internal/nditer ./random
+        env:
+          CGO_ENABLED: "1"
 
   cross-build:
     name: Build (${{ matrix.os }})
