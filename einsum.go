@@ -38,8 +38,14 @@ import (
 // 0-d arrays).
 //
 // Pure: returns new data; operands are never written.
-// shortcut: naive transpose-broadcast-multiply-sum path, optimize with
-// dedicated loops in Phase 5.
+//
+// With two or more operands the contraction runs as a left fold of dense
+// matmuls (einsumMatmul in einsum_matmul.go, on dot.go's matmulKernel): each
+// step flattens the pair's shared labels to K in sorted order — the same
+// ascending order the generic path sums in, so results are bit-identical —
+// with the left's remaining output labels as M and the right's as N.
+// Anything the pattern cannot express falls back to the generic
+// transpose-broadcast-multiply-sum path below.
 func Einsum[T Number](subscript string, as ...*Array[T]) *Array[T] {
 	inPart, outPart, explicit := strings.Cut(subscript, "->")
 	specs := strings.Split(inPart, ",")
@@ -57,6 +63,12 @@ func Einsum[T Number](subscript string, as ...*Array[T]) *Array[T] {
 			occurs[l]++
 		}
 		anyEll = anyEll || ell
+	}
+
+	// Pure-contraction fast path: rewrite the label graph as a chain of
+	// matmuls; fall back to the generic path when a pair does not fit.
+	if acc, ok := einsumMatmul(ops, occurs, outPart, explicit, anyEll); ok {
+		return acc
 	}
 
 	// numpy's implicit output places the broadcast dims FIRST, then the free

@@ -162,3 +162,39 @@ numpy nditer 的 buffering 能力）。
 
 未达标项：AsType 6.6×（目标 ≤5×）——剩余时间为输出分配 + 4 MB 写入的内存带宽下限，
 进一步需复用输出缓冲（超出本次 Pure 语义范围）。
+
+## Phase 5 优化后（2026-10-25，Einsum matmul 折叠 / nditer axis-0 连续快路径 / FFT 缓存上限）
+
+> `-benchtime 1s -count 3` 取中位数，同机同 numpy 数字。全部测试原样通过
+> （`go test -count=1 ./...` 全绿），race 下 fft/nditer/根包全绿。
+
+| 操作 | 规模 | before ns/op | after ns/op | after allocs/op | 比值 (after/numpy) | 目标 |
+|---|---|---:|---:|---:|---:|---|
+| Einsum ij,jk->ik | 100×100×100 | 15 730 113（基线）／7.3 ms（当前分支起点） | **272 258** | 93（8.4 MB → 0.33 MB） | **1.6×** | ≤40× 达标 |
+| Sum axis=0 | 1000×1000 | 3 708 087（基线）／3.5 ms（起点） | **1 338 198** | 5 | **10.6×** | ≤8× 未达标 |
+| FFT 2^16 | 2^16 | 5.2 ms | 5.1 ms（缓存上限未触发） | 16 | 6.7× | 不劣化 达标 |
+| FFT 混合基 | 2^13·5 | 2.8 ms | 2.8 ms | 16 | 6.3× | 不劣化 达标 |
+| FFTN 64×64 | 64×64 | 0.32 ms | 0.32 ms | 30 | 10.5× | 不劣化 达标 |
+| IRFFT 2^16 | 2^16 | 55.7 ms | 55.6 ms | 193 | 20.9× | 不劣化 达标 |
+
+实现要点（均为纯 Go，无新依赖）：
+
+- **Einsum matmul 折叠**（`einsum_matmul.go`，`einsumMatmul`/`einMatmulPair`）：≥2 操作数时
+  逐对左折叠为 dense matmul——共享且不出现在输出的标签按升序摊平成 K，左剩余输出标签为
+  M、右剩余输出标签为 N，走 `dot.go` 的 `matmulKernel`。K 的摊平顺序（升序）与通用路径的
+  求和顺序一致，结果逐位相同（随机对拍测试 `TestEinsumMatmulPathRandom` 断言 bit-identical）。
+  每对操作数先按轴序 permute、广播摊平 batch（ellipsis）、`Copy` 成 C 连续块再进内核。
+  模式不匹配即回退原 transpose-broadcast-multiply-sum 路径：共享且又在输出的标签
+  （Hadamard 混合）、纯外积、输出含 ellipsis、隐式 ellipsis 输出、成对后需再求和的标签、
+  自由标签 size-1 广播。>2 操作数为贪心左折叠（先 1·2，结果与 3 继续；numpy
+  optimize=greedy 的简化版，文档注明）。
+- **nditer axis-0 连续快路径**：`Reduce` 在输入 C 连续且仅折轴 0 时，先按行序把第 0 行
+  折进 identity 预填的 out（与通用 C 序遍历逐位同序），随后每行一次线性扫描
+  （`out[j] ⊕= data[base+j]`），消掉逐坐标 odometer。fn 契约不变。
+- **FFT 缓存上限**：包级 `cacheEntries` 计数（`sync.Mutex` 保护）覆盖 twiddle 表、
+  Bluestein 核、工作池三处 `sync.Map`；超过 `maxCacheEntries = 256` 条目时整体清空重建
+  （简单全清逐出，非 LRU——少尺寸负载永不触发；多条目负载付出整窗重建代价）。
+  白盒测试 `TestCacheBoundEvicts` 直填 map 验证逐出与恢复。
+
+未达标项：SumAxis0 10.6×（目标 ≤8×）——剩余为 8 MB 读带宽下限 + 5 次分配；进一步需要
+多行分块合并到一次扫描（收益递减，留待后续批次）。

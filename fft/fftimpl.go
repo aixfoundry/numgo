@@ -26,19 +26,64 @@ type twiddleKey struct {
 }
 
 var (
+	// cacheMu guards the entry counts below. Eviction is deliberately crude:
+	// when the total cached entries across all three caches crosses
+	// maxCacheEntries, everything is dropped and rebuilt on demand. Workloads
+	// with few distinct transform sizes never trip it; adversarial
+	// many-sizes workloads pay a rebuild per window instead of growing
+	// without bound. No LRU — eviction counts events, not bytes.
+	cacheMu        sync.Mutex
 	twiddleCache   sync.Map // twiddleKey -> []complex128 of cis(sign·k)
 	bluesteinCache sync.Map // twiddleKey -> *bluesteinKernel
 	bluesteinWork  sync.Map // int m -> *sync.Pool of []complex128 (len 3m)
+	cacheEntries   int
 )
+
+// maxCacheEntries bounds the combined twiddle/bluestein/pool-key cache size.
+const maxCacheEntries = 256
+
+// noteCacheEntry records a new cache insertion and clears all caches when the
+// combined entry count exceeds the bound. Called after a successful
+// LoadOrStore that inserted; races only over-count, which just evicts sooner.
+func noteCacheEntry() {
+	cacheMu.Lock()
+	cacheEntries++
+	if cacheEntries > maxCacheEntries {
+		twiddleCache.Range(func(key, _ any) bool {
+			twiddleCache.Delete(key)
+			return true
+		})
+		bluesteinCache.Range(func(key, _ any) bool {
+			bluesteinCache.Delete(key)
+			return true
+		})
+		bluesteinWork.Range(func(key, _ any) bool {
+			bluesteinWork.Delete(key)
+			return true
+		})
+		cacheEntries = 0
+	}
+	cacheMu.Unlock()
+}
+
+// cacheEntryCount reports the tracked entry count (white-box tests).
+func cacheEntryCount() int {
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
+	return cacheEntries
+}
 
 // bluesteinScratch rents a workspace of 3m complex: fa = w[:m], sc = w[m:].
 // Bluestein sits at recursion leaves needing ~6n elements — more than the
 // per-call arena carries — so its buffers come from a size-keyed pool instead
 // (concurrent transforms of one size contend only on the pool).
 func bluesteinScratch(m int) (w []complex128, put func()) {
-	p, _ := bluesteinWork.LoadOrStore(m, &sync.Pool{New: func() any {
+	p, loaded := bluesteinWork.LoadOrStore(m, &sync.Pool{New: func() any {
 		return make([]complex128, 3*m)
 	}})
+	if !loaded {
+		noteCacheEntry()
+	}
 	w = p.(*sync.Pool).Get().([]complex128)
 	return w, func() { p.(*sync.Pool).Put(w) }
 }
@@ -53,7 +98,9 @@ type bluesteinKernel struct {
 
 // twiddles returns the cached table tw[k] = cis(sign·k). The table covers
 // every j·b index the n-loops can form: n² for the naive base case (n ≤ 32)
-// and r·n for a radix-r level.
+// and r·n for a radix-r level. When the combined cache count crosses
+// maxCacheEntries all caches are cleared (simple whole-cache eviction; no
+// LRU — workloads with few sizes never trip it).
 func twiddles(n int, inverse bool) []complex128 {
 	key := twiddleKey{n, inverse}
 	if v, ok := twiddleCache.Load(key); ok {
@@ -68,7 +115,10 @@ func twiddles(n int, inverse bool) []complex128 {
 	for k := range tw {
 		tw[k] = cis(sign * float64(k))
 	}
-	v, _ := twiddleCache.LoadOrStore(key, tw)
+	v, loaded := twiddleCache.LoadOrStore(key, tw)
+	if !loaded {
+		noteCacheEntry()
+	}
 	return v.([]complex128)
 }
 
@@ -189,7 +239,10 @@ func bluesteinKernelFor(n int, inverse bool) *bluesteinKernel {
 	}
 	fftC(fb, fb, false)
 	kern := &bluesteinKernel{chirp: chirp, spec: fb, m: m}
-	v, _ := bluesteinCache.LoadOrStore(key, kern)
+	v, loaded := bluesteinCache.LoadOrStore(key, kern)
+	if !loaded {
+		noteCacheEntry()
+	}
 	return v.(*bluesteinKernel)
 }
 

@@ -325,6 +325,38 @@ func Reduce[T any](l *Layout, data []T, axes []int, out []T,
 			return
 		}
 	}
+	// Fast path: axis-0 reduce on contiguous input — row 0 folds into the
+	// identity-filled out (same ascending slot order as the general walk),
+	// then each later row is a linear in-order pass over its own slice.
+	if ndim > 1 && reduced[0] && contiguousSame(l, l.Shape) &&
+		Size(l.Shape) <= len(data)-l.Offset {
+		only0 := true
+		for i := 1; i < ndim; i++ {
+			if reduced[i] {
+				only0 = false
+				break
+			}
+		}
+		if only0 {
+			w := Size(l.Shape[1:])
+			// Row 0 folds into the identity-prefilled out (kept slot order is
+			// C order, matching the general walk), then rows 1..n-1 continue
+			// the fold row by row — a linear pass per row slice.
+			if len(out) < w {
+				return
+			}
+			for j, i := 0, l.Offset; j < w; j, i = j+1, i+1 {
+				fn(&out[j], data[i])
+			}
+			for row := 1; row < l.Shape[0]; row++ {
+				base := l.Offset + row*w
+				for j, i := 0, base; j < w; j, i = j+1, i+1 {
+					fn(&out[j], data[i])
+				}
+			}
+			return
+		}
+	}
 	// Fast path: last-axis reduce on contiguous input — each kept slot folds
 	// the contiguous row data[row*last : (row+1)*last].
 	if ndim > 1 && reduced[ndim-1] && contiguousSame(l, l.Shape) &&
