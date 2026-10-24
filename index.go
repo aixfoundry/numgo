@@ -65,6 +65,12 @@ func normalizeRange(r Range, dim int) (start, n, step int) {
 	return start, (start - stop + (-step) - 1) / (-step), step
 }
 
+// Pure: NormalizeRange exposes range normalization for subpackages that build
+// views from numgo.Range values (numgo/strings).
+func NormalizeRange(r Range, dim int) (start, n, step int) {
+	return normalizeRange(r, dim)
+}
+
 // Pure: At returns the element at coords. It panics if the rank or index is invalid.
 func (a *Array[T]) At(coords ...int) T {
 	if err := nditer.CheckCoords(a.layout(), coords); err != nil {
