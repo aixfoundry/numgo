@@ -21,7 +21,9 @@ func AsType[F, P Number](a *Array[F]) *Array[P] {
 	}
 	nditer.Zip(out.layout(), out.data, []*nditer.Layout{a.layout()}, [][]P{src},
 		func(d []P, src [][]P) {
-			d[0] = src[0][0]
+			for i := range d {
+				d[i] = src[0][i]
+			}
 		})
 	return out
 }

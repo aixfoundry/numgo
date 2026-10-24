@@ -25,7 +25,9 @@ func CopyInto[T Number](dst, src *Array[T]) {
 	}
 	nditer.Zip(dst.layout(), dst.data, []*nditer.Layout{l}, [][]T{src.data},
 		func(d []T, s [][]T) {
-			d[0] = s[0][0]
+			for i := range d {
+				d[i] = s[0][i]
+			}
 		})
 }
 

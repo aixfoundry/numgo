@@ -94,7 +94,9 @@ func zip2[T Number](la *nditer.Layout, adata []T, lb *nditer.Layout, bdata []T,
 	}
 	nditer.Zip(dst.layout(), dst.data, []*nditer.Layout{la, lb}, [][]T{adata, bdata},
 		func(d []T, src [][]T) {
-			d[0] = op(src[0][0], src[1][0])
+			for i := range d {
+				d[i] = op(src[0][i], src[1][i])
+			}
 		})
 	return dst
 }
@@ -110,7 +112,9 @@ func into2[T Number](dst, a, b *Array[T], op func(x, y T) T) *Array[T] {
 	}
 	nditer.Zip(dst.layout(), dst.data, []*nditer.Layout{la, lb}, [][]T{a.data, b.data},
 		func(d []T, src [][]T) {
-			d[0] = op(src[0][0], src[1][0])
+			for i := range d {
+				d[i] = op(src[0][i], src[1][i])
+			}
 		})
 	return dst
 }
@@ -123,7 +127,9 @@ func mapValues[T Number](a *Array[T], f func(T) T) *Array[T] {
 	}
 	nditer.Zip(out.layout(), out.data, []*nditer.Layout{a.layout()}, [][]T{a.data},
 		func(d []T, src [][]T) {
-			d[0] = f(src[0][0])
+			for i := range d {
+				d[i] = f(src[0][i])
+			}
 		})
 	return out
 }

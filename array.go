@@ -68,7 +68,9 @@ func (a *Array[T]) Copy() *Array[T] {
 	}
 	nditer.Zip(dst.layout(), dst.data, []*nditer.Layout{a.layout()}, [][]T{a.data},
 		func(d []T, src [][]T) {
-			d[0] = src[0][0]
+			for i := range d {
+				d[i] = src[0][i]
+			}
 		})
 	return dst
 }

@@ -79,7 +79,11 @@ func sortAxis[T Number](a *Array[T], axis int) {
 	}
 	src := &nditer.Layout{Shape: a.shape, Strides: srcStrides}
 	nditer.Zip(a.layout(), a.data, []*nditer.Layout{src}, [][]T{sorted},
-		func(d []T, s [][]T) { d[0] = s[0][0] })
+		func(d []T, s [][]T) {
+			for i := range d {
+				d[i] = s[0][i]
+			}
+		})
 }
 
 // Pure: Sort returns a new array with each channel along the given axes

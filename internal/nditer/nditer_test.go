@@ -79,7 +79,11 @@ func TestZip2D(t *testing.T) {
 	a := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
 	b := &Layout{Shape: []int{3}, Strides: []int{0, 1}}
 	Zip(dst, out, []*Layout{a, b}, [][]float64{{0, 1, 2, 3, 4, 5}, {10, 20, 30}},
-		func(d []float64, src [][]float64) { d[0] = src[0][0] + src[1][0] })
+		func(d []float64, src [][]float64) {
+			for i := range d {
+				d[i] = src[0][i] + src[1][i]
+			}
+		})
 	want := []float64{10, 21, 32, 13, 24, 35}
 	if !reflect.DeepEqual(out, want) {
 		t.Fatalf("got %v, want %v", out, want)
@@ -96,7 +100,11 @@ func TestZip3D(t *testing.T) {
 		adata[i] = i
 	}
 	Zip(dst, out, []*Layout{a, b}, [][]int{adata, {10, 20, 30, 40}},
-		func(d []int, src [][]int) { d[0] = src[0][0] + src[1][0] })
+		func(d []int, src [][]int) {
+			for i := range d {
+				d[i] = src[0][i] + src[1][i]
+			}
+		})
 	want := []int{
 		10, 21, 32, 43,
 		14, 25, 36, 47,
@@ -195,5 +203,153 @@ func TestAccumulateAllAxes(t *testing.T) {
 	want := []float64{1, 3, 6, 10, 15, 21}
 	if !reflect.DeepEqual(out, want) {
 		t.Fatalf("got %v, want %v", out, want)
+	}
+}
+
+// --- contiguous fast-path tests ---
+
+func TestZipFastPathCallbackBlocks(t *testing.T) {
+	dst := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	a := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	var dstLens, srcLens []int
+	Zip(dst, out, []*Layout{a}, [][]float64{{1, 2, 3, 4, 5, 6}},
+		func(d []float64, src [][]float64) {
+			dstLens = append(dstLens, len(d))
+			srcLens = append(srcLens, len(src[0]))
+			for i := range d {
+				d[i] = src[0][i] * 2
+			}
+		})
+	// Fast path contract: a whole block (>= 2 elements) in ONE call.
+	if len(dstLens) != 1 || dstLens[0] < 2 || srcLens[0] < 2 {
+		t.Fatalf("fast path: want one whole-block call, got dstLens=%v srcLens=%v", dstLens, srcLens)
+	}
+	if !reflect.DeepEqual(out, []float64{2, 4, 6, 8, 10, 12}) {
+		t.Fatalf("fast path result = %v", out)
+	}
+
+	// Strided src forces the per-element path: every block has length 1.
+	out2 := make([]int, 6)
+	aStrided := &Layout{Shape: []int{3, 2}, Strides: []int{1, 3}}
+	dLens, sLens := 0, map[int]bool{}
+	Zip(&Layout{Shape: []int{3, 2}, Strides: []int{2, 1}}, out2,
+		[]*Layout{aStrided}, [][]int{{1, 2, 3, 4, 5, 6}},
+		func(d []int, src [][]int) {
+			dLens++
+			sLens[len(src[0])] = true
+			d[0] = src[0][0]
+		})
+	if dLens != 6 || !sLens[1] {
+		t.Fatalf("strided path: want 6 per-element calls, got %d calls lens=%v", dLens, sLens)
+	}
+}
+
+func TestZipFastPathBroadcastAndOffset(t *testing.T) {
+	// Broadcast src (stride 0 on axis 0) must keep per-element semantics.
+	dst := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]int, 6)
+	a := &Layout{Shape: []int{1, 3}, Strides: []int{0, 1}}
+	Zip(dst, out, []*Layout{a}, [][]int{{1, 2, 3}},
+		func(d []int, src [][]int) { d[0] = src[0][0] })
+	if !reflect.DeepEqual(out, []int{1, 2, 3, 1, 2, 3}) {
+		t.Fatalf("broadcast zip = %v", out)
+	}
+
+	// Offset contiguous data must read/write from the right base.
+	off := &Layout{Shape: []int{2, 2}, Strides: []int{2, 1}, Offset: 2}
+	outOff := make([]int, 6)
+	dstOff := &Layout{Shape: []int{2, 2}, Strides: []int{2, 1}, Offset: 2}
+	Zip(dstOff, outOff, []*Layout{off}, [][]int{{9, 9, 1, 2, 3, 4}},
+		func(d []int, src [][]int) {
+			for i := range d {
+				d[i] = src[0][i]
+			}
+		})
+	if !reflect.DeepEqual(outOff, []int{0, 0, 1, 2, 3, 4}) {
+		t.Fatalf("offset zip = %v", outOff)
+	}
+}
+
+func TestReduceFastPaths(t *testing.T) {
+	// Whole-array reduce on a contiguous 2x3: linear fold into out[0].
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := []float64{0}
+	calls := 0
+	Reduce(l, data, []int{0, 1}, out, func(acc *float64, v float64) {
+		*acc += v
+		calls++
+	})
+	if out[0] != 21 || calls != 6 {
+		t.Fatalf("whole reduce: out=%v calls=%d", out, calls)
+	}
+
+	// Whole-array reduce via negative axes.
+	out2 := []float64{1}
+	Reduce(l, data, []int{-2, -1}, out2, func(acc *float64, v float64) { *acc *= v })
+	if out2[0] != 720 {
+		t.Fatalf("whole reduce product = %v", out2)
+	}
+
+	// Last-axis reduce on contiguous input: per-row folds, slot = row.
+	out3 := make([]float64, 2)
+	Reduce(l, data, []int{-1}, out3, func(acc *float64, v float64) { *acc += v })
+	if !reflect.DeepEqual(out3, []float64{6, 15}) {
+		t.Fatalf("last-axis reduce = %v", out3)
+	}
+
+	// Same data on a strided layout (slow path) must still agree.
+	lt := &Layout{Shape: []int{3, 2}, Strides: []int{1, 3}}
+	out4 := make([]float64, 3)
+	Reduce(lt, data, []int{1}, out4, func(acc *float64, v float64) { *acc += v })
+	if !reflect.DeepEqual(out4, []float64{5, 7, 9}) {
+		t.Fatalf("strided reduce = %v", out4)
+	}
+
+	// 1-D whole reduce.
+	out5 := make([]float64, 1)
+	Reduce(&Layout{Shape: []int{6}, Strides: []int{1}}, data, []int{0}, out5,
+		func(acc *float64, v float64) { *acc += v })
+	if out5[0] != 21 {
+		t.Fatalf("1d reduce = %v", out5)
+	}
+}
+
+func TestAccumulateFastPath(t *testing.T) {
+	data := []float64{1, 2, 3, 4, 5, 6}
+	l := &Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}
+	out := make([]float64, 6)
+	Accumulate(l, data, []int{-1}, out, func(acc *float64, v float64) { *acc += v })
+	if !reflect.DeepEqual(out, []float64{1, 3, 6, 4, 9, 15}) {
+		t.Fatalf("last-axis accumulate = %v", out)
+	}
+
+	// Offset data: out is indexed by the same linear position as data.
+	lo := &Layout{Shape: []int{2, 2}, Strides: []int{2, 1}, Offset: 2}
+	do := []int{9, 9, 1, 2, 3, 4}
+	outO := make([]int, 6)
+	Accumulate(lo, do, []int{1}, outO, func(acc *int, v int) { *acc += v })
+	if !reflect.DeepEqual(outO[2:], []int{1, 3, 3, 7}) {
+		t.Fatalf("offset accumulate = %v", outO)
+	}
+
+	// Axis 0 on contiguous input stays on the general path and matches.
+	out2 := make([]float64, 6)
+	Accumulate(l, data, []int{0}, out2, func(acc *float64, v float64) { *acc += v })
+	if !reflect.DeepEqual(out2, []float64{1, 2, 3, 5, 7, 9}) {
+		t.Fatalf("axis0 accumulate = %v", out2)
+	}
+}
+
+func TestContiguousSame(t *testing.T) {
+	if !contiguousSame(&Layout{Shape: []int{2, 3}, Strides: []int{3, 1}}, []int{2, 3}) {
+		t.Fatal("contiguous same shape should be true")
+	}
+	if contiguousSame(&Layout{Shape: []int{2, 3}, Strides: []int{1, 2}}, []int{2, 3}) {
+		t.Fatal("wrong strides should be false")
+	}
+	if contiguousSame(&Layout{Shape: []int{3}, Strides: []int{1}}, []int{2, 3}) {
+		t.Fatal("shape mismatch should be false")
 	}
 }

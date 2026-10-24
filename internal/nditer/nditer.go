@@ -4,6 +4,7 @@ package nditer
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -50,6 +51,12 @@ func IsContiguous(l *Layout) bool {
 		}
 	}
 	return true
+}
+
+// contiguousSame reports whether l addresses exactly shape in C order with no
+// broadcasting: equal shape and C-order strides.
+func contiguousSame(l *Layout, shape []int) bool {
+	return slices.Equal(l.Shape, shape) && IsContiguous(l)
 }
 
 // CheckCoords validates index rank and bounds. Negative indices are not
@@ -155,12 +162,35 @@ func Permute(l *Layout, axes []int) *Layout {
 	return out
 }
 
-// Zip iterates dst in C order, feeding one-element slices to fn. dst must
-// already be broadcast-aligned; each src Layout must be aligned to dst.Shape.
+// Zip iterates dst in C order, feeding fn successive slices of each operand.
+// The block size fn receives per call is UNSPECIFIED: one element on strided
+// paths, a whole contiguous run on the fast path. Callbacks must therefore
+// iterate the passed slices rather than assume length 1. dst must already be
+// broadcast-aligned; each src Layout must be aligned to dst.Shape.
 func Zip[T any](dst *Layout, dstData []T, srcs []*Layout, srcData [][]T,
 	fn func(dst []T, src [][]T)) {
 	if Size(dst.Shape) == 0 {
 		return
+	}
+	// Fast path: dst and every src fully C-contiguous over the same shape —
+	// one callback covers everything with zero-copy slices.
+	n := Size(dst.Shape)
+	if contiguousSame(dst, dst.Shape) && len(dstData) >= n+dst.Offset {
+		allContig := true
+		for j, s := range srcs {
+			if !contiguousSame(s, dst.Shape) || len(srcData[j]) < n+s.Offset {
+				allContig = false
+				break
+			}
+		}
+		if allContig {
+			rows := make([][]T, len(srcs))
+			for j, s := range srcs {
+				rows[j] = srcData[j][s.Offset : s.Offset+n]
+			}
+			fn(dstData[dst.Offset:dst.Offset+n], rows)
+			return
+		}
 	}
 	idx := make([]int, len(dst.Shape))
 	src := make([][]T, len(srcs))
@@ -189,7 +219,8 @@ func Zip[T any](dst *Layout, dstData []T, srcs []*Layout, srcData [][]T,
 
 // Reduce folds every element of data along axes into the kept-coordinate slot
 // of out. Axes are normalized (negative allowed) then deduplicated and sorted.
-// The caller prefills out with the identity value.
+// The caller prefills out with the identity value. fn may receive a whole
+// contiguous run per call — the block size is UNSPECIFIED, like Zip.
 func Reduce[T any](l *Layout, data []T, axes []int, out []T,
 	fn func(acc *T, v T)) {
 	if Size(l.Shape) == 0 {
@@ -213,6 +244,47 @@ func Reduce[T any](l *Layout, data []T, axes []int, out []T,
 	}
 	if Size(keptShape) == 0 && len(keptShape) > 0 {
 		return
+	}
+	// Fast path: whole-array reduce — every axis folded and the layout
+	// C-contiguous means data maps linearly onto out[0].
+	if contiguousSame(l, l.Shape) && len(out) > 0 && Size(l.Shape) <= len(data)-l.Offset {
+		whole := true
+		for i := range reduced {
+			if !reduced[i] {
+				whole = false
+				break
+			}
+		}
+		if whole {
+			n := Size(l.Shape)
+			for i := l.Offset; i < l.Offset+n; i++ {
+				fn(&out[0], data[i])
+			}
+			return
+		}
+	}
+	// Fast path: last-axis reduce on contiguous input — each kept slot folds
+	// the contiguous row data[row*last : (row+1)*last].
+	if ndim > 1 && reduced[ndim-1] && contiguousSame(l, l.Shape) &&
+		Size(l.Shape) <= len(data)-l.Offset {
+		last := true
+		for i := 0; i < ndim-1; i++ {
+			if reduced[i] {
+				last = false
+				break
+			}
+		}
+		if last {
+			n := Size(l.Shape[:ndim-1])
+			w := l.Shape[ndim-1]
+			for row := 0; row < n && row < len(out); row++ {
+				base := l.Offset + row*w
+				for i := base; i < base+w; i++ {
+					fn(&out[row], data[i])
+				}
+			}
+			return
+		}
 	}
 	idx := make([]int, ndim)
 	for {
@@ -289,7 +361,8 @@ func ReduceAxis[T any](l *Layout, data []T, axis int, fn func(slot, coord int, v
 // Accumulate folds along axes in C-order prefix style (cumsum semantics): out
 // has the same element count as input; within each channel (all non-axes
 // coords fixed), out[.., i_k, ..] holds the fold of data[.., 0..i_k, ..]. Axes
-// are normalized (negative allowed) like Reduce.
+// are normalized (negative allowed) like Reduce. fn is called per element with
+// a pointer to the folded-so-far accumulator.
 func Accumulate[T any](l *Layout, data []T, axes []int, out []T,
 	fn func(acc *T, v T)) {
 	if Size(l.Shape) == 0 {
@@ -303,6 +376,37 @@ func Accumulate[T any](l *Layout, data []T, axes []int, out []T,
 		}
 		if ax >= 0 && ax < ndim {
 			folded[ax] = true
+		}
+	}
+	// Fast path: fold along the last axis of contiguous input — each channel is
+	// a contiguous row, so one accumulator per row walks it linearly. out is
+	// indexed by the same linear position as data.
+	if ndim > 1 && folded[ndim-1] && contiguousSame(l, l.Shape) {
+		onlyLast := true
+		for i := 0; i < ndim-1; i++ {
+			if folded[i] {
+				onlyLast = false
+				break
+			}
+		}
+		if onlyLast {
+			n := Size(l.Shape[:ndim-1])
+			w := l.Shape[ndim-1]
+			if l.Offset+n*w <= len(out) {
+				// acc lives outside the row loop so &acc does not escape per row.
+				var acc T
+				for row := 0; row < n; row++ {
+					base := l.Offset + row*w
+					acc = data[base]
+					for i := base; i < base+w; i++ {
+						if i > base {
+							fn(&acc, data[i])
+						}
+						out[i] = acc
+					}
+				}
+				return
+			}
 		}
 	}
 	idx := make([]int, ndim)
