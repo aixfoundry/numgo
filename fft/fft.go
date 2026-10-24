@@ -1,5 +1,6 @@
 // Package fft provides numpy.fft-semantics discrete Fourier transforms over
-// numgo arrays, backed by gonum.org/v1/gonum/dsp/fourier (FFTPACK).
+// numgo arrays, backed by an own FFT: mixed-radix Cooley-Tukey + Bluestein
+// for large primes.
 //
 // Semantics follow numpy.fft (pocketfft): the forward transform is
 // A_k = Σ_j a_j·exp(-2πi·jk/n), the last axis is transformed by default,
@@ -15,8 +16,6 @@ package fft
 import (
 	"math"
 	"slices"
-
-	"gonum.org/v1/gonum/dsp/fourier"
 
 	"github.com/kaisawind/numgo"
 )
@@ -347,7 +346,6 @@ func fullAxis(in *numgo.Array[complex128], n, axis int, forward bool, fct float6
 		return out
 	}
 	seq := make([]complex128, n)
-	plan := fourier.NewCmplxFFT(n)
 	line := make([]int, len(inShape))
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
@@ -358,11 +356,11 @@ func fullAxis(in *numgo.Array[complex128], n, axis int, forward bool, fct float6
 		for i := m; i < n; i++ {
 			seq[i] = 0
 		}
-		res := seq
+		res := make([]complex128, n)
 		if forward {
-			res = plan.Coefficients(nil, seq)
+			fftC(res, seq, false)
 		} else {
-			res = plan.Sequence(nil, seq)
+			fftC(res, seq, true)
 		}
 		if fct != 1 {
 			f := complex(fct, 0)
@@ -389,19 +387,21 @@ func halfAxisForward(in *numgo.Array[complex128], n, axis int, fct float64) *num
 	if out.Size() == 0 {
 		return out
 	}
-	seq := make([]float64, n)
-	plan := fourier.NewFFT(n)
+	seq := make([]complex128, n)
 	line := make([]int, len(inShape))
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
 		for i := 0; i < m && i < n; i++ {
 			line[axis] = i
-			seq[i] = real(in.At(line...))
+			seq[i] = complex(real(in.At(line...)), 0)
 		}
 		for i := m; i < n; i++ {
 			seq[i] = 0
 		}
-		res := plan.Coefficients(nil, seq)
+		res := make([]complex128, n/2+1)
+		full := make([]complex128, n)
+		fftC(full, seq, false)
+		copy(res, full[:n/2+1])
 		if fct != 1 {
 			f := complex(fct, 0)
 			for i := range res {
@@ -429,7 +429,6 @@ func halfAxisInverse(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		return out
 	}
 	coeff := make([]complex128, half)
-	plan := fourier.NewFFT(n)
 	line := make([]int, len(inShape))
 	iterBatch(outShape, axis, func(batch []int) {
 		copy(line, batch)
@@ -440,7 +439,8 @@ func halfAxisInverse(in *numgo.Array[complex128], n, axis int, fct float64) *num
 		for i := m; i < half; i++ {
 			coeff[i] = 0
 		}
-		res := plan.Sequence(nil, coeff)
+		res := make([]float64, n)
+		irfftUnnorm(res, coeff)
 		if fct != 1 {
 			for i := range res {
 				res[i] *= fct
