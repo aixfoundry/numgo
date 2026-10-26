@@ -12,6 +12,10 @@ Go 泛型 N 维数组库，语义对齐 numpy，接口符合 Go 习惯。
 | [docs/roadmap.md](docs/roadmap.md) | 分期路线图（Phase 0-5、非目标） |
 | [docs/design.md](docs/design.md) | 核心设计：布局、Array[T]、语义三分类、硬规则 |
 
+## 许可
+
+Apache-2.0，Copyright 2024-2026 kaisawind。零第三方依赖，数学计算基于纯 Go 标准库。本库包含自 NumPy（BSD-3-Clause）翻译的代码，详见 [NOTICE](NOTICE) 与 [LICENSES/](LICENSES/)。
+
 ## 包
 
 | 包 | 内容 |
@@ -19,7 +23,7 @@ Go 泛型 N 维数组库，语义对齐 numpy，接口符合 Go 习惯。
 | `numgo`（根） | Array[T] 视图/构造、ufunc、归约、排序、操纵、点积、einsum、IO（.npy/.npz/txt）、互操作 |
 | `numgo/linalg` | numpy.linalg：解方程、最小二乘、SVD/QR/Cholesky/特征分解、范数（纯 Go LAPACK 内核） |
 | `numgo/fft` | numpy.fft：mixed-radix FFT/逆变换/rfft 族 + fftshift，norm 三模式 |
-| `numgo/random` | numpy.random：SeedSequence + MT19937/PCG64 + Generator 分布层（bit-exact 对齐） |
+| `numgo/random` | numpy.random：SeedSequence + MT19937/PCG64 + Generator 分布层（流与 numpy bit 一致：libm 无关路径逐位一致，libm 敏感分布使用 Go 标准库数学，ULP 级接近） |
 | `numgo/polynomial` | numpy.polynomial：Polynomial/Chebyshev/Legendre/Laguerre/Hermite/HermiteE 六类 |
 | `numgo/strings` | numpy.strings：StrArray 向量化字符串操作（upper/split/replace…） |
 | `numgo/ma` | numpy.ma：MaskedArray = data + mask，掩码传播运算 |

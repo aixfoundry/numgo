@@ -2,6 +2,9 @@
 // bit-generator engines + the Generator distribution layer, ported for
 // bit-exact agreement with numpy 2.x for identical seeds.
 //
+// Translated in part from NumPy (numpy/random), BSD-3-Clause; see
+// LICENSES/numpy-BSD3-CLAUSE.txt.
+//
 // Architecture (mirrors numpy.random):
 //
 //   - SeedSequence — entropy pool hashing and state generation
@@ -24,10 +27,10 @@
 // Gamma, Beta, Poisson, Binomial, Choice, Shuffle, Permutation; float32
 // sampling paths in float32.go (random/standard_normal/standard_exponential/
 // standard_gamma with dtype=float32 use numpy's genuine float32 kernels —
-// separate ziggurat tables, powf/logf/expf via internal/cmath's glibc-parity
-// float routines). Remaining distributions (chisquare, f, hypergeometric, …)
-// live in distributions2.go; float64 gamma/beta/… float32 variants beyond the
-// four above are pending.
+// separate ziggurat tables, float32 transcendentals via float64 promotion
+// through Go's math package). Remaining distributions (chisquare, f,
+// hypergeometric, …) live in distributions2.go; float64 gamma/beta/… float32
+// variants beyond the four above are pending.
 //
 // Differences from numpy, documented by design:
 //   - No size argument returns a 1-element array (numpy returns a scalar;
@@ -37,7 +40,7 @@
 //   - Choice takes the population as an int (numpy also accepts arrays).
 //   - MT19937 has Jumped (2**128-step polynomial) but numpy exposes no
 //     MT19937.advance; Advance falls back to consuming delta draws.
-//   - Transcendental functions (pow/log/log1p/exp and the float32 kernels)
-//     route through internal/cmath so ULP behavior matches numpy's C code;
-//     the pure-Go math package differs from glibc by 1 ULP on some inputs.
+//   - Transcendentals (pow/log/log1p/exp and the float32 kernels) use Go's
+//     math package; ULP differences vs the C libm can diverge streams at
+//     rejection boundaries for libm-sensitive distributions.
 package random

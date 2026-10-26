@@ -1,13 +1,16 @@
 // Package emath ports numpy.emath (lib.scimath): math functions that return
 // mathematically valid answers in the complex domain instead of NaN.
 //
+// Translated in part from NumPy (numpy/lib/_scimath_impl.py), BSD-3-Clause;
+// see LICENSES/numpy-BSD3-CLAUSE.txt.
+//
 // Documented deviation from numpy: numpy preserves the real dtype when no
 // imaginary part would appear (emath.sqrt([1,4]) stays float64); these
 // functions ALWAYS return *numgo.Array[complex128] with a zero imaginary part
 // for in-domain elements. Use Array.Real to extract real parts. Ported from
 // numpy/lib/_scimath_impl.py: the _fix_real_* promotion guards only decide
 // numpy's result dtype, so with a fixed complex128 output the port reduces to
-// applying the cmath function to every element (real inputs get a +0i part,
+// applying the math/cmplx function to every element (real inputs get a +0i part,
 // matching numpy's astype(cdouble)).
 package emath
 

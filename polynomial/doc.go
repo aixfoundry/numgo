@@ -2,6 +2,9 @@
 // classes sharing the ABCPolyBase API (numpy _polybase.py), each with its own
 // basis arithmetic ported from the corresponding numpy module.
 //
+// Translated in part from NumPy (numpy/polynomial), BSD-3-Clause; see
+// LICENSES/numpy-BSD3-CLAUSE.txt.
+//
 //	class        numpy module    basis
 //	Polynomial   polynomial.py   power basis x^k
 //	Chebyshev    chebyshev.py    T_k, first kind

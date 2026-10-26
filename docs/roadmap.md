@@ -13,7 +13,7 @@
    - `longdouble/clongdouble` 降级为 float64/complex128；`float16` 软件实现，排后期。
 2. **语义对拍 numpy**：广播规则、类型提升、NaN/Inf 传播、轴语义（axis 归约后该维消失/保留为 1 由 `keepdims` 显式控制）逐条对齐。错误消息沿用 numpy 措辞（`operands could not be broadcast together...`、`Singular matrix`）+ Go panic（非法输入=编程错误；IEEE 特例如除零走 Inf/NaN 不抛）。
 3. **命名**：保留 numpy 名字首字母大写（`Arange/Tensordot/NanMean`——Go 导出规则），不用 Go 重命名发明新词汇；概念对齐降低迁移心智成本，这就是 Go 生态的惯例（如 gonum 对标 BLAS 命名）。
-4. **零外部依赖**（用户定案 2026-10-24）：LAPACK → 自实现 `internal/lapack`（LU/Cholesky/QR/Jacobi-SVD/Hessenberg+QR 特征值）；FFT → 自实现 mixed-radix + Bluestein；随机 → 自实现；libm 位对齐 → 自实现 `internal/cmath`（glibc 算法移植）。go.mod 保持只有 stdlib。
+4. **零外部依赖**（用户定案 2026-10-24）：LAPACK → 自实现 `internal/lapack`（LU/Cholesky/QR/Jacobi-SVD/Hessenberg+QR 特征值）；FFT → 自实现 mixed-radix + Bluestein；随机 → 自实现；数学基于 Go 标准库（无 glibc/libm 移植内核）。go.mod 保持只有 stdlib。
 5. **测试策略：golden 对拍**。每期用一个 Python 脚本从 numpy 生成 fixture（输入+期望输出 JSON/npy），Go 侧读入断言。numpy 源码在本地可随时生成。
 
 ## Phase 0 — 架构基线 ✅（已完成）
@@ -57,12 +57,12 @@ numpy 对应：`linalg`、`fft`、`random`。相互独立，可三车道并行�
 **fft**（自实现 mixed-radix Cooley-Tukey + Bluestein）：
 - [ ] `FFT/IFFT/RFFT/IRFFT/HFFT/IHFFT` + 2D/nD 族 + `FFTFreq/FFTShift`；`norm` 三模式。
 
-**random**（自实现，对齐 bit-exact）：
+**random**（自实现，libm 无关路径与 numpy bit 一致；libm 敏感分布用 Go 标准库数学，ULP 级接近）：
 - [ ] `BitGenerator` 接口 + PCG64/MT19937 先行（Philox/SFC64 后补）；`SeedSequence`（熵池 + spawn，并行流可复现是 numpy random 的灵魂，优先级最高）。
 - [ ] `Generator`：`Random/Integers/Normal/Uniform/Choice/Shuffle/Permutation/Standard*` + 常用分布（Beta/Binomial/Exponential/Gamma/Poisson/Chisquare…），分布算法对照 numpy 的 C 源逐个移植。
 - [ ] legacy RandomState **不做**（np.random 全局单例是 Python 遗产，Go 习惯是显式 Generator 注入）。
 
-**验收**：linalg 对拍 LAPACK 例程 ~40 例；fft 精度对拍 1e-12；random 同种子序列逐位一致。
+**验收**：linalg 对拍 LAPACK 例程 ~40 例；fft 精度对拍 1e-12；random 同种子序列 libm 无关路径逐位一致（libm 敏感分布 ULP 级接近）。
 
 ## Phase 3 — lib 工具层 + polynomial ✅（已完成）
 

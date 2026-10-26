@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"github.com/aixfoundry/numgo"
-	"github.com/aixfoundry/numgo/internal/cmath"
 )
 
 // float32 sampling paths, ported from
@@ -14,8 +13,15 @@ import (
 // (next_uint32 >> 8) * 2^-24 with a float multiply, and standard_gamma_f
 // evaluates Marsaglia-Tsang with powf/logf/sqrtf on floats. The two rejection
 // tails use double exp() (distributions.c:207 uses exp, not expf) — preserved.
-// Transcendentals route through internal/cmath (glibc bit-parity float
-// kernels; see internal/cmath/float.go).
+
+// Single-precision math via float64 promotion through Go's math package;
+// results can differ from correctly-rounded float32 kernels by 1-2 ULP.
+func expf(x float32) float32 { return float32(math.Exp(float64(x))) }
+func logf(x float32) float32 { return float32(math.Log(float64(x))) }
+func log1pf(x float32) float32 {
+	return float32(math.Log1p(float64(x)))
+}
+func powf(x, y float32) float32 { return float32(math.Pow(float64(x), float64(y))) }
 
 // arrayF32 aliases the root float32 array (numgo.Array is generic over
 // Number, which includes float32).
@@ -46,12 +52,12 @@ func (g *Generator) Random32(size ...int) *arrayF32 {
 }
 
 // standardExponentialUnlikelyF: distributions.c:91. expf tail;
-// log1pf routes through cmath.Log1pf.
+// log1pf routes through log1pf.
 func (g *Generator) standardExponentialUnlikelyF(idx uint8, x float32) float32 {
 	if idx == 0 {
 		// 1.0 - U to avoid log(0.0), GH 13361
-		return zigguratExpRf - cmath.Log1pf(-g.nextFloat())
-	} else if (feFloat[idx-1]-feFloat[idx])*g.nextFloat()+feFloat[idx] < cmath.Expf(-x) {
+		return zigguratExpRf - log1pf(-g.nextFloat())
+	} else if (feFloat[idx-1]-feFloat[idx])*g.nextFloat()+feFloat[idx] < expf(-x) {
 		return x
 	}
 	return g.StandardExponential32Scalar()
@@ -97,8 +103,8 @@ func (g *Generator) StandardNormal32Scalar() float32 {
 		if idx == 0 {
 			for {
 				// 1.0 - U to avoid log(0.0), GH 13361
-				xx := -zigguratNorInvRf * cmath.Log1pf(-g.nextFloat())
-				yy := -cmath.Log1pf(-g.nextFloat())
+				xx := -zigguratNorInvRf * log1pf(-g.nextFloat())
+				yy := -log1pf(-g.nextFloat())
 				if yy+yy > xx*xx {
 					if (rabs>>8)&0x1 != 0 {
 						return -(zigguratNorRf + xx)
@@ -109,7 +115,7 @@ func (g *Generator) StandardNormal32Scalar() float32 {
 		} else {
 			// distributions.c:207 uses double exp here (not expf).
 			if (fiFloat[idx-1]-fiFloat[idx])*g.nextFloat()+fiFloat[idx] <
-				float32(cmath.Exp(-0.5*float64(x)*float64(x))) {
+				float32(math.Exp(-0.5*float64(x)*float64(x))) {
 				return x
 			}
 		}
@@ -128,8 +134,8 @@ func (g *Generator) StandardNormal32(size ...int) *arrayF32 {
 }
 
 // StandardGamma32Scalar: random_standard_gamma_f (distributions.c:266).
-// Entirely float32 arithmetic: powf/logf/sqrtf on floats (glibc kernels via
-// cmath.Powf/Logf; sqrtf == float32(math.Sqrt) is exactly rounded).
+// Entirely float32 arithmetic: powf/logf/sqrtf on floats via float64
+// promotion (see the helpers above; sqrtf == float32(math.Sqrt) is exactly rounded).
 func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
 	var b, c, U, V, X, Y float32
 	switch {
@@ -142,13 +148,13 @@ func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
 			U = g.nextFloat()
 			V = g.StandardExponential32Scalar()
 			if U <= 1.0-shape {
-				X = cmath.Powf(U, 1.0/shape)
+				X = powf(U, 1.0/shape)
 				if X <= V {
 					return X
 				}
 			} else {
-				Y = -cmath.Logf((1.0 - U) / shape)
-				X = cmath.Powf(1.0-shape+shape*Y, 1.0/shape)
+				Y = -logf((1.0 - U) / shape)
+				X = powf(1.0-shape+shape*Y, 1.0/shape)
 				if X <= V+Y {
 					return X
 				}
@@ -171,7 +177,7 @@ func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
 				return b * V
 			}
 			// logf(0.0) ok here (distributions.c:311)
-			if cmath.Logf(U) < 0.5*X*X+b*(1.0-V+cmath.Logf(V)) {
+			if logf(U) < 0.5*X*X+b*(1.0-V+logf(V)) {
 				return b * V
 			}
 		}

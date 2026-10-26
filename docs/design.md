@@ -29,7 +29,7 @@ numgo/
 │   └── fixtures/       # golden fixture 加载/断言 helper（对拍 numpy）
 ├── linalg/             # Phase 2：gonum/lapack 后端
 ├── fft/                # Phase 2：gonum/dsp/fourier 后端
-├── random/             # Phase 2：BitGenerator + Generator（bit-exact 对齐）
+├── random/             # Phase 2：BitGenerator + Generator（libm 无关流与 numpy bit 一致；libm 敏感分布用 Go 标准库数学，ULP 级接近）
 ├── polynomial/         # Phase 3：6 个多项式类
 ├── assert/             # Phase 5：AssertAllClose 等（公开包，供下游测试用）
 ├── scripts/gen_fixtures.py   # 从本地 numpy 源生成 fixture

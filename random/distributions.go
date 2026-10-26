@@ -4,8 +4,6 @@ import (
 	"github.com/aixfoundry/numgo"
 	"math"
 	"math/bits"
-
-	"github.com/aixfoundry/numgo/internal/cmath"
 )
 
 // arrayF aliases the root float64 array.
@@ -66,8 +64,8 @@ func (g *Generator) Random(size ...int) *arrayF {
 func (g *Generator) standardExponentialUnlikely(idx uint8, x float64) float64 {
 	if idx == 0 {
 		// 1.0 - U to avoid log(0.0), GH 13361
-		return expR - cmath.Log1p(-g.nextDouble())
-	} else if (fe[idx-1]-fe[idx])*g.nextDouble()+fe[idx] < cmath.Exp(-x) {
+		return expR - math.Log1p(-g.nextDouble())
+	} else if (fe[idx-1]-fe[idx])*g.nextDouble()+fe[idx] < math.Exp(-x) {
 		return x
 	}
 	return g.StandardExponentialScalar()
@@ -86,8 +84,8 @@ func (g *Generator) StandardNormalScalar() float64 {
 		}
 		if idx == 0 {
 			for {
-				xx := -norInvR * cmath.Log1p(-g.nextDouble())
-				yy := -cmath.Log1p(-g.nextDouble())
+				xx := -norInvR * math.Log1p(-g.nextDouble())
+				yy := -math.Log1p(-g.nextDouble())
 				if yy+yy > xx*xx {
 					if (rabs>>8)&0x1 != 0 {
 						return -(norR + xx)
@@ -96,7 +94,7 @@ func (g *Generator) StandardNormalScalar() float64 {
 				}
 			}
 		} else {
-			if (fi[idx-1]-fi[idx])*g.nextDouble()+fi[idx] < cmath.Exp(-0.5*x*x) {
+			if (fi[idx-1]-fi[idx])*g.nextDouble()+fi[idx] < math.Exp(-0.5*x*x) {
 				return x
 			}
 		}
@@ -180,13 +178,13 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 			U = g.nextDouble()
 			V = g.StandardExponentialScalar()
 			if U <= 1.0-shape {
-				X = cmath.Pow(U, 1.0/shape)
+				X = math.Pow(U, 1.0/shape)
 				if X <= V {
 					return X
 				}
 			} else {
-				Y = -cmath.Log((1 - U) / shape)
-				X = cmath.Pow(1.0-shape+shape*Y, 1.0/shape)
+				Y = -math.Log((1 - U) / shape)
+				X = math.Pow(1.0-shape+shape*Y, 1.0/shape)
 				if X <= V+Y {
 					return X
 				}
@@ -209,7 +207,7 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 				return b * V
 			}
 			// log(0.0) ok here
-			if cmath.Log(U) < 0.5*X*X+b*(1.0-V+cmath.Log(V)) {
+			if math.Log(U) < 0.5*X*X+b*(1.0-V+math.Log(V)) {
 				return b * V
 			}
 		}
@@ -262,21 +260,21 @@ func (g *Generator) betaScalar(a, b float64) float64 {
 		for {
 			U := g.nextDouble()
 			V := g.nextDouble()
-			X := cmath.Pow(U, 1.0/a)
-			Y := cmath.Pow(V, 1.0/b)
+			X := math.Pow(U, 1.0/a)
+			Y := math.Pow(V, 1.0/b)
 			XpY := X + Y
 			if XpY <= 1.0 && U+V > 0.0 {
 				if X > 0 && Y > 0 {
 					return X / XpY
 				}
 				// X or Y underflowed; work in logs (distributions.c:442).
-				logX := cmath.Log(U) / a
-				logY := cmath.Log(V) / b
+				logX := math.Log(U) / a
+				logY := math.Log(V) / b
 				delta := logX - logY
 				if delta > 0 {
-					return cmath.Exp(-cmath.Log1p(cmath.Exp(-delta)))
+					return math.Exp(-math.Log1p(math.Exp(-delta)))
 				}
-				return cmath.Exp(delta - cmath.Log1p(cmath.Exp(delta)))
+				return math.Exp(delta - math.Log1p(math.Exp(delta)))
 			}
 		}
 	}
@@ -306,10 +304,10 @@ func loggam(x float64) float64 {
 		gl0 *= x2
 		gl0 += a[k]
 	}
-	gl := gl0/x0 + 0.5*lg2pi + (x0-0.5)*cmath.Log(x0) - x0
+	gl := gl0/x0 + 0.5*lg2pi + (x0-0.5)*math.Log(x0) - x0
 	if x < 7.0 {
 		for k := int64(1); k <= n; k++ {
-			gl -= cmath.Log(x0 - 1.0)
+			gl -= math.Log(x0 - 1.0)
 			x0 -= 1.0
 		}
 	}
@@ -318,7 +316,7 @@ func loggam(x float64) float64 {
 
 // poissonMult: distributions.c:548.
 func (g *Generator) poissonMult(lam float64) int64 {
-	enlam := cmath.Exp(-lam)
+	enlam := math.Exp(-lam)
 	var X int64
 	prod := 1.0
 	for {
@@ -335,7 +333,7 @@ func (g *Generator) poissonMult(lam float64) int64 {
 // poissonPTRS: transformed rejection, distributions.c:573.
 func (g *Generator) poissonPTRS(lam float64) int64 {
 	slam := math.Sqrt(lam)
-	loglam := cmath.Log(lam)
+	loglam := math.Log(lam)
 	b := 0.931 + 2.53*slam
 	a := -0.059 + 0.02483*b
 	invalpha := 1.1239 + 1.1328/(b-3.4)
@@ -351,7 +349,7 @@ func (g *Generator) poissonPTRS(lam float64) int64 {
 		if k < 0 || (us < 0.013 && V > us) {
 			continue
 		}
-		if cmath.Log(V)+cmath.Log(invalpha)-cmath.Log(a/(us*us)+b) <=
+		if math.Log(V)+math.Log(invalpha)-math.Log(a/(us*us)+b) <=
 			-lam+float64(k)*loglam-loggam(float64(k)+1) {
 			return k
 		}
@@ -444,7 +442,7 @@ step30:
 	if u > p3 {
 		goto step40
 	}
-	y = int64(math.Floor(xl + cmath.Log(v)/laml))
+	y = int64(math.Floor(xl + math.Log(v)/laml))
 	if y < 0 || v == 0.0 {
 		goto step10
 	}
@@ -452,7 +450,7 @@ step30:
 	goto step50
 
 step40:
-	y = int64(math.Floor(xr - cmath.Log(v)/lamr))
+	y = int64(math.Floor(xr - math.Log(v)/lamr))
 	if y > n || v == 0.0 {
 		goto step10
 	}
@@ -483,7 +481,7 @@ step50:
 step52:
 	rho = (float64(k) / nrq) * ((float64(k)*(float64(k)/3.0+0.625)+0.16666666666666666)/nrq + 0.5)
 	t = -float64(k) * float64(k) / (2 * nrq)
-	A = cmath.Log(v)
+	A = math.Log(v)
 	if A < t-rho {
 		goto step60
 	}
@@ -498,8 +496,8 @@ step52:
 	f2 = f1 * f1
 	z2 = z * z
 	w2 = w * w
-	if A > (xm*cmath.Log(f1/x1) + (float64(n)-float64(m)+0.5)*cmath.Log(z/w) +
-		float64(y-m)*cmath.Log(w*r/(x1*q)) +
+	if A > (xm*math.Log(f1/x1) + (float64(n)-float64(m)+0.5)*math.Log(z/w) +
+		float64(y-m)*math.Log(w*r/(x1*q)) +
 		(13860.-(462.-(132.-(99.-140./f2)/f2)/f2)/f2)/f1/166320. +
 		(13860.-(462.-(132.-(99.-140./z2)/z2)/z2)/z2)/z/166320. -
 		(13860.-(462.-(132.-(99.-140./x2)/x2)/x2)/x2)/x1/166320. -
@@ -522,7 +520,7 @@ func (g *Generator) binomialInversion(n int64, p float64, st *binomialState) int
 		st.psave = p
 		st.hasBinomial = true
 		st.q = 1.0 - p
-		st.r = cmath.Exp(float64(n) * cmath.Log1p(-p))
+		st.r = math.Exp(float64(n) * math.Log1p(-p))
 		st.c = float64(n) * p
 		st.m = min64(n, int64(math.Min(float64(n), st.c+10.0*math.Sqrt(st.c*st.q+1))))
 	}

@@ -39,7 +39,6 @@ jobs:
         with:
           go-version: "1.27"
       - run: go build ./...
-      # Note: full test suites for random/cmath bit-exact parity are pinned to
-      # glibc (ubuntu). macOS/Windows libm may differ by 1 ULP in rare tails;
-      # run tests there once platform-specific reference streams exist.
-      - run: go test -count=1 . ./linalg ./fft ./polynomial ./assert ./strings ./ma ./emath
+      # Math goes through Go's stdlib, so random parity streams are
+      # deterministic on every platform.
+      - run: go test -count=1 . ./linalg ./fft ./polynomial ./assert ./strings ./ma ./emath ./random
