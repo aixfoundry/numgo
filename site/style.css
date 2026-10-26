@@ -320,9 +320,9 @@ h1 span { display: block; }
 .code .num { color: var(--num, #79c0ff); }
 .code .fn  { color: var(--fn, #d2a8ff); }
 .code .cmt { color: var(--cmt, #8b949e); font-style: italic; }
-/* neutralize the inline-code pill inside code blocks: the global `code` rule
-   would otherwise paint light strips behind every line */
-.code code { background: transparent; border: 0; border-radius: 0; padding: 0; font-size: 1em; }
+/* neutralize the inline-code pill inside dark surfaces (code blocks, install
+   pill): the global `code` rule would otherwise paint light strips */
+.code code, .install code { background: transparent; border: 0; border-radius: 0; padding: 0; font-size: 1em; }
 
 /* ---------- Packages ---------- */
 .pkg-grid {
