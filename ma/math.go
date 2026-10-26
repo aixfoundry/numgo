@@ -12,7 +12,7 @@ import (
 // masked instead of warning; the IEEE value stays in the data. Passthrough
 // functions (Exp/Sin/Cos/Tan/Floor/Ceil/Round) only propagate the mask.
 
-// Pure: Sqrt returns the element-wise square root; negative real elements are
+// Sqrt returns the element-wise square root; negative real elements are
 // masked (complex input uses the principal branch, no domain).
 func (m *Masked[T]) Sqrt() *Masked[T] {
 	if isComplexKind[T]() {
@@ -22,7 +22,7 @@ func (m *Masked[T]) Sqrt() *Masked[T] {
 		func(x T) bool { return realOf(x) < 0 })
 }
 
-// Pure: Log returns the natural logarithm; real elements < 0 are masked
+// Log returns the natural logarithm; real elements < 0 are masked
 // (Log(0) stays -Inf and unmasked, matching numpy's divide warning domain).
 func (m *Masked[T]) Log() *Masked[T] {
 	if isComplexKind[T]() {
@@ -32,7 +32,7 @@ func (m *Masked[T]) Log() *Masked[T] {
 		func(x T) bool { return realOf(x) < 0 })
 }
 
-// Pure: Log2 returns the base-2 logarithm with Log's domain.
+// Log2 returns the base-2 logarithm with Log's domain.
 func (m *Masked[T]) Log2() *Masked[T] {
 	if isComplexKind[T]() {
 		return m.unary(func(x T) T { return cmTo[T](cmplx.Log(cmOf(x)) * complex(1/math.Ln2, 0)) }, nil)
@@ -41,7 +41,7 @@ func (m *Masked[T]) Log2() *Masked[T] {
 		func(x T) bool { return realOf(x) < 0 })
 }
 
-// Pure: Log10 returns the base-10 logarithm with Log's domain.
+// Log10 returns the base-10 logarithm with Log's domain.
 func (m *Masked[T]) Log10() *Masked[T] {
 	if isComplexKind[T]() {
 		return m.unary(func(x T) T { return cmTo[T](cmplx.Log(cmOf(x)) * complex(1/math.Ln10, 0)) }, nil)
@@ -50,7 +50,7 @@ func (m *Masked[T]) Log10() *Masked[T] {
 		func(x T) bool { return realOf(x) < 0 })
 }
 
-// Pure: Log1p returns log(1+x); real elements < -1 are masked.
+// Log1p returns log(1+x); real elements < -1 are masked.
 func (m *Masked[T]) Log1p() *Masked[T] {
 	if isComplexKind[T]() {
 		return m.unary(func(x T) T { return cmTo[T](cmplx.Log(1 + cmOf(x))) }, nil)
@@ -59,37 +59,37 @@ func (m *Masked[T]) Log1p() *Masked[T] {
 		func(x T) bool { return realOf(x) < -1 })
 }
 
-// Pure: Exp returns the element-wise exponential (mask propagates only).
+// Exp returns the element-wise exponential (mask propagates only).
 func (m *Masked[T]) Exp() *Masked[T] {
 	return m.unary(func(x T) T { return cmTo[T](cmplx.Exp(cmOf(x))) }, nil)
 }
 
-// Pure: Sin returns the element-wise sine (mask propagates only).
+// Sin returns the element-wise sine (mask propagates only).
 func (m *Masked[T]) Sin() *Masked[T] {
 	return m.unary(func(x T) T { return cmTo[T](cmplx.Sin(cmOf(x))) }, nil)
 }
 
-// Pure: Cos returns the element-wise cosine (mask propagates only).
+// Cos returns the element-wise cosine (mask propagates only).
 func (m *Masked[T]) Cos() *Masked[T] {
 	return m.unary(func(x T) T { return cmTo[T](cmplx.Cos(cmOf(x))) }, nil)
 }
 
-// Pure: Tan returns the element-wise tangent (mask propagates only).
+// Tan returns the element-wise tangent (mask propagates only).
 func (m *Masked[T]) Tan() *Masked[T] {
 	return m.unary(func(x T) T { return cmTo[T](cmplx.Tan(cmOf(x))) }, nil)
 }
 
-// Pure: Floor returns the element-wise floor (mask propagates only).
+// Floor returns the element-wise floor (mask propagates only).
 func (m *Masked[T]) Floor() *Masked[T] {
 	return m.unary(func(x T) T { return fromParts[T](math.Floor(realOf(x)), 0) }, nil)
 }
 
-// Pure: Ceil returns the element-wise ceiling (mask propagates only).
+// Ceil returns the element-wise ceiling (mask propagates only).
 func (m *Masked[T]) Ceil() *Masked[T] {
 	return m.unary(func(x T) T { return fromParts[T](math.Ceil(realOf(x)), 0) }, nil)
 }
 
-// Pure: Round returns the element-wise round-half-to-even (mask propagates
+// Round returns the element-wise round-half-to-even (mask propagates
 // only).
 func (m *Masked[T]) Round() *Masked[T] {
 	return m.unary(func(x T) T { return fromParts[T](math.RoundToEven(realOf(x)), 0) }, nil)

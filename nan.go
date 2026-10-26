@@ -33,31 +33,31 @@ func nanReplaced[T Number](a *Array[T], ident T) *Array[T] {
 	return out
 }
 
-// Pure: NanSum folds addition along axes, treating NaN as 0 (numpy nansum; an
+// NanSum folds addition along axes, treating NaN as 0 (numpy nansum; an
 // all-NaN slice therefore sums to 0).
 func (a *Array[T]) NanSum(axes ...int) *Array[T] {
 	return nanReplaced(a, 0).Sum(axes...)
 }
 
-// Pure: NanSumKeepdims folds the NaN-skipping sum along axes, keeping reduced
+// NanSumKeepdims folds the NaN-skipping sum along axes, keeping reduced
 // axes as size 1.
 func (a *Array[T]) NanSumKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanSum, axes...)
 }
 
-// Pure: NanProd folds multiplication along axes, treating NaN as 1 (numpy
+// NanProd folds multiplication along axes, treating NaN as 1 (numpy
 // nanprod; an all-NaN slice therefore multiplies to 1).
 func (a *Array[T]) NanProd(axes ...int) *Array[T] {
 	return nanReplaced(a, 1).Prod(axes...)
 }
 
-// Pure: NanProdKeepdims folds the NaN-skipping product along axes, keeping
+// NanProdKeepdims folds the NaN-skipping product along axes, keeping
 // reduced axes as size 1.
 func (a *Array[T]) NanProdKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanProd, axes...)
 }
 
-// Pure: NanMax folds max along axes, skipping NaNs; a slice with no non-NaN
+// NanMax folds max along axes, skipping NaNs; a slice with no non-NaN
 // values (including an empty one) yields NaN.
 func (a *Array[T]) NanMax(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -73,13 +73,13 @@ func (a *Array[T]) NanMax(axes ...int) *Array[T] {
 	})
 }
 
-// Pure: NanMaxKeepdims folds the NaN-skipping max along axes, keeping reduced
+// NanMaxKeepdims folds the NaN-skipping max along axes, keeping reduced
 // axes as size 1.
 func (a *Array[T]) NanMaxKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanMax, axes...)
 }
 
-// Pure: NanMin folds min along axes, skipping NaNs; a slice with no non-NaN
+// NanMin folds min along axes, skipping NaNs; a slice with no non-NaN
 // values (including an empty one) yields NaN.
 func (a *Array[T]) NanMin(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -93,13 +93,13 @@ func (a *Array[T]) NanMin(axes ...int) *Array[T] {
 	})
 }
 
-// Pure: NanMinKeepdims folds the NaN-skipping min along axes, keeping reduced
+// NanMinKeepdims folds the NaN-skipping min along axes, keeping reduced
 // axes as size 1.
 func (a *Array[T]) NanMinKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanMin, axes...)
 }
 
-// Pure: NanMean averages the non-NaN values along axes; a slice without
+// NanMean averages the non-NaN values along axes; a slice without
 // non-NaN values yields NaN.
 func (a *Array[T]) NanMean(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -122,7 +122,7 @@ func (a *Array[T]) NanMean(axes ...int) *Array[T] {
 	return sum
 }
 
-// Pure: NanMeanKeepdims folds the NaN-skipping mean along axes, keeping
+// NanMeanKeepdims folds the NaN-skipping mean along axes, keeping
 // reduced axes as size 1.
 func (a *Array[T]) NanMeanKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanMean, axes...)
@@ -137,38 +137,38 @@ func (a *Array[T]) nanCount(axes []int) *Array[T] {
 	})
 }
 
-// Pure: NanVar computes the NaN-skipping population variance (ddof=0) along
+// NanVar computes the NaN-skipping population variance (ddof=0) along
 // axes. Complex arrays panic as with Var. A slice with fewer non-NaN values
 // than ddof+1 yields NaN.
 func (a *Array[T]) NanVar(axes ...int) *Array[T] {
 	return a.nanvariance(0, a.axesOrAll(axes))
 }
 
-// Pure: NanVarKeepdims folds the NaN-skipping variance along axes, keeping
+// NanVarKeepdims folds the NaN-skipping variance along axes, keeping
 // reduced axes as size 1.
 func (a *Array[T]) NanVarKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanVar, axes...)
 }
 
-// Pure: NanVarDDof computes the NaN-skipping variance along axes with the
+// NanVarDDof computes the NaN-skipping variance along axes with the
 // given delta degrees of freedom.
 func (a *Array[T]) NanVarDDof(ddof int, axes ...int) *Array[T] {
 	return a.nanvariance(ddof, a.axesOrAll(axes))
 }
 
-// Pure: NanStd computes the NaN-skipping standard deviation along axes with
+// NanStd computes the NaN-skipping standard deviation along axes with
 // ddof=0.
 func (a *Array[T]) NanStd(axes ...int) *Array[T] {
 	return a.nanstddev(0, a.axesOrAll(axes))
 }
 
-// Pure: NanStdKeepdims folds the NaN-skipping standard deviation along axes,
+// NanStdKeepdims folds the NaN-skipping standard deviation along axes,
 // keeping reduced axes as size 1.
 func (a *Array[T]) NanStdKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanStd, axes...)
 }
 
-// Pure: NanStdDDof computes the NaN-skipping standard deviation along axes
+// NanStdDDof computes the NaN-skipping standard deviation along axes
 // with the given delta degrees of freedom.
 func (a *Array[T]) NanStdDDof(ddof int, axes ...int) *Array[T] {
 	return a.nanstddev(ddof, a.axesOrAll(axes))
@@ -218,7 +218,7 @@ func (a *Array[T]) nanstddev(ddof int, axes []int) *Array[T] {
 	return v
 }
 
-// Pure: NanMedian computes the median of the non-NaN values along axes
+// NanMedian computes the median of the non-NaN values along axes
 // (linear interpolation between the two middle values for even counts); a
 // slice without non-NaN values yields NaN.
 func (a *Array[T]) NanMedian(axes ...int) *Array[T] {
@@ -244,13 +244,13 @@ func (a *Array[T]) NanMedian(axes ...int) *Array[T] {
 	return newArray(shape, nditer.COrderStrides(shape), 0, out)
 }
 
-// Pure: NanMedianKeepdims folds the NaN-skipping median along axes, keeping
+// NanMedianKeepdims folds the NaN-skipping median along axes, keeping
 // reduced axes as size 1.
 func (a *Array[T]) NanMedianKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.NanMedian, axes...)
 }
 
-// Pure: NanArgMax returns the coordinate of each maximum along axis, skipping
+// NanArgMax returns the coordinate of each maximum along axis, skipping
 // NaNs (first occurrence wins ties among non-NaN values), one entry per kept
 // slot in C order. A slice holding only NaNs panics, as numpy's nanargmax
 // raises.
@@ -258,7 +258,7 @@ func (a *Array[T]) NanArgMax(axis int) []int {
 	return nanArgExtreme(a, axis, greater[T])
 }
 
-// Pure: NanArgMin returns the coordinate of each minimum along axis, skipping
+// NanArgMin returns the coordinate of each minimum along axis, skipping
 // NaNs (first occurrence wins ties among non-NaN values), one entry per kept
 // slot in C order. A slice holding only NaNs panics.
 func (a *Array[T]) NanArgMin(axis int) []int {
@@ -290,14 +290,14 @@ func nanArgExtreme[T Number](a *Array[T], axis int, better func(a, b T) bool) []
 	return out
 }
 
-// Pure: NanCumSum prefixes NaN-free sums along axes (no axes = C-order prefix
+// NanCumSum prefixes NaN-free sums along axes (no axes = C-order prefix
 // over the raveled array, like CumSum): NaN contributes 0, mirroring numpy's
 // nancumsum.
 func (a *Array[T]) NanCumSum(axes ...int) *Array[T] {
 	return nanReplaced(a, 0).CumSum(axes...)
 }
 
-// Pure: NanCumProd prefixes NaN-free products along axes (no axes = C-order
+// NanCumProd prefixes NaN-free products along axes (no axes = C-order
 // prefix over the raveled array): NaN contributes 1, mirroring numpy's
 // nancumprod.
 func (a *Array[T]) NanCumProd(axes ...int) *Array[T] {

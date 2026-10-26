@@ -6,7 +6,7 @@ import (
 	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
-// Into: CopyInto mutates dst by filling it with src broadcast to dst's shape.
+// CopyInto mutates dst by filling it with src broadcast to dst's shape.
 // This is the Into-style mutation primitive later operations build on.
 func CopyInto[T Number](dst, src *Array[T]) {
 	if dst.Size() == 0 {
@@ -31,7 +31,7 @@ func CopyInto[T Number](dst, src *Array[T]) {
 		})
 }
 
-// Pure: Concatenate joins arrays along axis (negative allowed). All dimensions
+// Concatenate joins arrays along axis (negative allowed). All dimensions
 // except axis must match exactly. The result is new data.
 func Concatenate[T Number](axis int, as ...*Array[T]) *Array[T] {
 	if len(as) == 0 {
@@ -63,7 +63,7 @@ func Concatenate[T Number](axis int, as ...*Array[T]) *Array[T] {
 	return out
 }
 
-// Pure: Stack joins same-shaped arrays along a new axis (negative allowed,
+// Stack joins same-shaped arrays along a new axis (negative allowed,
 // ndim+1 positions valid). The result is new data.
 func Stack[T Number](axis int, as ...*Array[T]) *Array[T] {
 	if len(as) == 0 {
@@ -97,7 +97,7 @@ func axisRange(ndim, ax, k int) []Range {
 	return rs
 }
 
-// View: Split slices a at the given ascending boundaries along axis into
+// Split slices a at the given ascending boundaries along axis into
 // len(indices)+1 views sharing data with a. Indices may equal the axis size.
 func Split[T Number](a *Array[T], indices []int, axis int) []*Array[T] {
 	ax := a.resolveAxis(axis)
@@ -116,7 +116,7 @@ func Split[T Number](a *Array[T], indices []int, axis int) []*Array[T] {
 	return out
 }
 
-// Pure: Tile repeats a along each axis by reps, right-aligned like numpy.tile
+// Tile repeats a along each axis by reps, right-aligned like numpy.tile
 // (shorter reps are padded with leading ones; a longer reps list prepends
 // size-1 axes to a). The result is new data.
 func Tile[T Number](a *Array[T], reps ...int) *Array[T] {
@@ -151,7 +151,7 @@ func Tile[T Number](a *Array[T], reps ...int) *Array[T] {
 	})
 }
 
-// Pure: Repeat repeats each element count times along axis (negative allowed).
+// Repeat repeats each element count times along axis (negative allowed).
 // The result is new data.
 func Repeat[T Number](a *Array[T], count int, axis int) *Array[T] {
 	if count < 0 {
@@ -167,7 +167,7 @@ func Repeat[T Number](a *Array[T], count int, axis int) *Array[T] {
 	})
 }
 
-// Pure: Flip reverses the order of elements along axes (default: all axes). The
+// Flip reverses the order of elements along axes (default: all axes). The
 // result is new data; a negative-stride view is deliberately not attempted.
 func Flip[T Number](a *Array[T], axes ...int) *Array[T] {
 	rev := make([]bool, a.Ndim())
@@ -190,7 +190,7 @@ func Flip[T Number](a *Array[T], axes ...int) *Array[T] {
 	})
 }
 
-// Pure: Roll shifts elements by shift along axes (default: the flattened array
+// Roll shifts elements by shift along axes (default: the flattened array
 // in C order). Negative shifts roll backwards, wrapping around. The result is
 // new data.
 func Roll[T Number](a *Array[T], shift int, axes ...int) *Array[T] {

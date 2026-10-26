@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-// Performance baseline benchmarks (Phase 5, before-optimization); sizes match
+// Performance baseline benchmarks (before optimization); sizes match
 // scripts/bench_numpy.py.
 
 func BenchmarkStandardNormal1M(b *testing.B) {

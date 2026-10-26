@@ -67,7 +67,7 @@ func (f *fold[T]) finish() *Masked[T] {
 	return newMasked(f.out, f.mask)
 }
 
-// Pure: Sum folds addition along axes over unmasked elements.
+// Sum folds addition along axes over unmasked elements.
 func (m *Masked[T]) Sum(axes ...int) *Masked[T] {
 	if len(axes) == 0 {
 		axes = allAxes(m.Ndim())
@@ -77,12 +77,12 @@ func (m *Masked[T]) Sum(axes ...int) *Masked[T] {
 	return f.finish()
 }
 
-// Pure: SumKeepdims folds the sum keeping reduced axes as size 1.
+// SumKeepdims folds the sum keeping reduced axes as size 1.
 func (m *Masked[T]) SumKeepdims(axes ...int) *Masked[T] {
 	return m.keepdims(m.Sum, axes...)
 }
 
-// Pure: Mean divides the unmasked sum by the unmasked count along axes.
+// Mean divides the unmasked sum by the unmasked count along axes.
 func (m *Masked[T]) Mean(axes ...int) *Masked[T] {
 	if len(axes) == 0 {
 		axes = allAxes(m.Ndim())
@@ -97,7 +97,7 @@ func (m *Masked[T]) Mean(axes ...int) *Masked[T] {
 	return f.finish()
 }
 
-// Pure: MeanKeepdims folds the mean keeping reduced axes as size 1.
+// MeanKeepdims folds the mean keeping reduced axes as size 1.
 func (m *Masked[T]) MeanKeepdims(axes ...int) *Masked[T] {
 	return m.keepdims(m.Mean, axes...)
 }
@@ -118,23 +118,23 @@ func (m *Masked[T]) keepdims(fold func(axes ...int) *Masked[T], axes ...int) *Ma
 	return newMasked(r.a.Reshape(shape...), r.mask)
 }
 
-// Pure: Var computes the unmasked population variance (ddof=0) along axes.
+// Var computes the unmasked population variance (ddof=0) along axes.
 // Complex input panics like the root package (no real result in T).
 func (m *Masked[T]) Var(axes ...int) *Masked[T] {
 	return m.variance(0, axes)
 }
 
-// Pure: VarDDof computes the unmasked variance with the given ddof.
+// VarDDof computes the unmasked variance with the given ddof.
 func (m *Masked[T]) VarDDof(ddof int, axes ...int) *Masked[T] {
 	return m.variance(ddof, axes)
 }
 
-// Pure: Std computes the unmasked standard deviation along axes (ddof=0).
+// Std computes the unmasked standard deviation along axes (ddof=0).
 func (m *Masked[T]) Std(axes ...int) *Masked[T] {
 	return m.stddev(0, axes)
 }
 
-// Pure: StdDDof computes the unmasked standard deviation with the given ddof.
+// StdDDof computes the unmasked standard deviation with the given ddof.
 func (m *Masked[T]) StdDDof(ddof int, axes ...int) *Masked[T] {
 	return m.stddev(ddof, axes)
 }
@@ -221,22 +221,22 @@ func (m *Masked[T]) extreme(axes []int, better func(x, best T) bool) *Masked[T] 
 	return newMasked(out, mask)
 }
 
-// Pure: Max folds max along axes over unmasked elements (ties → first).
+// Max folds max along axes over unmasked elements (ties → first).
 func (m *Masked[T]) Max(axes ...int) *Masked[T] {
 	return m.extreme(axes, func(x, best T) bool { return realOf(x) > realOf(best) })
 }
 
-// Pure: MaxKeepdims folds max keeping reduced axes as size 1.
+// MaxKeepdims folds max keeping reduced axes as size 1.
 func (m *Masked[T]) MaxKeepdims(axes ...int) *Masked[T] {
 	return m.keepdims(m.Max, axes...)
 }
 
-// Pure: Min folds min along axes over unmasked elements (ties → first).
+// Min folds min along axes over unmasked elements (ties → first).
 func (m *Masked[T]) Min(axes ...int) *Masked[T] {
 	return m.extreme(axes, func(x, best T) bool { return realOf(x) < realOf(best) })
 }
 
-// Pure: MinKeepdims folds min keeping reduced axes as size 1.
+// MinKeepdims folds min keeping reduced axes as size 1.
 func (m *Masked[T]) MinKeepdims(axes ...int) *Masked[T] {
 	return m.keepdims(m.Min, axes...)
 }
@@ -278,20 +278,20 @@ func (m *Masked[T]) argExtreme(axis int, better func(x, best T) bool) []int {
 	return coord
 }
 
-// Pure: ArgMax returns the coordinate of each unmasked maximum along axis
+// ArgMax returns the coordinate of each unmasked maximum along axis
 // (first occurrence wins ties); an all-masked channel gives -1 (numpy returns
 // a masked index).
 func (m *Masked[T]) ArgMax(axis int) []int {
 	return m.argExtreme(axis, func(x, best T) bool { return realOf(x) > realOf(best) })
 }
 
-// Pure: ArgMin returns the coordinate of each unmasked minimum along axis
+// ArgMin returns the coordinate of each unmasked minimum along axis
 // (first occurrence wins ties); an all-masked channel gives -1.
 func (m *Masked[T]) ArgMin(axis int) []int {
 	return m.argExtreme(axis, func(x, best T) bool { return realOf(x) < realOf(best) })
 }
 
-// Pure: Any reports whether any UNMASKED element is nonzero. All-masked input
+// Any reports whether any UNMASKED element is nonzero. All-masked input
 // returns false (a bool cannot carry numpy's masked answer).
 func (m *Masked[T]) Any() bool {
 	for i, bad := range m.mask {
@@ -306,7 +306,7 @@ func (m *Masked[T]) Any() bool {
 	return false
 }
 
-// Pure: All reports whether every UNMASKED element is nonzero; masked
+// All reports whether every UNMASKED element is nonzero; masked
 // elements are skipped, so all-masked input is vacuously true.
 func (m *Masked[T]) All() bool {
 	for i, bad := range m.mask {
@@ -321,14 +321,14 @@ func (m *Masked[T]) All() bool {
 	return true
 }
 
-// Pure: CumSum prefixes unmasked sums along axes (no axes = C-order prefix
+// CumSum prefixes unmasked sums along axes (no axes = C-order prefix
 // over the raveled array); masked positions carry the running value forward
 // without contributing (numpy ma cumsum).
 func (m *Masked[T]) CumSum(axes ...int) *Masked[T] {
 	return m.accumulate(axes, func(acc *T, v T) { *acc += v })
 }
 
-// Pure: CumProd prefixes unmasked products along axes (same convention).
+// CumProd prefixes unmasked products along axes (same convention).
 func (m *Masked[T]) CumProd(axes ...int) *Masked[T] {
 	return m.accumulate(axes, func(acc *T, v T) { *acc *= v })
 }

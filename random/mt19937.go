@@ -5,9 +5,9 @@ package random
 // mt19937_gen), mt19937.h (tempering, next32/next64/next_double) and
 // mt19937-jump.c (2**128 jump). Seeding follows numpy/random/_mt19937.pyx
 // __init__: SeedSequence generate_state(624, uint32) written directly into
-// the state with key[0] forced to 0x80000000 (the task brief's
-// "init_by_array with those words" is the legacy RandomState path; modern
-// Generator seeding bypasses init_by_array — verified against numpy state).
+// the state with key[0] forced to 0x80000000. (Legacy RandomState seeding
+// would use init_by_array with those words; modern
+// Generator seeding bypasses init_by_array — verified against numpy state.)
 // next64 combines two tempered draws as (a<<32)|b in draw order
 // (mt19937.h:48); NextDouble is the MT-specific (a>>5)*2^26 + (b>>6) over
 // 2^53 (mt19937.h:56), exposed through the BitGenerator NextDouble slot.
@@ -141,16 +141,16 @@ func (m *MT19937) mtNext() uint32 {
 	return y
 }
 
-// Next32: mt19937_next32 (mt19937.h:52) — every call is one tempered draw,
+// Next32 is mt19937_next32 (mt19937.h:52): every call is one tempered draw,
 // no buffering (unlike PCG64).
 func (m *MT19937) Next32() uint32 { return m.mtNext() }
 
-// Next64: mt19937_next64 (mt19937.h:48) — first draw is the high word.
+// Next64 is mt19937_next64 (mt19937.h:48); the first draw is the high word.
 func (m *MT19937) Next64() uint64 {
 	return uint64(m.mtNext())<<32 | uint64(m.mtNext())
 }
 
-// NextDouble: mt19937_next_double (mt19937.h:56) — the MT-specific 53-bit
+// NextDouble is mt19937_next_double (mt19937.h:56): the MT-specific 53-bit
 // formula over two tempered draws: (a>>5)*2^26 + (b>>6), divided by 2^53.
 // The shifts are on uint32 (no sign extension).
 func (m *MT19937) NextDouble() float64 {

@@ -10,7 +10,7 @@ import (
 // broadcast_arrays. All results are VIEWS sharing the receiver's data; writes
 // through them alias across slots exactly as in numpy.
 
-// View: SlidingWindowView appends len(windowShape) window axes to a trimmed
+// SlidingWindowView appends len(windowShape) window axes to a trimmed
 // copy of a's shape: view.shape = trimmed + window, where trimmed[k] =
 // shape[k] - (window[k] - 1). The window axes run over ALL of a's axes in
 // order, so len(windowShape) must equal a.Ndim() (numpy's axis=None branch;
@@ -38,7 +38,7 @@ func (a *Array[T]) SlidingWindowView(windowShape ...int) *Array[T] {
 	return newArray(shape, strides, a.offset, a.data)
 }
 
-// View: AsStrided builds a low-level view with explicit shape and strides over
+// AsStrided builds a low-level view with explicit shape and strides over
 // a's data starting at a's offset (numpy as_strided). SAFER than numpy: every
 // reachable element position is validated against [0, len(a.data)) — numpy
 // silently reads out of bounds, this panics. Negative strides are allowed;
@@ -70,7 +70,7 @@ func (a *Array[T]) AsStrided(shape, strides []int) *Array[T] {
 	return newArray(slices.Clone(shape), slices.Clone(strides), a.offset, a.data)
 }
 
-// Pure-broadcast: BroadcastArrays returns views of all inputs expanded to
+// BroadcastArrays returns views of all inputs expanded to
 // their common broadcast shape (stride-0 dimensions, numpy broadcast_arrays).
 // Incompatible shapes panic. The views share each input's data.
 func BroadcastArrays[T Number](as ...*Array[T]) []*Array[T] {

@@ -31,7 +31,7 @@ func mix(x, y uint32) uint32 {
 	return result ^ (result >> xshift)
 }
 
-// SeedSequence(entropy ...uint64) mirrors numpy.random.SeedSequence with the
+// SeedSequence mirrors numpy.random.SeedSequence with the
 // default pool_size=4 and spawn_key from Spawn. Entropy words are split into
 // 32-bit chunks, lowest bits first (numpy _int_to_uint32_array).
 type SeedSequence struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/aixfoundry/numgo"
 )
 
-// Performance baseline benchmark (Phase 5, before-optimization); size matches
+// Performance baseline benchmark (before optimization); size matches
 // scripts/bench_numpy.py. The mask hides every other row (half the elements).
 func BenchmarkMaAdd(b *testing.B) {
 	a := numgo.Ones[float64](1000, 1000)

@@ -65,14 +65,14 @@ func (p *PCG64) step() {
 	p.stateHi, p.stateLo = hi, lo
 }
 
-// Next64: pcg64_next64 — advance then XSL-RR output
+// Next64 is pcg64_next64: advance then XSL-RR output
 // (pcg64.h:170, 186).
 func (p *PCG64) Next64() uint64 {
 	p.step()
 	return bits.RotateLeft64(p.stateHi^p.stateLo, -int(p.stateHi>>58))
 }
 
-// Next32: pcg64_next32 — low 32 bits of the current draw, high 32 buffered
+// Next32 is pcg64_next32: low 32 bits of the current draw, high 32 buffered
 // (pcg64.h:386).
 func (p *PCG64) Next32() uint32 {
 	if p.hasUint32 {
@@ -120,7 +120,7 @@ func (p *PCG64) Advance(delta uint64) {
 	p.stateHi, p.stateLo = hi, lo
 }
 
-// NextDouble: pcg64_next_double (numpy _pcg64.pyx:41) — uint64_to_double of
+// NextDouble is pcg64_next_double (numpy _pcg64.pyx:41): uint64_to_double of
 // the next 64-bit draw.
 func (p *PCG64) NextDouble() float64 {
 	return float64(p.Next64()>>11) * (1.0 / 9007199254740992.0)

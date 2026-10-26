@@ -60,7 +60,7 @@ func (n Norm) factor(nn int) float64 {
 	}
 }
 
-// Pure: FFT transforms a along one axis (default last). n == 0 uses the axis
+// FFT transforms a along one axis (default last). n == 0 uses the axis
 // length; n > 0 zero-pads or truncates. Full-spectrum complex128 output.
 func FFT[T numgo.Number](a *numgo.Array[T], n int, norm Norm, axes ...int) *numgo.Array[complex128] {
 	ax := axisOrLast(a.Shape(), axes)
@@ -68,7 +68,7 @@ func FFT[T numgo.Number](a *numgo.Array[T], n int, norm Norm, axes ...int) *numg
 	return fullAxis(numgo.AsType[T, complex128](a), nn, ax, true, norm.factor(nn))
 }
 
-// Pure: IFFT is the inverse of FFT. n == 0 uses the axis length; n > 0
+// IFFT is the inverse of FFT. n == 0 uses the axis length; n > 0
 // zero-pads or truncates the input.
 func IFFT[T numgo.Number](a *numgo.Array[T], n int, norm Norm, axes ...int) *numgo.Array[complex128] {
 	ax := axisOrLast(a.Shape(), axes)
@@ -76,7 +76,7 @@ func IFFT[T numgo.Number](a *numgo.Array[T], n int, norm Norm, axes ...int) *num
 	return fullAxis(numgo.AsType[T, complex128](a), nn, ax, false, norm.swap().factor(nn))
 }
 
-// Pure: RFFT is the FFT of real input along one axis, returning the
+// RFFT is the FFT of real input along one axis, returning the
 // non-negative frequency half-spectrum of length n//2+1 (including the
 // Nyquist bin).
 func RFFT[T numgo.Float](a *numgo.Array[T], n int, norm Norm, axes ...int) *numgo.Array[complex128] {
@@ -85,7 +85,7 @@ func RFFT[T numgo.Float](a *numgo.Array[T], n int, norm Norm, axes ...int) *numg
 	return halfAxisForward(numgo.AsType[T, complex128](a), nn, ax, norm.factor(nn))
 }
 
-// Pure: IRFFT inverts RFFT: complex half-spectrum input, real float64 output
+// IRFFT inverts RFFT: complex half-spectrum input, real float64 output
 // of length n (n == 0 means 2*(m-1) for input length m along the axis).
 func IRFFT(a *numgo.Array[complex128], n int, norm Norm, axes ...int) *numgo.Array[float64] {
 	ax := axisOrLast(a.Shape(), axes)
@@ -93,7 +93,7 @@ func IRFFT(a *numgo.Array[complex128], n int, norm Norm, axes ...int) *numgo.Arr
 	return halfAxisInverse(a, nn, ax, norm.swap().factor(nn))
 }
 
-// Pure: HFFT is the inverse of IHFFT: a complex Hermitian half-spectrum in,
+// HFFT is the inverse of IHFFT: a complex Hermitian half-spectrum in,
 // real float64 output of length n (n == 0 means 2*(m-1)).
 func HFFT(a *numgo.Array[complex128], n int, norm Norm, axes ...int) *numgo.Array[float64] {
 	ax := axisOrLast(a.Shape(), axes)
@@ -101,7 +101,7 @@ func HFFT(a *numgo.Array[complex128], n int, norm Norm, axes ...int) *numgo.Arra
 	return halfAxisInverse(conjAll(a), nn, ax, norm.factor(nn))
 }
 
-// Pure: IHFFT is the inverse of HFFT: real input, complex conjugated
+// IHFFT is the inverse of HFFT: real input, complex conjugated
 // half-spectrum output of length n//2+1 (numpy's ihfft; the input must be
 // real, as in numpy where complex input raises TypeError).
 func IHFFT[T numgo.Float](a *numgo.Array[T], n int, norm Norm, axes ...int) *numgo.Array[complex128] {
@@ -110,30 +110,30 @@ func IHFFT[T numgo.Float](a *numgo.Array[T], n int, norm Norm, axes ...int) *num
 	return conjAll(halfAxisForward(numgo.AsType[T, complex128](a), nn, ax, norm.swap().factor(nn)))
 }
 
-// Pure: FFT2 transforms the last two axes (numpy fft2's default (-2,-1)).
+// FFT2 transforms the last two axes (numpy fft2's default (-2,-1)).
 // s == nil or s[i] <= 0 uses the axis length; positive s[i] pads/truncates.
 func FFT2[T numgo.Number](a *numgo.Array[T], s []int, norm Norm) *numgo.Array[complex128] {
 	return FFTN(a, s, norm, -2, -1)
 }
 
-// Pure: IFFT2 is the two-dimensional inverse of FFT2 along the last two axes.
+// IFFT2 is the two-dimensional inverse of FFT2 along the last two axes.
 func IFFT2[T numgo.Number](a *numgo.Array[T], s []int, norm Norm) *numgo.Array[complex128] {
 	return IFFTN(a, s, norm, -2, -1)
 }
 
-// Pure: RFFT2 is the two-dimensional real FFT along the last two axes; the
+// RFFT2 is the two-dimensional real FFT along the last two axes; the
 // last output axis holds the half-spectrum n//2+1.
 func RFFT2[T numgo.Float](a *numgo.Array[T], s []int, norm Norm) *numgo.Array[complex128] {
 	return RFFTN(a, s, norm, -2, -1)
 }
 
-// Pure: IRFFT2 is the two-dimensional inverse of RFFT2; the result is a real
+// IRFFT2 is the two-dimensional inverse of RFFT2; the result is a real
 // float64 array.
 func IRFFT2(a *numgo.Array[complex128], s []int, norm Norm) *numgo.Array[float64] {
 	return IRFFTN(a, s, norm, -2, -1)
 }
 
-// Pure: FFTN transforms along the given axes (default: all axes). s aligns
+// FFTN transforms along the given axes (default: all axes). s aligns
 // with axes: s == nil or s[i] <= 0 uses the axis length; positive s[i]
 // zero-pads or truncates that axis.
 func FFTN[T numgo.Number](a *numgo.Array[T], s []int, norm Norm, axes ...int) *numgo.Array[complex128] {
@@ -145,7 +145,7 @@ func FFTN[T numgo.Number](a *numgo.Array[T], s []int, norm Norm, axes ...int) *n
 	return cur
 }
 
-// Pure: IFFTN is the inverse of FFTN with the same s/axes conventions.
+// IFFTN is the inverse of FFTN with the same s/axes conventions.
 func IFFTN[T numgo.Number](a *numgo.Array[T], s []int, norm Norm, axes ...int) *numgo.Array[complex128] {
 	axs, ns := ndAxes(a.Shape(), s, axes, false)
 	cur := numgo.AsType[T, complex128](a)
@@ -155,7 +155,7 @@ func IFFTN[T numgo.Number](a *numgo.Array[T], s []int, norm Norm, axes ...int) *
 	return cur
 }
 
-// Pure: RFFTN is the n-dimensional real FFT: RFFT along the last listed axis,
+// RFFTN is the n-dimensional real FFT: RFFT along the last listed axis,
 // then FFT along the others. Like numpy, the real-input RFFT runs first so
 // the remaining transforms operate on the complex half-spectrum.
 func RFFTN[T numgo.Float](a *numgo.Array[T], s []int, norm Norm, axes ...int) *numgo.Array[complex128] {
@@ -167,7 +167,7 @@ func RFFTN[T numgo.Float](a *numgo.Array[T], s []int, norm Norm, axes ...int) *n
 	return cur
 }
 
-// Pure: IRFFTN is the inverse of RFFTN; the last listed axis is the
+// IRFFTN is the inverse of RFFTN; the last listed axis is the
 // half-spectrum (default output length there is 2*(m-1)), the rest are full
 // complex axes. The result is a real float64 array.
 func IRFFTN(a *numgo.Array[complex128], s []int, norm Norm, axes ...int) *numgo.Array[float64] {
@@ -180,7 +180,7 @@ func IRFFTN(a *numgo.Array[complex128], s []int, norm Norm, axes ...int) *numgo.
 	return halfAxisInverse(cur, ns[last], axs[last], norm.swap().factor(ns[last]))
 }
 
-// Pure: FFTFreq returns n sample frequencies in cycles per unit of the sample
+// FFTFreq returns n sample frequencies in cycles per unit of the sample
 // spacing d: [0, 1, ..., n/2-1, -n/2, ..., -1] / (n*d).
 func FFTFreq(n int, d float64) *numgo.Array[float64] {
 	if n < 1 {
@@ -198,7 +198,7 @@ func FFTFreq(n int, d float64) *numgo.Array[float64] {
 	return numgo.New1DArray(data)
 }
 
-// Pure: RFFTFreq returns the non-negative frequencies of RFFT output:
+// RFFTFreq returns the non-negative frequencies of RFFT output:
 // [0, 1, ..., n/2] / (n*d).
 func RFFTFreq(n int, d float64) *numgo.Array[float64] {
 	if n < 1 {
@@ -212,7 +212,7 @@ func RFFTFreq(n int, d float64) *numgo.Array[float64] {
 	return numgo.New1DArray(data)
 }
 
-// Pure: FFTShift shifts the zero-frequency component to the center by rolling
+// FFTShift shifts the zero-frequency component to the center by rolling
 // each listed axis (default: all) by n//2. The result is a pure copy.
 func FFTShift[T numgo.Number](a *numgo.Array[T], axes ...int) *numgo.Array[T] {
 	out := a
@@ -222,7 +222,7 @@ func FFTShift[T numgo.Number](a *numgo.Array[T], axes ...int) *numgo.Array[T] {
 	return out
 }
 
-// Pure: IFFTShift is the inverse of FFTShift: it rolls each listed axis by
+// IFFTShift is the inverse of FFTShift: it rolls each listed axis by
 // -n/2. Identical to FFTShift for even-length axes. The result is a pure copy.
 func IFFTShift[T numgo.Number](a *numgo.Array[T], axes ...int) *numgo.Array[T] {
 	out := a

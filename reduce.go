@@ -71,7 +71,7 @@ func reduced[T Number](a *Array[T], axes []int, ident T, fn func(acc *T, v T), s
 	}
 	// simdSumF64 is the no-op default-build twin (reduce_nosimd.go) / real
 	// path (reduce_simd.go, GOEXPERIMENT=simd); the default build keeps
-	// pre-P2 bits and speed.
+	// the nditer walk's bits and speed.
 	if len(simdOK) > 0 && simdOK[0] && simdSumF64(a, out, axes, true) {
 		return newArray(shape, nditer.COrderStrides(shape), 0, out)
 	}
@@ -104,7 +104,7 @@ func reduceKeepdims[T Number](a *Array[T], fold func(axes ...int) *Array[T], axe
 	return newArray(shape, nditer.COrderStrides(shape), 0, r.data)
 }
 
-// Pure: Sum folds addition along axes (no axes = whole array, result shape
+// Sum folds addition along axes (no axes = whole array, result shape
 // [1]). Negative axes resolve as axis+ndim; invalid axes panic.
 func (a *Array[T]) Sum(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -114,12 +114,12 @@ func (a *Array[T]) Sum(axes ...int) *Array[T] {
 	return reduced(a, axes, 0, func(acc *T, v T) { *acc += v }, true)
 }
 
-// Pure: SumKeepdims folds addition along axes, keeping reduced axes as size 1.
+// SumKeepdims folds addition along axes, keeping reduced axes as size 1.
 func (a *Array[T]) SumKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Sum, axes...)
 }
 
-// Pure: Prod folds multiplication along axes (no axes = whole array, [1]).
+// Prod folds multiplication along axes (no axes = whole array, [1]).
 func (a *Array[T]) Prod(axes ...int) *Array[T] {
 	if len(axes) == 0 {
 		axes = allAxes(a.Ndim())
@@ -128,13 +128,13 @@ func (a *Array[T]) Prod(axes ...int) *Array[T] {
 	return reduced(a, axes, 1, func(acc *T, v T) { *acc *= v })
 }
 
-// Pure: ProdKeepdims folds multiplication along axes, keeping reduced axes as
+// ProdKeepdims folds multiplication along axes, keeping reduced axes as
 // size 1.
 func (a *Array[T]) ProdKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Prod, axes...)
 }
 
-// Pure: Max folds max along axes (no axes = whole array, [1]). The zero-size
+// Max folds max along axes (no axes = whole array, [1]). The zero-size
 // identity is -Inf: every element compares greater, so the fold adopts the
 // first element and the empty result stays -Inf.
 func (a *Array[T]) Max(axes ...int) *Array[T] {
@@ -149,12 +149,12 @@ func (a *Array[T]) Max(axes ...int) *Array[T] {
 	})
 }
 
-// Pure: MaxKeepdims folds max along axes, keeping reduced axes as size 1.
+// MaxKeepdims folds max along axes, keeping reduced axes as size 1.
 func (a *Array[T]) MaxKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Max, axes...)
 }
 
-// Pure: Min folds min along axes (no axes = whole array, [1]). The zero-size
+// Min folds min along axes (no axes = whole array, [1]). The zero-size
 // identity is +Inf: every element compares less, so the fold adopts the first
 // element and the empty result stays +Inf.
 func (a *Array[T]) Min(axes ...int) *Array[T] {
@@ -169,7 +169,7 @@ func (a *Array[T]) Min(axes ...int) *Array[T] {
 	})
 }
 
-// Pure: MinKeepdims folds min along axes, keeping reduced axes as size 1.
+// MinKeepdims folds min along axes, keeping reduced axes as size 1.
 func (a *Array[T]) MinKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Min, axes...)
 }
@@ -194,7 +194,7 @@ func less[T Number](a, b T) bool {
 	return re < other
 }
 
-// Pure: Mean divides the sum along axes by the reduced element count. It
+// Mean divides the sum along axes by the reduced element count. It
 // accumulates in T (documented); the zero-size identity is NaN.
 func (a *Array[T]) Mean(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -210,7 +210,7 @@ func (a *Array[T]) Mean(axes ...int) *Array[T] {
 	return out
 }
 
-// Pure: MeanKeepdims folds the mean along axes, keeping reduced axes as size 1.
+// MeanKeepdims folds the mean along axes, keeping reduced axes as size 1.
 func (a *Array[T]) MeanKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Mean, axes...)
 }
@@ -223,7 +223,7 @@ func isComplexKind[T Number]() bool {
 	return k == reflect.Complex64 || k == reflect.Complex128
 }
 
-// Pure: Var computes the population variance (ddof=0) along axes. The result
+// Var computes the population variance (ddof=0) along axes. The result
 // is real-valued: Var/Std of complex arrays are not representable in T and
 // panic (numpy raises TypeError for the same reason). The zero-size identity
 // is NaN.
@@ -231,30 +231,30 @@ func (a *Array[T]) Var(axes ...int) *Array[T] {
 	return a.variance(0, a.axesOrAll(axes))
 }
 
-// Pure: VarKeepdims folds the variance along axes, keeping reduced axes as
+// VarKeepdims folds the variance along axes, keeping reduced axes as
 // size 1.
 func (a *Array[T]) VarKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Var, axes...)
 }
 
-// Pure: VarDDof computes the variance along axes with the given delta degrees
+// VarDDof computes the variance along axes with the given delta degrees
 // of freedom.
 func (a *Array[T]) VarDDof(ddof int, axes ...int) *Array[T] {
 	return a.variance(ddof, a.axesOrAll(axes))
 }
 
-// Pure: Std computes the standard deviation along axes with ddof=0.
+// Std computes the standard deviation along axes with ddof=0.
 func (a *Array[T]) Std(axes ...int) *Array[T] {
 	return a.stddev(0, a.axesOrAll(axes))
 }
 
-// Pure: StdKeepdims folds the standard deviation along axes, keeping reduced
+// StdKeepdims folds the standard deviation along axes, keeping reduced
 // axes as size 1.
 func (a *Array[T]) StdKeepdims(axes ...int) *Array[T] {
 	return reduceKeepdims(a, a.Std, axes...)
 }
 
-// Pure: StdDDof computes the standard deviation along axes with the given
+// StdDDof computes the standard deviation along axes with the given
 // delta degrees of freedom.
 func (a *Array[T]) StdDDof(ddof int, axes ...int) *Array[T] {
 	return a.stddev(ddof, a.axesOrAll(axes))
@@ -334,7 +334,7 @@ func argExtreme[T Number](a *Array[T], axis int, better func(a, b T) bool) []int
 	return out
 }
 
-// Pure: ArgMax returns the coordinate of each maximum along axis (first
+// ArgMax returns the coordinate of each maximum along axis (first
 // occurrence wins ties), one entry per kept slot in C order. It returns a
 // plain []int: index results are not element data, and Array's Number
 // constraint excludes integer element types.
@@ -342,13 +342,13 @@ func (a *Array[T]) ArgMax(axis int) []int {
 	return argExtreme(a, axis, greater[T])
 }
 
-// Pure: ArgMin returns the coordinate of each minimum along axis (first
+// ArgMin returns the coordinate of each minimum along axis (first
 // occurrence wins ties), one entry per kept slot in C order.
 func (a *Array[T]) ArgMin(axis int) []int {
 	return argExtreme(a, axis, less[T])
 }
 
-// Pure: Any reports whether any element is nonzero.
+// Any reports whether any element is nonzero.
 func (a *Array[T]) Any() bool {
 	for _, v := range a.data {
 		re, im := parts(v)
@@ -359,7 +359,7 @@ func (a *Array[T]) Any() bool {
 	return false
 }
 
-// Pure: All reports whether every element is nonzero. The zero-size array is
+// All reports whether every element is nonzero. The zero-size array is
 // vacuously all-nonzero.
 func (a *Array[T]) All() bool {
 	for _, v := range a.data {
@@ -371,13 +371,13 @@ func (a *Array[T]) All() bool {
 	return true
 }
 
-// Pure: CumSum prefixes sums along axes (no axes = C-order prefix over the
+// CumSum prefixes sums along axes (no axes = C-order prefix over the
 // raveled array, numpy's cumsum default). The result has the input's shape.
 func (a *Array[T]) CumSum(axes ...int) *Array[T] {
 	return a.accumulate(axes, func(acc *T, v T) { *acc += v })
 }
 
-// Pure: CumProd prefixes products along axes (no axes = C-order prefix over
+// CumProd prefixes products along axes (no axes = C-order prefix over
 // the raveled array). The result has the input's shape.
 func (a *Array[T]) CumProd(axes ...int) *Array[T] {
 	return a.accumulate(axes, func(acc *T, v T) { *acc *= v })

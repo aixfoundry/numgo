@@ -7,7 +7,7 @@ import (
 	"github.com/aixfoundry/numgo/internal/simdvec"
 )
 
-// Pure: Add returns a new array with the element-wise sum of a and b, broadcasting
+// Add returns a new array with the element-wise sum of a and b, broadcasting
 // both operands with full numpy right-alignment.
 func (a *Array[T]) Add(b *Array[T]) *Array[T] {
 	la, lb, shape := broadcastPair(a, b)
@@ -22,62 +22,62 @@ func (a *Array[T]) Add(b *Array[T]) *Array[T] {
 	return zip2Into(dst, la, a.data, lb, b.data, shape, func(x, y T) T { return x + y })
 }
 
-// Pure: Sub returns a new array with the element-wise difference of a and b.
+// Sub returns a new array with the element-wise difference of a and b.
 func (a *Array[T]) Sub(b *Array[T]) *Array[T] {
 	la, lb, shape := broadcastPair(a, b)
 	return zip2(la, a.data, lb, b.data, shape, func(x, y T) T { return x - y })
 }
 
-// Pure: Mul returns a new array with the element-wise product of a and b.
+// Mul returns a new array with the element-wise product of a and b.
 func (a *Array[T]) Mul(b *Array[T]) *Array[T] {
 	la, lb, shape := broadcastPair(a, b)
 	return zip2(la, a.data, lb, b.data, shape, func(x, y T) T { return x * y })
 }
 
-// Pure: Div returns a new array with the element-wise quotient of a and b. Division
+// Div returns a new array with the element-wise quotient of a and b. Division
 // by zero follows IEEE (Inf/NaN), never panics.
 func (a *Array[T]) Div(b *Array[T]) *Array[T] {
 	la, lb, shape := broadcastPair(a, b)
 	return zip2(la, a.data, lb, b.data, shape, func(x, y T) T { return x / y })
 }
 
-// In-place: AddInto writes the broadcast sum of a and b into dst and returns dst. dst
+// AddInto writes the broadcast sum of a and b into dst and returns dst. dst
 // must already have the broadcast result shape.
 func (a *Array[T]) AddInto(dst *Array[T], b *Array[T]) *Array[T] {
 	return into2(dst, a, b, func(x, y T) T { return x + y })
 }
 
-// In-place: SubInto writes the broadcast difference of a and b into dst and returns dst.
+// SubInto writes the broadcast difference of a and b into dst and returns dst.
 func (a *Array[T]) SubInto(dst *Array[T], b *Array[T]) *Array[T] {
 	return into2(dst, a, b, func(x, y T) T { return x - y })
 }
 
-// In-place: MulInto writes the broadcast product of a and b into dst and returns dst.
+// MulInto writes the broadcast product of a and b into dst and returns dst.
 func (a *Array[T]) MulInto(dst *Array[T], b *Array[T]) *Array[T] {
 	return into2(dst, a, b, func(x, y T) T { return x * y })
 }
 
-// In-place: DivInto writes the broadcast quotient of a and b into dst and returns dst.
+// DivInto writes the broadcast quotient of a and b into dst and returns dst.
 func (a *Array[T]) DivInto(dst *Array[T], b *Array[T]) *Array[T] {
 	return into2(dst, a, b, func(x, y T) T { return x / y })
 }
 
-// Pure: AddValue returns a new array with v added to every element.
+// AddValue returns a new array with v added to every element.
 func (a *Array[T]) AddValue(v T) *Array[T] {
 	return mapValues(a, func(x T) T { return x + v })
 }
 
-// Pure: SubValue returns a new array with v subtracted from every element.
+// SubValue returns a new array with v subtracted from every element.
 func (a *Array[T]) SubValue(v T) *Array[T] {
 	return mapValues(a, func(x T) T { return x - v })
 }
 
-// Pure: MulValue returns a new array with every element multiplied by v.
+// MulValue returns a new array with every element multiplied by v.
 func (a *Array[T]) MulValue(v T) *Array[T] {
 	return mapValues(a, func(x T) T { return x * v })
 }
 
-// Pure: DivValue returns a new array with every element divided by v. Division by
+// DivValue returns a new array with every element divided by v. Division by
 // zero follows IEEE (Inf/NaN), never panics.
 func (a *Array[T]) DivValue(v T) *Array[T] {
 	return mapValues(a, func(x T) T { return x / v })

@@ -1,6 +1,6 @@
 package random
 
-// Panic message table, aligned with numpy's wording (design.md §7 P0-4).
+// Panic message table, aligned with numpy's wording.
 import "fmt"
 
 func panicBounds(kind, comp string, v int64) {

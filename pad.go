@@ -19,7 +19,7 @@ const (
 	// PadConstant(0).
 )
 
-// Pure: Pad returns a new array grown by pads[ax] = {before, after} along
+// Pad returns a new array grown by pads[ax] = {before, after} along
 // each axis, filled per mode. pads must have one entry per axis and no
 // negative widths.
 func Pad[T Number](a *Array[T], pads [][2]int, mode PadMode, constantValue T) *Array[T] {

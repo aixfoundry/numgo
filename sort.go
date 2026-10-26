@@ -151,7 +151,7 @@ func sortAxis[T Number](a *Array[T], axis int) {
 		})
 }
 
-// Pure: Sort returns a new array with each channel along the given axes
+// Sort returns a new array with each channel along the given axes
 // sorted ascending; with no axes the LAST axis is sorted (numpy axis=-1).
 // Each listed axis is sorted independently, one pass per axis in the order
 // given. NaN sorts last. Negative axes resolve.
@@ -166,7 +166,7 @@ func (a *Array[T]) Sort(axes ...int) *Array[T] {
 	return out
 }
 
-// In-place: SortInto sorts the receiver's channels in place (same semantics
+// SortInto sorts the receiver's channels in place (same semantics
 // as Sort) and returns it.
 func (a *Array[T]) SortInto(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -178,7 +178,7 @@ func (a *Array[T]) SortInto(axes ...int) *Array[T] {
 	return a
 }
 
-// Pure: Argsort returns the coordinates that would sort each channel along
+// Argsort returns the coordinates that would sort each channel along
 // axis as a flat []int (one entry per element, kept slots in C order).
 // The order is STABLE: equal values keep their original order, a Go-friendly
 // superset of numpy's non-stable quicksort default. Negative axes resolve.
@@ -215,7 +215,7 @@ func checkKth(kth, n int) {
 	}
 }
 
-// Pure: Partition returns a new array where the element at position kth
+// Partition returns a new array where the element at position kth
 // (negative counts from the end) along each channel of axis is in its sorted
 // place, with smaller elements left and larger right (numpy partition).
 //
@@ -226,7 +226,7 @@ func (a *Array[T]) Partition(kth int, axis int) *Array[T] {
 	return a.Sort(axis)
 }
 
-// Pure: ArgPartition returns the indices that would partition each channel
+// ArgPartition returns the indices that would partition each channel
 // along axis, as a flat []int (same shortcut and stability as Argsort).
 //
 // shortcut: O(n log n) sort-based partition, upgrade to introselect if
@@ -243,7 +243,7 @@ func sortedFlat[T Number](a *Array[T]) []T {
 	return vals
 }
 
-// Pure: Unique returns the flattened (C-order ravel) unique values, sorted.
+// Unique returns the flattened (C-order ravel) unique values, sorted.
 // NaN — compared by real part — groups into a single NaN placed last, as
 // complex values order by (real, imag).
 func (a *Array[T]) Unique() *Array[T] {
@@ -254,7 +254,7 @@ func (a *Array[T]) Unique() *Array[T] {
 	return newArray(shape, nditer.COrderStrides(shape), 0, vals)
 }
 
-// Pure: UniqueCounts returns Unique's values together with each value's
+// UniqueCounts returns Unique's values together with each value's
 // occurrence count.
 func (a *Array[T]) UniqueCounts() (*Array[T], []int) {
 	sorted := sortedFlat(a)

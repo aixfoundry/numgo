@@ -71,7 +71,7 @@ func (g *Generator) standardExponentialUnlikely(idx uint8, x float64) float64 {
 	return g.StandardExponentialScalar()
 }
 
-// StandardNormal returns a single standard normal draw.
+// StandardNormalScalar returns a single standard normal draw.
 func (g *Generator) StandardNormalScalar() float64 {
 	for {
 		r := g.bg.Next64()
@@ -111,7 +111,7 @@ func (g *Generator) StandardNormal(size ...int) *arrayF {
 	return out
 }
 
-// StandardExponential returns a single standard exponential draw.
+// StandardExponentialScalar returns a single standard exponential draw.
 func (g *Generator) StandardExponentialScalar() float64 {
 	ri := g.bg.Next64() >> 3
 	idx := uint8(ri & 0xFF)
@@ -133,7 +133,7 @@ func (g *Generator) StandardExponential(size ...int) *arrayF {
 	return out
 }
 
-// Normal: loc + scale*standard_normal (distributions.c:386).
+// Normal returns loc + scale*standard_normal (distributions.c:386).
 func (g *Generator) Normal(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -143,7 +143,7 @@ func (g *Generator) Normal(loc, scale float64, size ...int) *arrayF {
 	return out
 }
 
-// Uniform: lower + range*next_double where range = high-lower
+// Uniform returns lower + range*next_double, where range = high-lower
 // (distributions.c:394; numpy Generator.uniform(low, high)).
 func (g *Generator) Uniform(lower, high float64, size ...int) *arrayF {
 	rng := high - lower
@@ -155,7 +155,7 @@ func (g *Generator) Uniform(lower, high float64, size ...int) *arrayF {
 	return out
 }
 
-// Exponential: scale * standard_exponential (distributions.c:390).
+// Exponential returns scale * standard_exponential (distributions.c:390).
 func (g *Generator) Exponential(scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -165,7 +165,7 @@ func (g *Generator) Exponential(scale float64, size ...int) *arrayF {
 	return out
 }
 
-// StandardGamma returns a single draw (scalar convenience).
+// StandardGammaScalar returns a single draw (scalar convenience).
 func (g *Generator) StandardGammaScalar(shape float64) float64 {
 	var b, c, U, V, X, Y float64
 	switch {
@@ -214,7 +214,8 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 	}
 }
 
-// StandardGammaArray fills size draws.
+// StandardGamma fills size draws (1 by default) of the standard gamma
+// distribution.
 func (g *Generator) StandardGamma(shape float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -224,7 +225,7 @@ func (g *Generator) StandardGamma(shape float64, size ...int) *arrayF {
 	return out
 }
 
-// Gamma: scale * standard_gamma (distributions.c:398).
+// Gamma returns scale * standard_gamma (distributions.c:398).
 func (g *Generator) Gamma(shape, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -236,7 +237,7 @@ func (g *Generator) Gamma(shape, scale float64, size ...int) *arrayF {
 
 const betaTinyThreshold = 3e-103
 
-// Beta: distributions.c:411. Assumes a != 0 and b != 0.
+// Beta samples distributions.c:411. Assumes a != 0 and b != 0.
 // Beta fills size draws (distributions.c:411). Assumes a != 0 and b != 0.
 func (g *Generator) Beta(a, b float64, size ...int) *arrayF {
 	n := sizeOr1(size)
@@ -356,7 +357,7 @@ func (g *Generator) poissonPTRS(lam float64) int64 {
 	}
 }
 
-// Poisson: distributions.c:604.
+// Poisson samples distributions.c:604.
 func (g *Generator) Poisson(lam float64, size ...int) *arrayI {
 	n := sizeOr1(size)
 	out := newI(n)
@@ -543,7 +544,7 @@ func (g *Generator) binomialInversion(n int64, p float64, st *binomialState) int
 	return X
 }
 
-// Binomial: dispatch per distributions.c:806.
+// Binomial samples per distributions.c:806.
 func (g *Generator) Binomial(n int64, p float64, size ...int) *arrayI {
 	cnt := sizeOr1(size)
 	out := newI(cnt)
@@ -609,7 +610,7 @@ func (g *Generator) boundedMaskedUint64(rng, mask uint64) uint64 {
 
 // boundedLemireUint32: Lemire rejection on 32-bit draws
 // (distributions.c buffered_bounded_lemire_uint32:1291; numpy's uint16/8 bit
-// buffers only matter for 8/16-bit dtypes, which this batch does not port).
+// buffers only matter for 8/16-bit dtypes, which are not ported).
 func (g *Generator) boundedLemireUint32(rng uint32) uint32 {
 	rngExcl := rng + 1
 	m := uint64(g.next32()) * uint64(rngExcl)

@@ -11,7 +11,7 @@ import (
 // Conversions bridging StrArray and numeric arrays (numpy's str→num ufuncs and
 // the reverse via format strings).
 
-// Pure: ParseFloat converts every element with strconv.ParseFloat 64-bit. The
+// ParseFloat converts every element with strconv.ParseFloat 64-bit. The
 // returned array shares the input's shape; the error reports the C-order
 // linear index of the first failing element.
 func ParseFloat(a *StrArray) (*numgo.Array[float64], error) {
@@ -36,7 +36,7 @@ func ParseFloat(a *StrArray) (*numgo.Array[float64], error) {
 	return out, nil
 }
 
-// Pure: Atoi converts every element with strconv.ParseInt base 10 into a
+// Atoi converts every element with strconv.ParseInt base 10 into a
 // plain []int64 in C order — int64 is not a numgo.Number, so no Array type
 // exists for it (same precedent as the random package's arrayI). The error
 // reports the C-order linear index of the first failing element.
@@ -77,7 +77,7 @@ func (e *ElementError) Error() string {
 // Unwrap returns the underlying parse error.
 func (e *ElementError) Unwrap() error { return e.Err }
 
-// Pure: FromFloat formats every element of a with the format verb (a
+// FromFloat formats every element of a with the format verb (a
 // fmt.Sprintf verb like "%g" or "%.3f") into a new StrArray of the same shape.
 func FromFloat(a *numgo.Array[float64], format string) *StrArray {
 	shape := a.Shape()

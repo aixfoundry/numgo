@@ -234,7 +234,7 @@ func TestQRReduced(t *testing.T) {
 	if v := r.R.At(0, 0); math.Abs(v-(-5.916079783099616)) > tol {
 		t.Fatalf("R00 = %v", v)
 	}
-	// Wide input is not supported in this phase (numpy's reduced/complete/raw
+	// Wide input is not supported (numpy's reduced/complete/raw
 	// modes require m >= n; wide matrices need the LQ path — deferred).
 	func() {
 		defer func() {

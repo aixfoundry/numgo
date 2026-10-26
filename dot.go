@@ -145,7 +145,7 @@ func leadShapes[T Number](a, b *Array[T]) []int {
 	return shape
 }
 
-// Pure: Matmul returns the numpy matmul product: the last two dimensions are
+// Matmul returns the numpy matmul product: the last two dimensions are
 // the matrix dimensions (M,K)@(K,N), leading dimensions broadcast. A 1-D left
 // operand is treated as a (1,K) row and a 1-D right operand as a (K,1)
 // column, that dimension dropped from the result. Two 1-D operands panic
@@ -237,7 +237,7 @@ func odometer(shape []int, f func(coords []int)) {
 	}
 }
 
-// Pure: Vdot returns the conjugate dot product of the flattened operands:
+// Vdot returns the conjugate dot product of the flattened operands:
 // sum(conj(a[i]) * b[i]). Sizes must match.
 func (a *Array[T]) Vdot(b *Array[T]) T {
 	if a.Size() != b.Size() {
@@ -278,7 +278,7 @@ func (a *Array[T]) Vdot(b *Array[T]) T {
 	return sum
 }
 
-// Pure: Dot dispatches exactly like numpy's dot (PyArray_MatrixProduct_int in
+// Dot dispatches exactly like numpy's dot (PyArray_MatrixProduct_int in
 // numpy/_core/src/multiarray/multiarraymodule.c): 1-D·1-D gives the scalar
 // product as a one-element array; otherwise the last axis of a contracts with
 // the second-to-last axis of b (axis 0 when b is 1-D). The result shape is

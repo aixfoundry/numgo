@@ -7,13 +7,13 @@ import (
 	"github.com/aixfoundry/numgo/internal/lapack"
 )
 
-// Second batch of Generator distributions, ported 1:1 from
+// Additional Generator distributions, ported 1:1 from
 // numpy/random/src/distributions/distributions.c (file:line refs per method)
 // preserving the exact underlying draw sequence. Transcendentals use Go's
 // math package; results are ULP-close to numpy but streams may diverge at
 // rejection boundaries.
 
-// chisquare: distributions.c:466 — 2 * standard_gamma(df/2).
+// Chisquare samples distributions.c:466: 2 * standard_gamma(df/2).
 func (g *Generator) Chisquare(df float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -23,7 +23,7 @@ func (g *Generator) Chisquare(df float64, size ...int) *arrayF {
 	return out
 }
 
-// F: distributions.c:470 — (χ²(dfnum)*dfden) / (χ²(dfden)*dfnum).
+// F samples distributions.c:470: (χ²(dfnum)*dfden) / (χ²(dfden)*dfnum).
 func (g *Generator) F(dfnum, dfden float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -35,7 +35,7 @@ func (g *Generator) F(dfnum, dfden float64, size ...int) *arrayF {
 	return out
 }
 
-// StandardCauchy: distributions.c:476 — normal(0)/normal(0), NOT tan(π(u-1/2)).
+// StandardCauchy samples distributions.c:476: normal(0)/normal(0), NOT tan(π(u-1/2)).
 func (g *Generator) StandardCauchy(size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -45,7 +45,7 @@ func (g *Generator) StandardCauchy(size ...int) *arrayF {
 	return out
 }
 
-// Pareto: distributions.c:482 — expm1(standard_exponential / a).
+// Pareto samples distributions.c:482: expm1(standard_exponential / a).
 func (g *Generator) Pareto(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -55,7 +55,7 @@ func (g *Generator) Pareto(a float64, size ...int) *arrayF {
 	return out
 }
 
-// Weibull: distributions.c:486 — standard_exponential ** (1/a); a == 0 → 0
+// Weibull samples distributions.c:486: standard_exponential ** (1/a); a == 0 → 0
 // without consuming a draw.
 func (g *Generator) Weibull(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
@@ -69,7 +69,7 @@ func (g *Generator) Weibull(a float64, size ...int) *arrayF {
 	return out
 }
 
-// Power: distributions.c:493 — (−expm1(−standard_exponential)) ** (1/a).
+// Power samples distributions.c:493: (−expm1(−standard_exponential)) ** (1/a).
 func (g *Generator) Power(a float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -79,7 +79,7 @@ func (g *Generator) Power(a float64, size ...int) *arrayF {
 	return out
 }
 
-// Laplace: distributions.c:497 — inverse CDF; rejects U == 0 by redrawing.
+// Laplace samples distributions.c:497 via the inverse CDF; rejects U == 0 by redrawing.
 func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -106,7 +106,7 @@ func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 	return out
 }
 
-// Gumbel: distributions.c:510 — loc − scale*log(−log(U)) with U = 1−uniform,
+// Gumbel samples distributions.c:510: loc − scale*log(−log(U)) with U = 1−uniform,
 // rejecting U == 1 by redrawing.
 func (g *Generator) Gumbel(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
@@ -124,7 +124,7 @@ func (g *Generator) Gumbel(loc, scale float64, size ...int) *arrayF {
 	return out
 }
 
-// Logistic: distributions.c:521 — inverse CDF; rejects U == 0 by redrawing.
+// Logistic samples distributions.c:521 via the inverse CDF; rejects U == 0 by redrawing.
 func (g *Generator) Logistic(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -141,7 +141,7 @@ func (g *Generator) Logistic(loc, scale float64, size ...int) *arrayF {
 	return out
 }
 
-// Lognormal: distributions.c:532 — exp(normal(mean, sigma)).
+// Lognormal samples distributions.c:532: exp(normal(mean, sigma)).
 func (g *Generator) Lognormal(mean, sigma float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -151,7 +151,7 @@ func (g *Generator) Lognormal(mean, sigma float64, size ...int) *arrayF {
 	return out
 }
 
-// Rayleigh: distributions.c:536 — mode * sqrt(2 * standard_exponential).
+// Rayleigh samples distributions.c:536: mode * sqrt(2 * standard_exponential).
 func (g *Generator) Rayleigh(scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -161,7 +161,7 @@ func (g *Generator) Rayleigh(scale float64, size ...int) *arrayF {
 	return out
 }
 
-// StandardT: distributions.c:540 — sqrt(df/2) * normal / sqrt(gamma(df/2)).
+// StandardT samples distributions.c:540: sqrt(df/2) * normal / sqrt(gamma(df/2)).
 func (g *Generator) StandardT(df float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -173,7 +173,7 @@ func (g *Generator) StandardT(df float64, size ...int) *arrayF {
 	return out
 }
 
-// NoncentralChisquare: distributions.c:829. df > 1: χ²(df−1) + (N + √nonc)²;
+// NoncentralChisquare samples distributions.c:829. df > 1: χ²(df−1) + (N + √nonc)²;
 // df ≤ 1: χ²(df + 2·Poisson(nonc/2)); nonc == 0 falls back to plain χ².
 func (g *Generator) NoncentralChisquare(df, nonc float64, size ...int) *arrayF {
 	n := sizeOr1(size)
@@ -199,7 +199,7 @@ func (g *Generator) NoncentralChisquare(df, nonc float64, size ...int) *arrayF {
 	return out
 }
 
-// NoncentralF: distributions.c:847 — noncentral_chisquare(dfnum,nonc)*dfden /
+// NoncentralF samples distributions.c:847: noncentral_chisquare(dfnum,nonc)*dfden /
 // (χ²(dfden)*dfnum).
 func (g *Generator) NoncentralF(dfnum, dfden, nonc float64, size ...int) *arrayF {
 	n := sizeOr1(size)
@@ -228,7 +228,7 @@ func (g *Generator) noncentralChisquareScalar(df, nonc float64) float64 {
 	return 2.0 * g.StandardGammaScalar((df+2.0*float64(p))/2.0)
 }
 
-// Wald: distributions.c:853 — inverse Gaussian via normal+uniform selection.
+// Wald samples distributions.c:853, the inverse Gaussian via normal+uniform selection.
 func (g *Generator) Wald(mean, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
@@ -247,7 +247,7 @@ func (g *Generator) Wald(mean, scale float64, size ...int) *arrayF {
 	return out
 }
 
-// VonMises: distributions.c:869 — rejection on the wrapped density; the four
+// VonMises samples distributions.c:869 by rejection on the wrapped density; the four
 // kappa regimes (NaN, <1e-8 uniform, <1e-5 taylor, ≤1e6 rejection, wrapped
 // normal fallback) are ported in order.
 func (g *Generator) VonMises(mu, kappa float64, size ...int) *arrayF {
@@ -313,7 +313,7 @@ func (g *Generator) vonMisesScalar(mu, kappa float64) float64 {
 	return mod
 }
 
-// Triangular: distributions.c:1062 — piecewise inverse CDF via sqrt.
+// Triangular samples distributions.c:1062, a piecewise inverse CDF via sqrt.
 func (g *Generator) Triangular(left, mode, right float64, size ...int) *arrayF {
 	if left > mode {
 		panic("left > mode")
@@ -342,7 +342,7 @@ func (g *Generator) Triangular(left, mode, right float64, size ...int) *arrayF {
 	return out
 }
 
-// Logseries: distributions.c:941.
+// Logseries samples distributions.c:941.
 func (g *Generator) Logseries(p float64, size ...int) *arrayI {
 	n := sizeOr1(size)
 	out := newI(n)
@@ -400,7 +400,7 @@ func (g *Generator) geometricInversion(p float64) int64 {
 	return int64(z)
 }
 
-// Geometric: distributions.c:1006 — search for p ≥ 1/3, inversion otherwise.
+// Geometric samples distributions.c:1006: search for p ≥ 1/3, inversion otherwise.
 func (g *Generator) Geometric(p float64, size ...int) *arrayI {
 	if p <= 0 || p > 1 {
 		panic("p <= 0, p > 1 or p contains NaNs")
@@ -441,7 +441,7 @@ func (g *Generator) randomZipf(a float64) int64 {
 	}
 }
 
-// Zipf: distributions.c _generator.pyx zipf → random_zipf, CONS_GT_1.
+// Zipf samples _generator.pyx zipf → random_zipf, CONS_GT_1 (distributions.c).
 func (g *Generator) Zipf(a float64, size ...int) *arrayI {
 	if !(a > 1) {
 		panic("a <= 1 or a is NaN")
@@ -596,7 +596,7 @@ func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 	return K
 }
 
-// Hypergeometric: random_hypergeometric.c:231 — HRUA when
+// Hypergeometric samples random_hypergeometric.c:231 (HRUA) when
 // 10 ≤ sample ≤ total−10, counting otherwise.
 func (g *Generator) Hypergeometric(ngood, nbad, nsample int64, size ...int) *arrayI {
 	const hypergeomMax = 1e9
@@ -618,7 +618,7 @@ func (g *Generator) Hypergeometric(ngood, nbad, nsample int64, size ...int) *arr
 	return out
 }
 
-// NegativeBinomial: distributions.c:614 — Poisson(gamma(n, (1−p)/p)).
+// NegativeBinomial samples distributions.c:614: Poisson(gamma(n, (1−p)/p)).
 func (g *Generator) NegativeBinomial(n float64, p float64, size ...int) *arrayI {
 	if !(n > 0) || math.IsNaN(n) {
 		panic("n must not be NaN and n <= 0")
@@ -640,7 +640,7 @@ func (g *Generator) NegativeBinomial(n float64, p float64, size ...int) *arrayI 
 	return out
 }
 
-// Dirichlet: _generator.pyx:4409. Small-alpha (max < 0.1) uses the
+// Dirichlet samples _generator.pyx:4409. Small-alpha (max < 0.1) uses the
 // stick-breaking Beta construction; otherwise gamma draws normalized by
 // 1/sum (numpy multiplies by invacc, not divides).
 func (g *Generator) Dirichlet(alpha []float64, size ...int) *arrayF {
@@ -701,7 +701,7 @@ func (g *Generator) Dirichlet(alpha []float64, size ...int) *arrayF {
 	return out
 }
 
-// Multinomial: _generator.pyx:3959 + random_multinomial
+// Multinomial samples _generator.pyx:3959 + random_multinomial
 // (distributions.c:1733) — binomial chain over remaining probability.
 // Returns int64 counts in a float64 array (numpy uses int64; arrayI
 // precedent applies, but the counts belong in the typed float array to
@@ -745,7 +745,7 @@ func (g *Generator) Multinomial(n int64, pvals []float64, size ...int) *arrayF {
 	return out
 }
 
-// MultivariateNormal: _generator.pyx:3719 with method='cholesky': x =
+// MultivariateNormal samples _generator.pyx:3719 with method='cholesky': x =
 // standard_normal(rows,dim) then x @ L.T + mean (dot accumulated with FMA per
 // step, matching OpenBLAS dgemm's rounding for the small cov verified here).
 // numpy warns on non-PSD cov; we panic instead. shortcut: our Potrf's
@@ -803,7 +803,7 @@ const (
 	MVHCount
 )
 
-// MultivariateHypergeometric: _generator.pyx:4203. Returns a rows×len(colors)
+// MultivariateHypergeometric samples _generator.pyx:4203. Returns a rows×len(colors)
 // int64 count array. Default method 'marginals'.
 func (g *Generator) MultivariateHypergeometric(colors []int64, nsample int64, size int, method MultivariateHypergeometricMethod) *arrayI {
 	numColors := len(colors)

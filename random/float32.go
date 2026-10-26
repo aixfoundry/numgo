@@ -37,7 +37,7 @@ func (g *Generator) nextFloat() float32 {
 
 var signFloat = [2]float32{1.0, -1.0}
 
-// StandardUniform32: random_standard_uniform_f (distributions.c:32).
+// StandardUniform32 is random_standard_uniform_f (distributions.c:32).
 func (g *Generator) StandardUniform32() float32 { return g.nextFloat() }
 
 // Random32 fills size float32 uniforms in [0,1); no size = one draw
@@ -63,7 +63,7 @@ func (g *Generator) standardExponentialUnlikelyF(idx uint8, x float32) float32 {
 	return g.StandardExponential32Scalar()
 }
 
-// StandardExponential32Scalar: random_standard_exponential_f (distributions.c:105).
+// StandardExponential32Scalar is random_standard_exponential_f (distributions.c:105).
 // ri is uint32: next_uint32>>1, idx = ri&0xff, ri >>= 8 — the mantissa consumes
 // 23 bits, sign+idx the low 9.
 func (g *Generator) StandardExponential32Scalar() float32 {
@@ -88,7 +88,7 @@ func (g *Generator) StandardExponential32(size ...int) *arrayF32 {
 	return out
 }
 
-// StandardNormal32Scalar: random_standard_normal_f (distributions.c:183).
+// StandardNormal32Scalar is random_standard_normal_f (distributions.c:183).
 // r = n23sb8: idx = r&0xff, rabs = (r>>9)&0x7fffff, sign = (r>>8)&1.
 // The idx==0 tail uses double exp(-0.5*x*x) (distributions.c:207).
 func (g *Generator) StandardNormal32Scalar() float32 {
@@ -133,7 +133,7 @@ func (g *Generator) StandardNormal32(size ...int) *arrayF32 {
 	return out
 }
 
-// StandardGamma32Scalar: random_standard_gamma_f (distributions.c:266).
+// StandardGamma32Scalar is random_standard_gamma_f (distributions.c:266).
 // Entirely float32 arithmetic: powf/logf/sqrtf on floats via float64
 // promotion (see the helpers above; sqrtf == float32(math.Sqrt) is exactly rounded).
 func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
@@ -237,7 +237,7 @@ func boundedUint32(off, rng, mask uint32, g *Generator) uint32 {
 	return off + g.boundedLemireUint32(rng)
 }
 
-// Normal32: loc + scale*standard_normal_f as float32 (numpy has no
+// Normal32 returns loc + scale*standard_normal_f as float32 (numpy has no
 // dtype=float32 normal(); this is the float32 analogue for convenience and
 // consumes the same stream as StandardNormal32).
 func (g *Generator) Normal32(mu, sigma float32, size ...int) *arrayF32 {
@@ -249,7 +249,7 @@ func (g *Generator) Normal32(mu, sigma float32, size ...int) *arrayF32 {
 	return out
 }
 
-// Uniform32: lower + range*next_float as float32 (numpy has no dtype=float32
+// Uniform32 returns lower + range*next_float as float32 (numpy has no dtype=float32
 // uniform(); float32 analogue consuming the same stream as Random32).
 func (g *Generator) Uniform32(low, high float32, size ...int) *arrayF32 {
 	rng := high - low
@@ -264,7 +264,7 @@ func (g *Generator) Uniform32(low, high float32, size ...int) *arrayF32 {
 // Beta32 is pending: numpy has no float32 beta kernel (random_beta is
 // double-only); a float32 variant would need a chosen downsampling policy.
 
-// Gamma32: scale * standard_gamma_f, both float32 (numpy has no dtype
+// Gamma32 returns scale * standard_gamma_f, both float32 (numpy has no dtype
 // argument on gamma(); float32 analogue of random_gamma_f, distributions.c:402).
 func (g *Generator) Gamma32(shape, scale float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)

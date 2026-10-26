@@ -7,10 +7,10 @@ import (
 	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
-// Interop primitives for handing array memory to foreign code (cgo, syscalls,
+// UnsafeData hands the array's backing storage to foreign code (cgo, syscalls,
 // binary decoders) — the Go-side analog of numpy's __array_interface__ /
-// ctypeslib. These are the ONLY ways this package aliases caller memory: every
-// constructor otherwise copies its input (design.md P0-2).
+// ctypeslib. This is the ONLY way this package aliases caller memory: every
+// constructor otherwise copies its input.
 //
 // cgo example (a is *Array[float64], C-order contiguous):
 //
@@ -29,14 +29,14 @@ func (a *Array[T]) UnsafeData() unsafe.Pointer {
 	return unsafe.Pointer(&a.data[a.offset])
 }
 
-// Pure: ByteSize returns the number of bytes from UnsafeData to the end of the
+// ByteSize returns the number of bytes from UnsafeData to the end of the
 // VIEW: Size()·sizeof(T) — NOT the size of the whole backing store, which may
 // be longer (a view starting at offset > 0 covers less than len(data)).
 func (a *Array[T]) ByteSize() uintptr {
 	return uintptr(a.Size()) * unsafe.Sizeof(*new(T))
 }
 
-// Shares data: BorrowSlice wraps a caller-owned slice ZERO-COPY (numpy
+// BorrowSlice wraps a caller-owned slice ZERO-COPY (numpy
 // asarray semantics — the one explicit exception to the constructors-copy
 // rule, named Borrow* to flag the aliasing). Mutations through the array write
 // through to the slice and vice versa. The caller guarantees the slice is not
@@ -51,7 +51,7 @@ func BorrowSlice[T Number](data []T, shape ...int) *Array[T] {
 	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), 0, data)
 }
 
-// Shares data: FromByteSlice reinterprets raw LITTLE-ENDIAN bytes as T
+// FromByteSlice reinterprets raw LITTLE-ENDIAN bytes as T
 // elements (numpy frombuffer semantics). When len(b) is a multiple of
 // sizeof(T) AND b is suitably aligned for T, it is a zero-copy
 // reinterpretation that ALIASES b (mutations flow both ways); misaligned

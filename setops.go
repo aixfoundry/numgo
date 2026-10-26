@@ -9,7 +9,7 @@ func isFloat32Kind[T Number]() bool {
 	return reflect.TypeOf(*new(T)).Kind() == reflect.Float32
 }
 
-// Pure: IsIn tests every element of testElements against a's flattened unique
+// IsIn tests every element of testElements against a's flattened unique
 // values (numpy isin, Unique-based) and returns a []bool in C order of
 // testElements. NaN only matches NaN. invert swaps the membership test.
 // The result is a plain []bool because bool is not a Number element type.

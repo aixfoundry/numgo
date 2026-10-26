@@ -136,8 +136,8 @@ func Det[T numgo.Number](a *numgo.Array[T]) *numgo.Array[T] {
 }
 
 // SlogdetResult holds numpy's slogdet pair: Sign is one of -1, 0, +1 and
-// LogAbsDet is log(|det|) (-Inf when the matrix is singular). This phase
-// pins Slogdet to 2-D input (numpy's batched version returns arrays).
+// LogAbsDet is log(|det|) (-Inf when the matrix is singular). Slogdet
+// is pinned to 2-D input (numpy's batched version returns arrays).
 type SlogdetResult[T numgo.Number] struct {
 	Sign      T
 	LogAbsDet T

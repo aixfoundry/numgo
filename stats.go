@@ -114,8 +114,8 @@ func (a *Array[T]) quantileImpl(q01 float64, axes []int) []T {
 	return out
 }
 
-// Pure: Percentile computes the q-th percentile (q in [0, 100]) along axes
-// with numpy's linear interpolation method — the only method in this batch.
+// Percentile computes the q-th percentile (q in [0, 100]) along axes
+// with numpy's linear interpolation method — the only method implemented.
 // The result is always float64: percentiles of complex values are not
 // representable here (numpy raises TypeError). A channel containing NaN
 // yields NaN for it.
@@ -123,7 +123,7 @@ func (a *Array[T]) Percentile(q float64, axes ...int) *Array[float64] {
 	return a.quantileAsReal(q, 100, "Percentiles", axes)
 }
 
-// Pure: Quantile is Percentile with numpy's quantile scale: q in [0, 1].
+// Quantile is Percentile with numpy's quantile scale: q in [0, 1].
 func (a *Array[T]) Quantile(q float64, axes ...int) *Array[float64] {
 	return a.quantileAsReal(q, 1, "Quantiles", axes)
 }
@@ -147,7 +147,7 @@ func (a *Array[T]) quantileAsReal(q, scale float64, kind string, axes []int) *Ar
 	return newArray(shape, nditer.COrderStrides(shape), 0, out)
 }
 
-// Pure: Median computes the median along axes (linear interpolation between
+// Median computes the median along axes (linear interpolation between
 // the two middle values for even counts). A channel containing NaN yields NaN
 // for it; an empty channel yields NaN (numpy raises).
 func (a *Array[T]) Median(axes ...int) *Array[T] {
@@ -298,7 +298,7 @@ func binIndex(v float64, edges []float64) int {
 	return idx
 }
 
-// Pure: HistogramBinEdges returns the bins+1 equal-width edges numpy's
+// HistogramBinEdges returns the bins+1 equal-width edges numpy's
 // histogram would use: linspace over [min, max] of the raveled values,
 // widened by 0.5 on both sides when min == max and [0, 1] when a is empty.
 func (a *Array[T]) HistogramBinEdges(bins int) *Array[float64] {
@@ -313,7 +313,7 @@ func (a *Array[T]) HistogramBinEdges(bins int) *Array[float64] {
 	return newArray(shape, nditer.COrderStrides(shape), 0, edges)
 }
 
-// Pure: Histogram counts the raveled values of a into bins equal-width bins
+// Histogram counts the raveled values of a into bins equal-width bins
 // over [min, max] — numpy's histogram defaults: the last edge is inclusive
 // and out-of-range values (NaN included) are dropped. Returns the counts then
 // the edges.
@@ -329,7 +329,7 @@ func (a *Array[T]) Histogram(bins int) (*Array[float64], *Array[float64]) {
 	return newArray(shape, nditer.COrderStrides(shape), 0, counts), edges
 }
 
-// Pure: HistogramDD counts a's points into bins[d] equal-width bins per
+// HistogramDD counts a's points into bins[d] equal-width bins per
 // dimension: a's last axis holds the D coordinates of each point (numpy's
 // sample of shape (N, D) with the points along the leading axes). Optional
 // ranges override the autodetected [min, max] per dimension. Returns the
@@ -431,7 +431,7 @@ func xySample(xv, yv []float64) *Array[float64] {
 	return FromSlice(data, len(xv), 2)
 }
 
-// Pure: Gradient returns one float64 array per axis with numpy's default
+// Gradient returns one float64 array per axis with numpy's default
 // gradient: second-order central differences in the interior and first-order
 // one-sided differences at the edges, unit spacing. Every axis must have at
 // least two elements (numpy raises for fewer).

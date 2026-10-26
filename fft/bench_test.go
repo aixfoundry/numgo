@@ -6,7 +6,7 @@ import (
 	"github.com/aixfoundry/numgo"
 )
 
-// Performance baseline benchmarks (Phase 5, before-optimization); sizes match
+// Performance baseline benchmarks (before optimization); sizes match
 // scripts/bench_numpy.py. n == 0 selects the axis length (numpy's None).
 
 func realSignal(n int) *numgo.Array[float64] {

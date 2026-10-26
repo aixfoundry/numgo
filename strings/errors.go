@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Panic messages live here (design.md P0-4), reusing numgo's root message text
+// Panic messages live here, reusing numgo's root message text
 // patterns with the subpackage prefix. The root helpers are unexported and a
 // root import would not provide them, so they are mirrored locally.
 

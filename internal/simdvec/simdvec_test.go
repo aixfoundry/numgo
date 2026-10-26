@@ -7,7 +7,7 @@ import (
 
 func TestMatmulKernelF64Bits(t *testing.T) {
 	// Mode-correct bit oracle. Default build: plain mul+add accumulation —
-	// the restored pre-P1 kernel must match the pre-P1 dot.go bits exactly.
+	// the kernel must match the scalar default-build matmul bits exactly.
 	// GOEXPERIMENT=simd: fused MulAdd lanes — assert per-element math.FMA
 	// bits. The root package's TestEinsumMatmulPathRandom independently pins
 	// end-to-end bits in each mode.

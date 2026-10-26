@@ -6,7 +6,7 @@ import (
 	"github.com/aixfoundry/numgo"
 )
 
-// Performance baseline benchmarks (Phase 5, before-optimization).
+// Performance baseline benchmarks (before optimization).
 // Sizes chosen to match scripts/bench_numpy.py so the two tables align.
 func benchMat[T numgo.Number](n int) *numgo.Array[T] {
 	return numgo.Ones[T](n, n)

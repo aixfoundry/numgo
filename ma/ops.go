@@ -54,22 +54,22 @@ func slicesEqual(x, y []int) bool {
 	return true
 }
 
-// Pure: Add returns the element-wise sum with the masks ORed.
+// Add returns the element-wise sum with the masks ORed.
 func (m *Masked[T]) Add(b *Masked[T]) *Masked[T] {
 	return zip2(m, b, func(x, y T) T { return x + y })
 }
 
-// Pure: Sub returns the element-wise difference with the masks ORed.
+// Sub returns the element-wise difference with the masks ORed.
 func (m *Masked[T]) Sub(b *Masked[T]) *Masked[T] {
 	return zip2(m, b, func(x, y T) T { return x - y })
 }
 
-// Pure: Mul returns the element-wise product with the masks ORed.
+// Mul returns the element-wise product with the masks ORed.
 func (m *Masked[T]) Mul(b *Masked[T]) *Masked[T] {
 	return zip2(m, b, func(x, y T) T { return x * y })
 }
 
-// Pure: Div returns the element-wise quotient. Positions where the divisor is
+// Div returns the element-wise quotient. Positions where the divisor is
 // zero are additionally masked (numpy ma: divide-by-zero warning becomes a
 // mask bit; the IEEE result stays in the data).
 func (m *Masked[T]) Div(b *Masked[T]) *Masked[T] {
@@ -88,27 +88,27 @@ func (m *Masked[T]) Div(b *Masked[T]) *Masked[T] {
 	return out
 }
 
-// Pure: Neg returns the element-wise negation.
+// Neg returns the element-wise negation.
 func (m *Masked[T]) Neg() *Masked[T] {
 	return m.unary(func(x T) T { return -x }, nil)
 }
 
-// Pure: AddValue adds the scalar v to every element.
+// AddValue adds the scalar v to every element.
 func (m *Masked[T]) AddValue(v T) *Masked[T] {
 	return m.unary(func(x T) T { return x + v }, nil)
 }
 
-// Pure: SubValue subtracts the scalar v from every element.
+// SubValue subtracts the scalar v from every element.
 func (m *Masked[T]) SubValue(v T) *Masked[T] {
 	return m.unary(func(x T) T { return x - v }, nil)
 }
 
-// Pure: MulValue multiplies every element by the scalar v.
+// MulValue multiplies every element by the scalar v.
 func (m *Masked[T]) MulValue(v T) *Masked[T] {
 	return m.unary(func(x T) T { return x * v }, nil)
 }
 
-// Pure: DivValue divides every element by the scalar v (zero v masks, like Div).
+// DivValue divides every element by the scalar v (zero v masks, like Div).
 func (m *Masked[T]) DivValue(v T) *Masked[T] {
 	re, im := parts(v)
 	out := m.unary(func(x T) T { return x / v }, nil)
@@ -120,12 +120,12 @@ func (m *Masked[T]) DivValue(v T) *Masked[T] {
 	return out
 }
 
-// Pure: Pow raises m to each element of b with the masks ORed.
+// Pow raises m to each element of b with the masks ORed.
 func (m *Masked[T]) Pow(b *Masked[T]) *Masked[T] {
 	return zip2(m, b, powValue[T])
 }
 
-// Pure: Abs returns the element-wise absolute value (real |x|, complex |z|).
+// Abs returns the element-wise absolute value (real |x|, complex |z|).
 func (m *Masked[T]) Abs() *Masked[T] {
 	return m.unary(func(x T) T { return fromParts[T](math.Abs(realOf(x)), 0) }, nil)
 }

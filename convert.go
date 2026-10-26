@@ -7,7 +7,7 @@ import (
 	"github.com/aixfoundry/numgo/internal/simdvec"
 )
 
-// Pure: AsType returns a new array with every element converted to P. Real values
+// AsType returns a new array with every element converted to P. Real values
 // converted to a complex type get a zero imaginary part; a complex value
 // converted to a real type drops its imaginary part.
 //
@@ -122,7 +122,7 @@ func convertTyped[F, P Number](dst []P, src []F) bool {
 	return true
 }
 
-// Pure: AsArray returns a new array holding a copy of data, shaped as given. It is
+// AsArray returns a new array holding a copy of data, shaped as given. It is
 // numpy's asarray naming for FromSlice.
 func AsArray[T Number](data []T, shape ...int) *Array[T] {
 	return FromSlice(data, shape...)

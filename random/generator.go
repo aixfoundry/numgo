@@ -252,7 +252,7 @@ func (g *Generator) shuffleBoundedInt64(data []int64) {
 	}
 }
 
-// Permutation(n) returns a shuffled arange(n); Permutation of an array
+// Permutation returns a shuffled arange(n); Permutation of an array
 // returns a shuffled copy. Integer form matches numpy permutation(int).
 func (g *Generator) Permutation(n int) *arrayI {
 	arr := arangeI(n)

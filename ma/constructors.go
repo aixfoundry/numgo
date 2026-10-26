@@ -8,22 +8,22 @@ import (
 
 // Constructors and masked-value helpers (numpy ma masked_* family).
 
-// Pure: MaskedZeros returns a Masked zeros array (nomask).
+// MaskedZeros returns a Masked zeros array (nomask).
 func MaskedZeros[T numgo.Number](shape ...int) *Masked[T] {
 	return New(numgo.Zeros[T](shape...))
 }
 
-// Pure: MaskedOnes returns a Masked ones array (nomask).
+// MaskedOnes returns a Masked ones array (nomask).
 func MaskedOnes[T numgo.Number](shape ...int) *Masked[T] {
 	return New(numgo.Ones[T](shape...))
 }
 
-// Pure: MaskedFull returns a Masked array filled with v (nomask).
+// MaskedFull returns a Masked array filled with v (nomask).
 func MaskedFull[T numgo.Number](v T, shape ...int) *Masked[T] {
 	return New(numgo.Full(v, shape...))
 }
 
-// Pure: MaskedAll returns a Masked array with every element masked. The data
+// MaskedAll returns a Masked array with every element masked. The data
 // carries zeros (numpy leaves whatever Empty produced; masked anyway).
 func MaskedAll[T numgo.Number](shape ...int) *Masked[T] {
 	m := New(numgo.Zeros[T](shape...))
@@ -33,32 +33,32 @@ func MaskedAll[T numgo.Number](shape ...int) *Masked[T] {
 	return m
 }
 
-// Pure: MaskedEqual masks elements equal to v.
+// MaskedEqual masks elements equal to v.
 func MaskedEqual[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return eq(x, v) })
 }
 
-// Pure: MaskedNotEqual masks elements not equal to v.
+// MaskedNotEqual masks elements not equal to v.
 func MaskedNotEqual[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return !eq(x, v) })
 }
 
-// Pure: MaskedLess masks elements strictly less than v.
+// MaskedLess masks elements strictly less than v.
 func MaskedLess[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return realOf(x) < realOf(v) })
 }
 
-// Pure: MaskedLessEqual masks elements less than or equal to v.
+// MaskedLessEqual masks elements less than or equal to v.
 func MaskedLessEqual[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return realOf(x) <= realOf(v) })
 }
 
-// Pure: MaskedGreater masks elements strictly greater than v.
+// MaskedGreater masks elements strictly greater than v.
 func MaskedGreater[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return realOf(x) > realOf(v) })
 }
 
-// Pure: MaskedGreaterEqual masks elements greater than or equal to v.
+// MaskedGreaterEqual masks elements greater than or equal to v.
 func MaskedGreaterEqual[T numgo.Number](a *numgo.Array[T], v T) *Masked[T] {
 	return maskedCompare(a, v, func(x, v T) bool { return realOf(x) >= realOf(v) })
 }
@@ -79,7 +79,7 @@ func eq[T numgo.Number](x, v T) bool {
 	return xr == vr && xi == vi
 }
 
-// Pure: MaskedWhere masks cond true positions of a (flat C order).
+// MaskedWhere masks cond true positions of a (flat C order).
 func MaskedWhere[T numgo.Number](cond []bool, a *numgo.Array[T]) *Masked[T] {
 	if len(cond) != a.Size() {
 		panicMaskedSize()
@@ -87,7 +87,7 @@ func MaskedWhere[T numgo.Number](cond []bool, a *numgo.Array[T]) *Masked[T] {
 	return FromData(a, cond)
 }
 
-// Pure: MaskedInvalid masks NaN and ±Inf elements (real and complex parts).
+// MaskedInvalid masks NaN and ±Inf elements (real and complex parts).
 func MaskedInvalid[T numgo.Number](a *numgo.Array[T]) *Masked[T] {
 	m := New(a)
 	for i, x := range a.Data() {
@@ -103,7 +103,7 @@ func invalidPart(f float64) bool {
 	return math.IsNaN(f) || math.IsInf(f, 0)
 }
 
-// Pure: MaskedInside masks v1 <= x <= v2 (both inclusive).
+// MaskedInside masks v1 <= x <= v2 (both inclusive).
 func MaskedInside[T numgo.Number](a *numgo.Array[T], v1, v2 T) *Masked[T] {
 	m := New(a)
 	for i, x := range a.Data() {
@@ -113,7 +113,7 @@ func MaskedInside[T numgo.Number](a *numgo.Array[T], v1, v2 T) *Masked[T] {
 	return m
 }
 
-// Pure: MaskedOutside masks x < v1 or x > v2.
+// MaskedOutside masks x < v1 or x > v2.
 func MaskedOutside[T numgo.Number](a *numgo.Array[T], v1, v2 T) *Masked[T] {
 	m := New(a)
 	for i, x := range a.Data() {

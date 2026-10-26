@@ -16,20 +16,26 @@
 // dot products accumulate in a different order and must not be added here.
 //
 // Matmul is the one deliberate exception to bit-equality between builds:
-// GOEXPERIMENT=simd 构建 matmul 为 FMA 累加语义，与默认构建（普通 mul+add）在
-// 一般 float64 输入上末位 ULP 可能不同——与 numpy 跨 BLAS 后端行为同类；库内契约
-// （einsum 折叠路径与通用路径 bit-identical）在两种构建下各自成立。默认构建的
-// 代码路径保持 pre-P1 位级与速度不变，这是双构建设计的核心契约。
+// under GOEXPERIMENT=simd the matmul kernel accumulates fused (MulAdd), which
+// may differ from the default build's plain mul+add in the last ulp on generic
+// float64 inputs — the same class of variation as numpy across BLAS backends.
+// The in-library contract (einsum fold path bit-identical to the general path)
+// holds in each build independently. The default build's code path keeps the
+// original scalar kernel's exact bits and speed — the core contract of the
+// dual-build design.
 //
-// Float32 matmul joins the exception list too (simd 构建的 MatmulKernelF32
-// 为 FMA 累加，与默认构建 generic 内核在一般 float32 输入上末位 ULP 可能
-// 不同)：默认构建中它是只返回 false 的 shim，float32 永远走 generic 内核，
-// 默认路径位级与速度保持不变。
+// Float32 matmul joins the exception list (MatmulKernelF32 accumulates fused
+// under GOEXPERIMENT=simd and may differ in the last ulp from the default
+// build's generic kernel on generic float32 inputs); in the default build it
+// is a shim that only returns false, so float32 always takes the generic
+// kernel there, keeping the default path's bits and speed unchanged.
 //
-// SumF64 joins the exception list: simd 通道并行累加后合并，合并顺序近似两两
-// （pairwise-ish），与默认构建的顺序累加在一般 float64 输入上末位 ULP 可能不同
-// （见 SumF64 注释）。SumAxis0F64 不是例外：通道只跨列，每列仍是升序行累加，
-// 两构建 bit-identical。
+// SumF64 joins the exception list: the simd build accumulates in parallel
+// lanes and merges them in order (pairwise-ish), which may differ from the
+// default build's sequential accumulation in the last ulp on generic float64
+// inputs (see SumF64). SumAxis0F64 is NOT an exception: lanes span columns
+// only, each column still accumulates rows in ascending order — bit-identical
+// across builds.
 package simdvec
 
 // AddF64 writes a[i]+b[i] into dst for i in [0, len(a)). dst, a and b must have
@@ -43,9 +49,9 @@ func AddF64(dst, a, b []float64) {
 
 // MatmulKernelF64 computes c = a@b for dense C-order float64 blocks: a is
 // M×K, b is K×N, c is M×N and must be pre-zeroed. Verbatim lift of dot.go's
-// pre-P1 kernel (git show 683270a:dot.go, 4×8 register-blocked i-k-j, plain
+// original scalar kernel (4×8 register-blocked i-k-j, plain
 // mul+add): "default unchanged" is the core contract of the dual-build design,
-// so default-mode matmul keeps pre-P1 bits AND speed. The GOEXPERIMENT=simd
+// so default-mode matmul keeps the original kernel's bits AND speed. The GOEXPERIMENT=simd
 // twin accumulates fused (MulAdd) and may differ in the last ulp on generic
 // float64 inputs — documented in the package doc and docs/performance.md.
 func MatmulKernelF64(a, b, c []float64, M, K, N int) {
@@ -142,7 +148,8 @@ func MatmulKernelF32(a, b, c []float32, M, K, N int) bool {
 }
 
 // SumF64 folds src into one float64 sum: the existing sequential
-// left-to-right loop, verbatim semantics (default build keeps pre-P2 bits).
+// left-to-right loop, verbatim semantics (the default build has only this
+// path, so its bits are fixed).
 func SumF64(src []float64) float64 {
 	sum := 0.0
 	for _, v := range src {

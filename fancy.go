@@ -4,7 +4,7 @@ import (
 	"slices"
 )
 
-// Pure: Take gathers the elements of a at indices along axis (negative indices
+// Take gathers the elements of a at indices along axis (negative indices
 // count from the end, repeats allowed). The result shape is a's with the axis
 // dimension replaced by len(indices); the result is new data.
 func (a *Array[T]) Take(indices []int, axis int) *Array[T] {
@@ -19,7 +19,7 @@ func (a *Array[T]) Take(indices []int, axis int) *Array[T] {
 	})
 }
 
-// Into: Put mutates the receiver by writing values at the given indices along
+// Put mutates the receiver by writing values at the given indices along
 // axis (negative indices count from the end, repeats allowed). values broadcast
 // against the gathered shape (a's shape with the axis dimension replaced by
 // len(indices)). Returns the receiver for chaining.
@@ -47,7 +47,7 @@ func (a *Array[T]) Put(indices []int, axis int, values *Array[T]) *Array[T] {
 	return a
 }
 
-// Pure: Compress selects the entries of a along axis where mask is true. The
+// Compress selects the entries of a along axis where mask is true. The
 // result shape is a's with the axis dimension replaced by the number of true
 // entries (possibly zero); the result is new data.
 func (a *Array[T]) Compress(mask []bool, axis int) *Array[T] {
@@ -64,7 +64,7 @@ func (a *Array[T]) Compress(mask []bool, axis int) *Array[T] {
 	return a.Take(keep, ax)
 }
 
-// Into: SetMask mutates the receiver by assigning v to every element whose
+// SetMask mutates the receiver by assigning v to every element whose
 // flattened C-order position has mask true (numpy a[mask] = v flat semantics).
 // Returns the receiver for chaining.
 func (a *Array[T]) SetMask(mask []bool, v T) *Array[T] {
@@ -127,7 +127,7 @@ func fancyCoords(norm [][]int, k int, coords []int) []int {
 	return src
 }
 
-// Pure: Index gathers elements of a by integer fancy indexing on the leading
+// Index gathers elements of a by integer fancy indexing on the leading
 // axes: each list is a 1-d index array, the lists broadcast to one common
 // length k, and the result shape is (k,) ++ a's trailing axes. Negative
 // indices count from the end, repeats allowed; the result is new data. With no
@@ -143,7 +143,7 @@ func (a *Array[T]) Index(idx ...[]int) *Array[T] {
 	})
 }
 
-// Into: PutIndices mutates the receiver by assigning values at the positions
+// PutIndices mutates the receiver by assigning values at the positions
 // selected by integer fancy indexing (same rules as Index): values are
 // broadcast against the gathered shape. Returns the receiver for chaining.
 func (a *Array[T]) PutIndices(values *Array[T], idx ...[]int) *Array[T] {
@@ -166,7 +166,7 @@ func (a *Array[T]) PutIndices(values *Array[T], idx ...[]int) *Array[T] {
 	return a
 }
 
-// Pure: MaskSelect selects every element whose flattened C-order position has
+// MaskSelect selects every element whose flattened C-order position has
 // mask true (numpy a[mask] for the whole array). The result is a new 1-d array.
 func (a *Array[T]) MaskSelect(mask []bool) *Array[T] {
 	if len(mask) != a.Size() {

@@ -2,7 +2,7 @@ package fft
 
 import "fmt"
 
-// Panic messages live here (design.md P0-4), worded after numpy.
+// Panic messages live here, worded after numpy.
 
 // panicAxis reports an axis outside [0, ndim) with the original, un-normalized
 // value (numpy normalize_axis_index wording).

@@ -7,11 +7,11 @@ import (
 )
 
 // Shape operations: pure ops that rebuild the mask for the new shape. There
-// are deliberately no zero-copy views this batch (Masked docs). Concatenate,
+// are deliberately no zero-copy views (Masked docs). Concatenate,
 // Stack, Transpose, Reshape and Squeeze are implemented; the rest of numpy
 // ma's shape family (Split, Tile, …) is pending.
 
-// Pure: Concatenate joins masked arrays along axis (negative allowed); masks
+// Concatenate joins masked arrays along axis (negative allowed); masks
 // merge by concatenation.
 func Concatenate[T numgo.Number](axis int, as ...*Masked[T]) *Masked[T] {
 	if len(as) == 0 {
@@ -45,7 +45,7 @@ func Concatenate[T numgo.Number](axis int, as ...*Masked[T]) *Masked[T] {
 	return newMasked(out, mask)
 }
 
-// Pure: Stack joins same-shaped masked arrays along a new axis (negative
+// Stack joins same-shaped masked arrays along a new axis (negative
 // allowed, ndim+1 positions valid).
 func Stack[T numgo.Number](axis int, as ...*Masked[T]) *Masked[T] {
 	if len(as) == 0 {
@@ -70,7 +70,7 @@ func Stack[T numgo.Number](axis int, as ...*Masked[T]) *Masked[T] {
 	return newMasked(out, mask)
 }
 
-// Pure: Transpose permutes axes (no axes = reverse); the mask permutes with
+// Transpose permutes axes (no axes = reverse); the mask permutes with
 // the data.
 func Transpose[T numgo.Number](m *Masked[T], axes ...int) *Masked[T] {
 	out := m.a.Transpose(axes...)
@@ -98,7 +98,7 @@ func Transpose[T numgo.Number](m *Masked[T], axes ...int) *Masked[T] {
 	return newMasked(out, mask)
 }
 
-// Pure: Reshape re-shapes (at most one -1 dimension); the mask re-indexes in
+// Reshape re-shapes (at most one -1 dimension); the mask re-indexes in
 // C order of the new shape. Masks are materialized in C order of the logical
 // shape, so for contiguous data the mask carries over verbatim.
 func Reshape[T numgo.Number](m *Masked[T], shape ...int) *Masked[T] {
@@ -111,7 +111,7 @@ func Reshape[T numgo.Number](m *Masked[T], shape ...int) *Masked[T] {
 	return newMasked(out, slicesClone(m.mask))
 }
 
-// Pure: Squeeze drops size-1 dimensions (all when no axes given); the mask
+// Squeeze drops size-1 dimensions (all when no axes given); the mask
 // re-indexes in C order.
 func Squeeze[T numgo.Number](m *Masked[T], axes ...int) *Masked[T] {
 	out := m.a.Squeeze(axes...)

@@ -2,6 +2,7 @@ package linalg
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/aixfoundry/numgo"
@@ -12,7 +13,7 @@ import (
 // internals.
 func NumberFromFloat[T numgo.Number](v float64) T { return scalarOf[T](v) }
 
-// Panic messages live here (design.md P0-4), worded after numpy's
+// Panic messages live here, worded after numpy's
 // numpy.linalg exception strings.
 
 // panicComplex reports a complex element type reaching a real-only routine.
@@ -71,7 +72,7 @@ func shapeString(shape []int) string {
 		if i > 0 {
 			parts.WriteString(",")
 		}
-		parts.WriteString(fmt.Sprint(d))
+		parts.WriteString(strconv.Itoa(d))
 	}
 	return "(" + parts.String() + ")"
 }

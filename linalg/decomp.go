@@ -66,7 +66,7 @@ type QRResult[T numgo.Number] struct {
 // QR computes the QR factorization of a (..., M, N) with M >= N. Backend:
 // own kernels Geqrf + Orgqr (complete: Orgqr over all m columns; reduced:
 // the first k columns). shortcut: wide matrices (m < n) need the LQ path —
-// not implemented this phase and panic.
+// not implemented; QR panics.
 func QR[T numgo.Number](a *numgo.Array[T], mode QRMode) QRResult[T] {
 	af := f64(a)
 	shape := af.Shape()

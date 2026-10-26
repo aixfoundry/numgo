@@ -7,12 +7,12 @@ import (
 	"github.com/aixfoundry/numgo/internal/nditer"
 )
 
-// Pure: Zeros returns a new array of the given shape filled with zeros.
+// Zeros returns a new array of the given shape filled with zeros.
 func Zeros[T Number](shape ...int) *Array[T] {
 	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), 0, make([]T, nditer.Size(shape)))
 }
 
-// Pure: Ones returns a new array of the given shape filled with ones.
+// Ones returns a new array of the given shape filled with ones.
 func Ones[T Number](shape ...int) *Array[T] {
 	a := Zeros[T](shape...)
 	for i := range a.data {
@@ -21,7 +21,7 @@ func Ones[T Number](shape ...int) *Array[T] {
 	return a
 }
 
-// Pure: Full returns a new array of the given shape filled with v.
+// Full returns a new array of the given shape filled with v.
 func Full[T Number](v T, shape ...int) *Array[T] {
 	a := Zeros[T](shape...)
 	for i := range a.data {
@@ -30,7 +30,7 @@ func Full[T Number](v T, shape ...int) *Array[T] {
 	return a
 }
 
-// Pure: Arange returns evenly spaced values in [start, stop), stepping by step.
+// Arange returns evenly spaced values in [start, stop), stepping by step.
 // Complex operands are ordered by their real part.
 func Arange[T Number](start, stop, step T) *Array[T] {
 	startRe, startIm := parts(start)
@@ -52,7 +52,7 @@ func Arange[T Number](start, stop, step T) *Array[T] {
 	return New1DArray(data)
 }
 
-// Pure: Linspace returns num evenly spaced values from start to stop inclusive.
+// Linspace returns num evenly spaced values from start to stop inclusive.
 func Linspace[T Number](start, stop T, num int) *Array[T] {
 	if num < 0 {
 		panicSamples(num)
@@ -74,7 +74,7 @@ func Linspace[T Number](start, stop T, num int) *Array[T] {
 	return New1DArray(data)
 }
 
-// Pure: Eye returns the n-by-n identity matrix.
+// Eye returns the n-by-n identity matrix.
 func Eye[T Number](n int) *Array[T] {
 	a := Zeros[T](n, n)
 	for i := range n {
@@ -83,7 +83,7 @@ func Eye[T Number](n int) *Array[T] {
 	return a
 }
 
-// Pure: FromSlice returns a new array holding a copy of data. With no shape the
+// FromSlice returns a new array holding a copy of data. With no shape the
 // result is 1-D; otherwise the element count must match.
 func FromSlice[T Number](data []T, shape ...int) *Array[T] {
 	if len(shape) == 0 {
@@ -95,12 +95,12 @@ func FromSlice[T Number](data []T, shape ...int) *Array[T] {
 	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), 0, slices.Clone(data))
 }
 
-// Pure: New1DArray returns a new 1-D array holding a copy of data.
+// New1DArray returns a new 1-D array holding a copy of data.
 func New1DArray[T Number](data []T) *Array[T] {
 	return FromSlice(data, len(data))
 }
 
-// Pure: New2DArray returns a new 2-D array holding a copy of rows; it panics on
+// New2DArray returns a new 2-D array holding a copy of rows; it panics on
 // jagged input.
 func New2DArray[T Number](rows [][]T) *Array[T] {
 	if len(rows) == 0 || len(rows[0]) == 0 {
@@ -117,13 +117,13 @@ func New2DArray[T Number](rows [][]T) *Array[T] {
 	return FromSlice(data, len(rows), cols)
 }
 
-// Pure: Identity returns the n-by-n matrix with ones on the diagonal. Eye with a
+// Identity returns the n-by-n matrix with ones on the diagonal. Eye with a
 // single argument; no Empty constructor exists because Go's make already zeroes.
 func Identity[T Number](n int) *Array[T] {
 	return Eye[T](n)
 }
 
-// Pure: FromFunction fills a new array in C order, calling f with the coordinates
+// FromFunction fills a new array in C order, calling f with the coordinates
 // of each element.
 func FromFunction[T Number](shape []int, f func(coords ...int) T) *Array[T] {
 	a := Zeros[T](shape...)
@@ -144,7 +144,7 @@ func FromFunction[T Number](shape []int, f func(coords ...int) T) *Array[T] {
 	return a
 }
 
-// Pure: MeshGrid returns len(as) arrays with 'ij' (matrix) indexing semantics:
+// MeshGrid returns len(as) arrays with 'ij' (matrix) indexing semantics:
 // result[k] has shape len(as[0]) × … × len(as[n-1]) and varies only along
 // dimension k, taking as[k]'s values there.
 func MeshGrid[T Number](as ...*Array[T]) []*Array[T] {

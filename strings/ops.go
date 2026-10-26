@@ -52,15 +52,15 @@ func bools(a *StrArray, f func(string) bool) []bool {
 // Case ops. Upper/Lower/Swapcase use Go's Unicode mappings, matching numpy's
 // per-character semantics (including ß→SS).
 
-// Pure: Upper uppercases every element. Go's unicode simple case mapping keeps
+// Upper uppercases every element. Go's unicode simple case mapping keeps
 // ß as ß, while numpy (full case mapping) yields "SS" — documented divergence;
 // fixing it would need a special-case table, out of scope for the core.
 func (a *StrArray) Upper() *StrArray { return elementwise(a, strings.ToUpper) }
 
-// Pure: Lower lowercases every element.
+// Lower lowercases every element.
 func (a *StrArray) Lower() *StrArray { return elementwise(a, strings.ToLower) }
 
-// Pure: Swapcase swaps the case of every character.
+// Swapcase swaps the case of every character.
 func (a *StrArray) Swapcase() *StrArray {
 	return elementwise(a, func(s string) string {
 		return strings.Map(func(r rune) rune {
@@ -75,7 +75,7 @@ func (a *StrArray) Swapcase() *StrArray {
 	})
 }
 
-// Pure: Capitalize uppercases the first character and lowercases the rest of
+// Capitalize uppercases the first character and lowercases the rest of
 // each element (numpy semantics).
 func (a *StrArray) Capitalize() *StrArray {
 	return elementwise(a, func(s string) string {
@@ -92,7 +92,7 @@ func (a *StrArray) Capitalize() *StrArray {
 	})
 }
 
-// Pure: Title uppercases the first character of each word and lowercases the
+// Title uppercases the first character of each word and lowercases the
 // rest, matching numpy.strings.title: a character starts a word when the
 // preceding character is uncased, so "don't do" → "Don'T Do". This equals Go's
 // deprecated strings.Title and diverges from modern-English intuition; numpy
@@ -138,7 +138,7 @@ func pythonStop(s string, stop int) int {
 	return max(min(stop, n), 0)
 }
 
-// Pure: Find returns the lowest index of sub at or after start in each element,
+// Find returns the lowest index of sub at or after start in each element,
 // or -1 when absent.
 func (a *StrArray) Find(sub string, start int) *StrArray {
 	return elementwise(a, func(s string) string {
@@ -150,7 +150,7 @@ func (a *StrArray) Find(sub string, start int) *StrArray {
 	})
 }
 
-// Pure: RFind returns the highest index of sub before stop in each element, or
+// RFind returns the highest index of sub before stop in each element, or
 // -1 when absent. A stop of -1 searches the whole element.
 func (a *StrArray) RFind(sub string, stop int) *StrArray {
 	return elementwise(a, func(s string) string {
@@ -163,7 +163,7 @@ func (a *StrArray) RFind(sub string, stop int) *StrArray {
 	})
 }
 
-// Pure: Index is Find but panics "substring not found" (numpy ValueError
+// Index is Find but panics "substring not found" (numpy ValueError
 // wording) if any element lacks sub.
 func (a *StrArray) Index(sub string, start int) *StrArray {
 	res := a.Find(sub, start)
@@ -175,7 +175,7 @@ func (a *StrArray) Index(sub string, start int) *StrArray {
 	return res
 }
 
-// Pure: RIndex is RFind but panics "substring not found" if any element lacks
+// RIndex is RFind but panics "substring not found" if any element lacks
 // sub.
 func (a *StrArray) RIndex(sub string, stop int) *StrArray {
 	res := a.RFind(sub, stop)
@@ -187,7 +187,7 @@ func (a *StrArray) RIndex(sub string, stop int) *StrArray {
 	return res
 }
 
-// Pure: Count returns the number of non-overlapping occurrences of sub between
+// Count returns the number of non-overlapping occurrences of sub between
 // start and stop in each element. Bounds are Python-style exclusive-stop when
 // stop >= 0; a negative stop counts from the end (stop = -1 → whole element
 // via the n+1 wrap matching Python's [start:-1] convention).
@@ -199,14 +199,14 @@ func (a *StrArray) Count(sub string, start, stop int) *StrArray {
 	})
 }
 
-// Pure: StartsWith reports whether each element starts with prefix from start.
+// StartsWith reports whether each element starts with prefix from start.
 func (a *StrArray) StartsWith(prefix string, start int) []bool {
 	return bools(a, func(s string) bool {
 		return strings.HasPrefix(s[clampStart(s, start):], prefix)
 	})
 }
 
-// Pure: EndsWith reports whether each element ends with suffix before stop.
+// EndsWith reports whether each element ends with suffix before stop.
 // A stop of -1 means the whole element.
 func (a *StrArray) EndsWith(suffix string, stop int) []bool {
 	return bools(a, func(s string) bool {
@@ -219,7 +219,7 @@ func (a *StrArray) EndsWith(suffix string, stop int) []bool {
 	})
 }
 
-// Pure: Contains reports whether sub occurs in each element. A Go idiom numpy
+// Contains reports whether sub occurs in each element. A Go idiom numpy
 // lacks (numpy composes it from find >= 0); documented addition.
 func (a *StrArray) Contains(sub string) []bool {
 	return bools(a, func(s string) bool { return strings.Contains(s, sub) })
@@ -256,18 +256,18 @@ func strip(a *StrArray, chars string, left, right bool) *StrArray {
 	})
 }
 
-// Pure: Strip removes leading and trailing chars (whitespace if empty).
+// Strip removes leading and trailing chars (whitespace if empty).
 func (a *StrArray) Strip(chars string) *StrArray { return strip(a, chars, true, true) }
 
-// Pure: LStrip removes leading chars (whitespace if empty).
+// LStrip removes leading chars (whitespace if empty).
 func (a *StrArray) LStrip(chars string) *StrArray { return strip(a, chars, true, false) }
 
-// Pure: RStrip removes trailing chars (whitespace if empty).
+// RStrip removes trailing chars (whitespace if empty).
 func (a *StrArray) RStrip(chars string) *StrArray { return strip(a, chars, false, true) }
 
 // Split ops.
 
-// Pure: Split splits each element at sep into a [][]string in C order. numpy
+// Split splits each element at sep into a [][]string in C order. numpy
 // strings removed split from its namespace (numpy.char keeps it); provided for
 // chararray parity.
 func (a *StrArray) Split(sep string) [][]string {
@@ -276,7 +276,7 @@ func (a *StrArray) Split(sep string) [][]string {
 	return out
 }
 
-// Pure: SplitLines splits each element at line boundaries (\n, \r\n, \r) into
+// SplitLines splits each element at line boundaries (\n, \r\n, \r) into
 // a [][]string in C order, dropping the trailing empty piece a final newline
 // would produce (Python str.splitlines semantics).
 func (a *StrArray) SplitLines() [][]string {
@@ -292,20 +292,20 @@ func (a *StrArray) SplitLines() [][]string {
 	return out
 }
 
-// Pure: Join joins parts with each element as the separator (numpy.char.join
+// Join joins parts with each element as the separator (numpy.char.join
 // semantics; numpy.strings removed join).
 func (a *StrArray) Join(parts []string) *StrArray {
 	return elementwise(a, func(sep string) string { return strings.Join(parts, sep) })
 }
 
-// Pure: Partition splits each element at the first sep into a
+// Partition splits each element at the first sep into a
 // []string{head, sep, tail}; a missing sep yields {elem, "", ""} (numpy
 // semantics).
 func (a *StrArray) Partition(sep string) [][]string {
 	return partitionImpl(a, sep, false)
 }
 
-// Pure: RPartition splits each element at the last sep into
+// RPartition splits each element at the last sep into
 // []string{head, sep, tail}; a missing sep yields {"", "", elem}.
 func (a *StrArray) RPartition(sep string) [][]string {
 	return partitionImpl(a, sep, true)
@@ -333,13 +333,13 @@ func partitionImpl(a *StrArray, sep string, fromRight bool) [][]string {
 
 // Replace and friends.
 
-// Pure: Replace replaces up to n occurrences of old with new in each element
+// Replace replaces up to n occurrences of old with new in each element
 // (n < 0 means all).
 func (a *StrArray) Replace(old, new string, n int) *StrArray {
 	return elementwise(a, func(s string) string { return strings.Replace(s, old, new, n) })
 }
 
-// Pure: Translate maps runes through the table (absent runes pass through).
+// Translate maps runes through the table (absent runes pass through).
 // numpy's delete parameter has no map representation — delete via Replace
 // with "". Documented simplification.
 func (a *StrArray) Translate(table map[rune]rune) *StrArray {
@@ -353,7 +353,7 @@ func (a *StrArray) Translate(table map[rune]rune) *StrArray {
 	})
 }
 
-// Pure: ExpandTabs replaces each tab with spaces to the next tab stop of
+// ExpandTabs replaces each tab with spaces to the next tab stop of
 // tabWidth runes (columns reset at newlines); tabWidth <= 0 removes tabs.
 func (a *StrArray) ExpandTabs(tabWidth int) *StrArray {
 	return elementwise(a, func(s string) string {
@@ -384,7 +384,7 @@ func (a *StrArray) ExpandTabs(tabWidth int) *StrArray {
 // padded, longer and non-positive widths pass through unchanged (numpy
 // behavior).
 
-// Pure: Center pads each element with spaces on both sides to width; the extra
+// Center pads each element with spaces on both sides to width; the extra
 // space goes to the right (CPython: left = deficit/2, rounded down).
 func (a *StrArray) Center(width int) *StrArray {
 	return pad(a, width, func(s string, n int) string {
@@ -393,17 +393,17 @@ func (a *StrArray) Center(width int) *StrArray {
 	})
 }
 
-// Pure: LJust left-justifies each element in a field of width (pads right).
+// LJust left-justifies each element in a field of width (pads right).
 func (a *StrArray) LJust(width int) *StrArray {
 	return pad(a, width, func(s string, n int) string { return s + strings.Repeat(" ", n) })
 }
 
-// Pure: RJust right-justifies each element in a field of width (pads left).
+// RJust right-justifies each element in a field of width (pads left).
 func (a *StrArray) RJust(width int) *StrArray {
 	return pad(a, width, func(s string, n int) string { return strings.Repeat(" ", n) + s })
 }
 
-// Pure: ZFill pads each element with leading zeros to width, keeping a leading
+// ZFill pads each element with leading zeros to width, keeping a leading
 // '+'/'-' sign ahead of the zeros.
 func (a *StrArray) ZFill(width int) *StrArray {
 	return pad(a, width, func(s string, n int) string {
@@ -426,7 +426,7 @@ func pad(a *StrArray, width int, f func(s string, n int) string) *StrArray {
 	})
 }
 
-// Pure: Repeat repeats each element count times (numpy.strings.multiply).
+// Repeat repeats each element count times (numpy.strings.multiply).
 // Negative counts panic (numpy ValueError).
 func (a *StrArray) Repeat(count int) *StrArray {
 	if count < 0 {
@@ -435,7 +435,7 @@ func (a *StrArray) Repeat(count int) *StrArray {
 	return elementwise(a, func(s string) string { return strings.Repeat(s, count) })
 }
 
-// Pure: SliceVal slices each element by Python-style [start:stop] byte bounds;
+// SliceVal slices each element by Python-style [start:stop] byte bounds;
 // negative values count from the end. Named SliceVal because StrArray.Slice is
 // the view op (numpy.strings.slice).
 func (a *StrArray) SliceVal(start, stop int) *StrArray {
@@ -467,34 +467,34 @@ func allRunes(s string, pred func(rune) bool) bool {
 	return true
 }
 
-// Pure: IsAlpha reports whether every character is alphabetic.
+// IsAlpha reports whether every character is alphabetic.
 func (a *StrArray) IsAlpha() []bool {
 	return bools(a, func(s string) bool { return allRunes(s, unicode.IsLetter) })
 }
 
-// Pure: IsDigit reports whether every character is a Unicode decimal digit.
+// IsDigit reports whether every character is a Unicode decimal digit.
 func (a *StrArray) IsDigit() []bool {
 	return bools(a, func(s string) bool { return allRunes(s, unicode.IsDigit) })
 }
 
-// Pure: IsDecimal reports whether every character is a Unicode decimal digit
+// IsDecimal reports whether every character is a Unicode decimal digit
 // (identical to IsDigit here; Python separates them only for non-Nd digits).
 func (a *StrArray) IsDecimal() []bool {
 	return bools(a, func(s string) bool { return allRunes(s, unicode.IsDigit) })
 }
 
-// Pure: IsNumeric reports whether every character is numeric (digits,
+// IsNumeric reports whether every character is numeric (digits,
 // fractions, Roman numerals — Python str.isnumeric semantics).
 func (a *StrArray) IsNumeric() []bool {
 	return bools(a, func(s string) bool { return allRunes(s, unicode.IsNumber) })
 }
 
-// Pure: IsSpace reports whether every character is whitespace.
+// IsSpace reports whether every character is whitespace.
 func (a *StrArray) IsSpace() []bool {
 	return bools(a, func(s string) bool { return allRunes(s, unicode.IsSpace) })
 }
 
-// Pure: IsAlNum reports whether every character is alphanumeric.
+// IsAlNum reports whether every character is alphanumeric.
 func (a *StrArray) IsAlNum() []bool {
 	return bools(a, func(s string) bool {
 		return allRunes(s, func(r rune) bool { return unicode.IsLetter(r) || unicode.IsNumber(r) })
@@ -516,19 +516,19 @@ func casedCheck(s string, pred func(rune) bool) bool {
 	return any
 }
 
-// Pure: IsLower reports whether all cased characters are lowercase and at
+// IsLower reports whether all cased characters are lowercase and at
 // least one exists.
 func (a *StrArray) IsLower() []bool {
 	return bools(a, func(s string) bool { return casedCheck(s, unicode.IsLower) })
 }
 
-// Pure: IsUpper reports whether all cased characters are uppercase and at
+// IsUpper reports whether all cased characters are uppercase and at
 // least one exists.
 func (a *StrArray) IsUpper() []bool {
 	return bools(a, func(s string) bool { return casedCheck(s, unicode.IsUpper) })
 }
 
-// Pure: IsTitle reports whether each element is title-cased: cased characters
+// IsTitle reports whether each element is title-cased: cased characters
 // follow uncased ones and vice versa (Python str.istitle; empty → false).
 func (a *StrArray) IsTitle() []bool {
 	return bools(a, func(s string) bool {
@@ -547,7 +547,7 @@ func (a *StrArray) IsTitle() []bool {
 	})
 }
 
-// Pure: IsEmpty reports whether each element is the empty string. A Go idiom
+// IsEmpty reports whether each element is the empty string. A Go idiom
 // (Python has no str.isempty); documented addition.
 func (a *StrArray) IsEmpty() []bool {
 	return bools(a, func(s string) bool { return s == "" })

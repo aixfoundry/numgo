@@ -6,7 +6,7 @@ import (
 	"github.com/aixfoundry/numgo"
 )
 
-// Performance baseline benchmarks (Phase 5, before-optimization); sizes match
+// Performance baseline benchmarks (before optimization); sizes match
 // scripts/bench_numpy.py. Values are a fixed pseudo-random matrix — the SVD /
 // eig paths need non-degenerate data to converge.
 func benchPD(n int) *numgo.Array[float64] {

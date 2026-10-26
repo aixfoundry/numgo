@@ -31,27 +31,27 @@ func (a *Array[T]) layout() *nditer.Layout {
 	return &nditer.Layout{Shape: a.shape, Strides: a.strides, Offset: a.offset}
 }
 
-// Pure: Shape returns a copy of the array's dimensions.
+// Shape returns a copy of the array's dimensions.
 func (a *Array[T]) Shape() []int {
 	return slices.Clone(a.shape)
 }
 
-// Pure: Ndim returns the number of dimensions.
+// Ndim returns the number of dimensions.
 func (a *Array[T]) Ndim() int {
 	return len(a.shape)
 }
 
-// Pure: Size returns the total number of elements.
+// Size returns the total number of elements.
 func (a *Array[T]) Size() int {
 	return nditer.Size(a.shape)
 }
 
-// Pure: IsContiguous reports whether the array is laid out in C order.
+// IsContiguous reports whether the array is laid out in C order.
 func (a *Array[T]) IsContiguous() bool {
 	return nditer.IsContiguous(a.layout())
 }
 
-// Shares data: Data returns the underlying storage starting at the view
+// Data returns the underlying storage starting at the view
 // offset. For contiguous arrays it reads in C order; for non-contiguous
 // views the element order does NOT match C order — use Ravel().Data()
 // instead. Mutating it affects every array sharing the storage.
@@ -59,7 +59,7 @@ func (a *Array[T]) Data() []T {
 	return a.data[a.offset:]
 }
 
-// Pure: Copy returns an independent, C-order compact copy of the array.
+// Copy returns an independent, C-order compact copy of the array.
 func (a *Array[T]) Copy() *Array[T] {
 	shape := slices.Clone(a.shape)
 	dst := newArray(shape, nditer.COrderStrides(shape), 0, make([]T, nditer.Size(shape)))
@@ -75,7 +75,7 @@ func (a *Array[T]) Copy() *Array[T] {
 	return dst
 }
 
-// View: Reshape views the array with a new shape when the data is contiguous; a
+// Reshape views the array with a new shape when the data is contiguous; a
 // non-contiguous array is copied first, so the result may not share data.
 // At most one dimension may be -1 and is inferred.
 func (a *Array[T]) Reshape(shape ...int) *Array[T] {
@@ -112,7 +112,7 @@ func (a *Array[T]) Reshape(shape ...int) *Array[T] {
 	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), a.offset, a.data)
 }
 
-// View: Transpose views the array with its axes permuted. With no axes it reverses
+// Transpose views the array with its axes permuted. With no axes it reverses
 // them (numpy .T). The result shares data.
 func (a *Array[T]) Transpose(axes ...int) *Array[T] {
 	if len(axes) == 0 {
@@ -138,7 +138,7 @@ func (a *Array[T]) Transpose(axes ...int) *Array[T] {
 	return newArray(l.Shape, l.Strides, l.Offset, a.data)
 }
 
-// View: Slice views a strided sub-array. Ranges cover the leading axes;
+// Slice views a strided sub-array. Ranges cover the leading axes;
 // trailing axes not mentioned are taken whole (numpy a[:2] semantics), so a
 // zero Range or a missing axis means the entire axis. The result shares data.
 // Bounds follow numpy: negative indices count from the end and a negative
@@ -162,7 +162,7 @@ func (a *Array[T]) Slice(rs ...Range) *Array[T] {
 	return newArray(l.Shape, l.Strides, l.Offset, a.data)
 }
 
-// View: Squeeze drops size-1 dimensions. With no axes all size-1 dimensions are
+// Squeeze drops size-1 dimensions. With no axes all size-1 dimensions are
 // dropped; named axes must have size one. The result shares data.
 func (a *Array[T]) Squeeze(axes ...int) *Array[T] {
 	drop := make([]bool, len(a.shape))
@@ -189,7 +189,7 @@ func (a *Array[T]) Squeeze(axes ...int) *Array[T] {
 	return newArray(shape, strides, a.offset, a.data)
 }
 
-// View: ExpandDims inserts a size-1 dimension at axis (negative counts from the
+// ExpandDims inserts a size-1 dimension at axis (negative counts from the
 // end). The result shares data.
 func (a *Array[T]) ExpandDims(axis int) *Array[T] {
 	ax := axis
@@ -205,7 +205,7 @@ func (a *Array[T]) ExpandDims(axis int) *Array[T] {
 		a.offset, a.data)
 }
 
-// View: SwapAxes exchanges dimensions i and j (negative allowed). The result
+// SwapAxes exchanges dimensions i and j (negative allowed). The result
 // shares data.
 func (a *Array[T]) SwapAxes(i, j int) *Array[T] {
 	i, j = a.resolveAxis(i), a.resolveAxis(j)
@@ -218,14 +218,14 @@ func (a *Array[T]) SwapAxes(i, j int) *Array[T] {
 	return newArray(l.Shape, l.Strides, l.Offset, a.data)
 }
 
-// View: Ravel flattens to 1-D in C order. A contiguous array returns a view
+// Ravel flattens to 1-D in C order. A contiguous array returns a view
 // sharing data; a non-contiguous array is copied first, so sharing is not
 // guaranteed.
 func (a *Array[T]) Ravel() *Array[T] {
 	return a.Reshape(a.Size())
 }
 
-// View: BroadcastTo expands the array to shape with stride-0 dimensions. The
+// BroadcastTo expands the array to shape with stride-0 dimensions. The
 // shape must be right-align-compatible: every trailing dimension is equal to the
 // input's or the input dimension is one. The result shares data, and writes
 // through it alias across expanded slots — numpy's broadcast_to is read-only,

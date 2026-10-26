@@ -6,7 +6,7 @@
 // data's Size) and is indexed in C order of the data's LOGICAL shape, so it
 // stays aligned no matter what view the underlying data is.
 //
-// Semantics for this batch:
+// Semantics:
 //   - Constructors copy their inputs; operations are pure (new Masked). There
 //     are no zero-copy views: shape ops rebuild the mask for the new shape.
 //   - Element-wise ops OR the operand masks. Div additionally masks positions
@@ -42,13 +42,13 @@ type Masked[T numgo.Number] struct {
 	hard bool
 }
 
-// Pure: New returns a masked view-free copy of a with no elements masked
+// New returns a masked view-free copy of a with no elements masked
 // (numpy's nomask).
 func New[T numgo.Number](a *numgo.Array[T]) *Masked[T] {
 	return &Masked[T]{a: a.Copy(), mask: make([]bool, a.Size())}
 }
 
-// Pure: FromData builds a Masked from data and a mask, copying both. The mask
+// FromData builds a Masked from data and a mask, copying both. The mask
 // length must equal data's Size.
 func FromData[T numgo.Number](data *numgo.Array[T], mask []bool) *Masked[T] {
 	if len(mask) != data.Size() {
@@ -63,22 +63,22 @@ func newMasked[T numgo.Number](a *numgo.Array[T], mask []bool) *Masked[T] {
 	return &Masked[T]{a: a, mask: mask}
 }
 
-// Pure: Shape returns a copy of the data's dimensions.
+// Shape returns a copy of the data's dimensions.
 func (m *Masked[T]) Shape() []int { return m.a.Shape() }
 
-// Pure: Ndim returns the data's dimension count.
+// Ndim returns the data's dimension count.
 func (m *Masked[T]) Ndim() int { return m.a.Ndim() }
 
-// Pure: Size returns the data's element count (and the mask length).
+// Size returns the data's element count (and the mask length).
 func (m *Masked[T]) Size() int { return m.a.Size() }
 
-// Shares data: Data returns the underlying data array.
+// Data returns the underlying data array.
 func (m *Masked[T]) Data() *numgo.Array[T] { return m.a }
 
-// Pure: Mask returns a copy of the mask, C order of the logical shape.
+// Mask returns a copy of the mask, C order of the logical shape.
 func (m *Masked[T]) Mask() []bool { return slices.Clone(m.mask) }
 
-// Pure: CountUnmasked returns the number of valid elements.
+// CountUnmasked returns the number of valid elements.
 func (m *Masked[T]) CountUnmasked() int {
 	n := 0
 	for _, bad := range m.mask {
@@ -89,12 +89,12 @@ func (m *Masked[T]) CountUnmasked() int {
 	return n
 }
 
-// Pure: Copy returns an independent copy of data and mask (hard flag kept).
+// Copy returns an independent copy of data and mask (hard flag kept).
 func (m *Masked[T]) Copy() *Masked[T] {
 	return &Masked[T]{a: m.a.Copy(), mask: slices.Clone(m.mask), hard: m.hard}
 }
 
-// Pure: Filled returns a copy of the data with every masked element replaced
+// Filled returns a copy of the data with every masked element replaced
 // by fill.
 func (m *Masked[T]) Filled(fill T) *numgo.Array[T] {
 	out := m.a.Copy()
@@ -107,14 +107,14 @@ func (m *Masked[T]) Filled(fill T) *numgo.Array[T] {
 	return out
 }
 
-// Pure: FilledDefault fills masked elements with numpy's default fill value
+// FilledDefault fills masked elements with numpy's default fill value
 // for the element type: 1e20 (real part 1e20 for complex), per
 // np.ma.default_fill_value.
 func (m *Masked[T]) FilledDefault() *numgo.Array[T] {
 	return m.Filled(fromParts[T](1e20, 0))
 }
 
-// Pure: Compressed returns the unmasked elements as a new 1-D array in C order
+// Compressed returns the unmasked elements as a new 1-D array in C order
 // (numpy compressed()); possibly empty.
 func (m *Masked[T]) Compressed() *numgo.Array[T] {
 	vals := make([]T, 0, m.CountUnmasked())
@@ -127,14 +127,14 @@ func (m *Masked[T]) Compressed() *numgo.Array[T] {
 	return numgo.New1DArray(vals)
 }
 
-// Chainable: HardMask enables the hard mask: SetUnmasked silently refuses
+// HardMask enables the hard mask: SetUnmasked silently refuses
 // writes to masked positions (numpy hard_mask).
 func (m *Masked[T]) HardMask() *Masked[T] { m.hard = true; return m }
 
-// Chainable: SoftMask disables the hard mask (numpy default).
+// SoftMask disables the hard mask (numpy default).
 func (m *Masked[T]) SoftMask() *Masked[T] { m.hard = false; return m }
 
-// In-place: SetUnmasked writes v at coords and clears the mask bit there. A
+// SetUnmasked writes v at coords and clears the mask bit there. A
 // masked position under a hard mask silently refuses the write and is returned
 // unchanged (numpy behavior). Invalid coords panic.
 func (m *Masked[T]) SetUnmasked(coords []int, v T) *Masked[T] {
