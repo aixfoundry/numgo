@@ -7,7 +7,7 @@ N-dimensional arrays with NumPy semantics for Go.
 ![License](https://img.shields.io/badge/License-Apache--2.0-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-[中文文档](README.zh-CN.md)
+[中文文档](README.zh-CN.md) · [Website](https://aixfoundry.github.io/numgo/)
 
 ## Why numgo
 

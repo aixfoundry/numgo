@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>numgo — N-dimensional arrays with NumPy semantics for Go</title>
+<meta name="description" content="numgo is a zero-dependency Go library for N-dimensional arrays with NumPy semantics: broadcasting, type promotion, reproducible random streams, pure-Go LAPACK and FFT.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f5f0">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a111e">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="#main" aria-label="numgo home">
+      <svg class="brand-mark" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true" focusable="false">
+        <rect x="1"  y="1"  width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="9.5" y="1"  width="7" height="7" rx="2" class="mk mk-b"/>
+        <rect x="18" y="1"  width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="1"  y="9.5" width="7" height="7" rx="2" class="mk mk-b"/>
+        <rect x="9.5" y="9.5" width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="18" y="9.5" width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="1"  y="18" width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="9.5" y="18" width="7" height="7" rx="2" class="mk mk-a"/>
+        <rect x="18" y="18" width="7" height="7" rx="2" class="mk mk-b"/>
+      </svg>
+      <span class="brand-name">numgo</span>
+    </a>
+    <p class="tagline">N-dimensional arrays with NumPy semantics for Go</p>
+    <nav class="site-nav" aria-label="Site">
+      <a href="https://github.com/aixfoundry/numgo">GitHub</a>
+      <a href="https://pkg.go.dev/github.com/aixfoundry/numgo">pkg.go.dev</a>
+      <a href="https://github.com/aixfoundry/numgo/blob/main/docs/performance.md">Docs</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ Hero ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <h1 id="hero-title">
+          <span class="rise r1">NumPy semantics.</span>
+          <span class="rise r2">Go ergonomics.</span>
+          <span class="rise r3 accent">Zero dependencies.</span>
+        </h1>
+        <p class="lede rise r4">Broadcasting rules, type promotion, NaN/Inf propagation and axis
+        handling match NumPy — while the API stays Go-idiomatic: generics for dtype dispatch,
+        explicit conversion, views as first-class values. LAPACK, FFT, random and the math
+        kernels are implemented in-tree, on the Go standard library alone.</p>
+
+        <div class="install rise r5" role="group" aria-label="Install command">
+          <span class="prompt" aria-hidden="true">$</span>
+          <code>go get github.com/aixfoundry/numgo</code>
+        </div>
+        <p class="micro rise r5">Requires Go 1.27 or later.</p>
+
+        <div class="cta rise r6">
+          <a class="btn btn-primary" href="https://github.com/aixfoundry/numgo">GitHub</a>
+          <a class="btn" href="https://pkg.go.dev/github.com/aixfoundry/numgo">pkg.go.dev</a>
+          <a class="btn" href="https://github.com/aixfoundry/numgo/blob/main/docs/performance.md">Documentation</a>
+        </div>
+      </div>
+
+      <div class="hero-art rise r4" aria-hidden="true">
+        <svg class="array-svg" viewBox="0 0 300 230" role="presentation" focusable="false">
+          <!-- array a (2,3) -->
+          <text x="10" y="20" class="lbl">a (2,3)</text>
+          <g>
+            <rect x="10"  y="30" width="56" height="44" rx="8" class="cell"/>
+            <rect x="72"  y="30" width="56" height="44" rx="8" class="cell"/>
+            <rect x="134" y="30" width="56" height="44" rx="8" class="cell"/>
+            <rect x="10"  y="80" width="56" height="44" rx="8" class="cell"/>
+            <rect x="72"  y="80" width="56" height="44" rx="8" class="cell"/>
+            <rect x="134" y="80" width="56" height="44" rx="8" class="cell"/>
+            <text x="38"  y="58" text-anchor="middle" class="num">0</text>
+            <text x="100" y="58" text-anchor="middle" class="num">1</text>
+            <text x="162" y="58" text-anchor="middle" class="num">2</text>
+            <text x="38"  y="108" text-anchor="middle" class="num">3</text>
+            <text x="100" y="108" text-anchor="middle" class="num">4</text>
+            <text x="162" y="108" text-anchor="middle" class="num">5</text>
+          </g>
+          <!-- broadcast row b (1,3) -->
+          <text x="200" y="150" class="lbl">b (1,3)</text>
+          <g>
+            <rect x="10"  y="158" width="56" height="44" rx="8" class="cell cell-b"/>
+            <rect x="72"  y="158" width="56" height="44" rx="8" class="cell cell-b"/>
+            <rect x="134" y="158" width="56" height="44" rx="8" class="cell cell-b"/>
+            <text x="38"  y="186" text-anchor="middle" class="num num-b">1</text>
+            <text x="100" y="186" text-anchor="middle" class="num num-b">1</text>
+            <text x="162" y="186" text-anchor="middle" class="num num-b">1</text>
+          </g>
+          <!-- broadcast arrows -->
+          <path d="M 38 132 v 18"  class="arrow"/>
+          <path d="M 100 132 v 18" class="arrow"/>
+          <path d="M 162 132 v 18" class="arrow"/>
+          <text x="232" y="110" class="lbl lbl-b">broadcasts →</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Features ============ -->
+  <section class="section" aria-labelledby="features-title">
+    <div class="wrap">
+      <p class="kicker">why numgo</p>
+      <h2 id="features-title">A NumPy you can ship inside a Go binary</h2>
+      <div class="feature-grid">
+        <article class="card">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <h3>NumPy semantics, Go ergonomics</h3>
+          <p>Broadcasting, type promotion, NaN/Inf propagation, axis handling — even error-message
+          wording — match NumPy, behind a Go-idiomatic API: generics for dtype dispatch, explicit
+          conversion, views as first-class values.</p>
+        </article>
+        <article class="card">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 12h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <h3>Zero dependencies</h3>
+          <p><code>go.mod</code> contains only the Go standard library. LAPACK, FFT, random and the
+          math kernels are implemented in-tree — no cgo, no BLAS.</p>
+        </article>
+        <article class="card">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <h3>Reproducible random streams</h3>
+          <p><code>SeedSequence</code> + MT19937/PCG64 are exact ports: for identical seeds,
+          libm-free distributions produce bit-identical streams to NumPy; libm-sensitive ones stay
+          ULP-close via Go's stdlib math.</p>
+        </article>
+        <article class="card">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 3 5 13h5l-1 8 8-10h-5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <h3>Opt-in <code>GOEXPERIMENT=simd</code></h3>
+          <p>Two build modes: a default pure-Go build, and an opt-in SIMD build that accelerates
+          hot paths (with documented last-ULP notes). Results contracts hold in both.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Performance ============ -->
+  <section class="section section-alt" aria-labelledby="perf-title">
+    <div class="wrap">
+      <p class="kicker">performance</p>
+      <h2 id="perf-title">Where numgo wins — measured, not claimed</h2>
+
+      <ul class="perf-points">
+        <li>Faster than NumPy on small-matrix <code>Solve</code> (24×) and <code>Inv</code> (4.6×),
+            <code>StandardNormal</code>, <code>StandardGamma</code>, and element-level
+            <code>At</code>/<code>Set</code> (12×).</li>
+        <li>Near parity on einsum, cumsum, and masked-array arithmetic.</li>
+        <li>Single-threaded elementwise and reductions currently trail NumPy's vectorized kernels
+            by 3–21×.</li>
+        <li>The opt-in <code>GOEXPERIMENT=simd</code> build turns Matmul 4.2× faster and makes
+            <code>SumAll</code>/<code>SumAxis0</code> <strong>faster than NumPy</strong>.</li>
+      </ul>
+
+      <div class="table-scroll">
+        <table class="perf-table">
+          <caption class="sr-only">Selected numgo vs NumPy benchmark results, single-threaded pure Go vs NumPy 2.5.1 with OpenBLAS</caption>
+          <thead>
+            <tr><th scope="col">Operation</th><th scope="col" class="r">Size</th><th scope="col" class="r">numgo</th><th scope="col" class="r">NumPy</th><th scope="col" class="r">Ratio</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><code>Solve</code></th><td class="r mono">100×100</td><td class="r mono">0.24 ms</td><td class="r mono">5.730 ms</td><td class="r"><span class="badge badge-win">24× faster</span></td></tr>
+            <tr><th scope="row"><code>Inv</code></th><td class="r mono">100×100</td><td class="r mono">1.98 ms</td><td class="r mono">9.114 ms</td><td class="r"><span class="badge badge-win">4.6× faster</span></td></tr>
+            <tr><th scope="row"><code>At</code>/<code>Set</code> per element</th><td class="r mono">1e6</td><td class="r mono">9.38 ms</td><td class="r mono">114.0 ms</td><td class="r"><span class="badge badge-win">12× faster</span></td></tr>
+            <tr><th scope="row"><code>StandardNormal</code></th><td class="r mono">1e6</td><td class="r mono">4.53 ms</td><td class="r mono">6.563 ms</td><td class="r"><span class="badge badge-win">0.69× · faster</span></td></tr>
+            <tr><th scope="row"><code>StandardGamma</code></th><td class="r mono">1e6</td><td class="r mono">11.1 ms</td><td class="r mono">12.093 ms</td><td class="r"><span class="badge">0.92× · parity</span></td></tr>
+            <tr><th scope="row"><code>einsum</code> ij,jk→ik</th><td class="r mono">100×100×100</td><td class="r mono">0.29 ms</td><td class="r mono">0.168 ms</td><td class="r"><span class="badge">1.7× · near parity</span></td></tr>
+            <tr><th scope="row"><code>CumSum</code> (last axis)</th><td class="r mono">1000×1000</td><td class="r mono">2.82 ms</td><td class="r mono">2.302 ms</td><td class="r"><span class="badge">1.2× · near parity</span></td></tr>
+            <tr><th scope="row"><code>ma.Add</code> half-masked</th><td class="r mono">1000×1000</td><td class="r mono">2.59 ms</td><td class="r mono">0.888 ms</td><td class="r"><span class="badge">2.9× · near parity</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="footnote">Single-threaded pure Go vs NumPy 2.5.1 / OpenBLAS · ratio = numgo ÷ NumPy,
+      lower is better · <a href="https://github.com/aixfoundry/numgo/blob/main/docs/performance.md">full methodology and all benchmarks</a></p>
+
+      <aside class="simd-callout" aria-labelledby="simd-title">
+        <h3 id="simd-title">With <code>GOEXPERIMENT=simd</code></h3>
+        <p class="simd-note">Go 1.27's experimental <code>simd</code> package is wired into selected
+        hot paths; same machine, default build unchanged.</p>
+        <div class="table-scroll">
+          <table class="simd-table">
+            <caption class="sr-only">Benchmarks with the opt-in GOEXPERIMENT=simd build versus the default build</caption>
+            <thead>
+              <tr><th scope="col">Benchmark</th><th scope="col" class="r">Default build</th><th scope="col" class="r">GOEXPERIMENT=simd</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Sum full reduction, 1000×1000</th><td class="r mono">~2.24 ms</td><td class="r mono"><strong>~0.072 ms</strong> — beats NumPy's 0.107 ms</td></tr>
+              <tr><th scope="row">Sum axis=0, 1000×1000</th><td class="r mono">~1.35 ms</td><td class="r mono"><strong>~0.088 ms</strong> — beats NumPy's 0.125 ms</td></tr>
+              <tr><th scope="row">Matmul 200³</th><td class="r mono">~1.9 ms</td><td class="r mono">~0.45 ms (≈4.2×)</td></tr>
+              <tr><th scope="row">Matmul batched 16×64×64×64</th><td class="r mono">~1.0 ms</td><td class="r mono">~0.26 ms (≈4×)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ Quick start ============ -->
+  <section class="section" id="quickstart" aria-labelledby="qs-title">
+    <div class="wrap">
+      <p class="kicker">quick start</p>
+      <h2 id="qs-title">From <code>go get</code> to <code>.npy</code> in one file</h2>
+      <div class="code-card">
+        <div class="code-bar" aria-hidden="true">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="code-file">main.go</span>
+        </div>
+<pre class="code"><code><span class="kw">package</span> main
+
+<span class="kw">import</span> (
+    <span class="str">"os"</span>
+
+    <span class="str">"github.com/aixfoundry/numgo"</span>
+)
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    a := numgo.<span class="fn">Arange</span>(<span class="num">0.0</span>, <span class="num">6.0</span>, <span class="num">1.0</span>).<span class="fn">Reshape</span>(<span class="num">2</span>, <span class="num">3</span>)   <span class="cmt">// [[0 1 2], [3 4 5]]</span>
+    b := numgo.<span class="fn">Ones</span>[<span class="kw">float64</span>](<span class="num">1</span>, <span class="num">3</span>)                 <span class="cmt">// broadcast add (2,3)+(1,3)</span>
+    c := a.<span class="fn">Add</span>(b)                                  <span class="cmt">// pure operation: new data</span>
+
+    m := numgo.<span class="fn">Ones</span>[<span class="kw">float64</span>](<span class="num">3</span>, <span class="num">2</span>)
+    p := c.<span class="fn">Matmul</span>(m)                               <span class="cmt">// (2,3) @ (3,2) → (2,2)</span>
+
+    numgo.<span class="fn">SaveFile</span>(<span class="str">"a.npy"</span>, a)                     <span class="cmt">// .npy write/read</span>
+    <span class="kw">if</span> v, err := numgo.<span class="fn">LoadFile</span>(<span class="str">"a.npy"</span>); err == <span class="kw">nil</span> {
+        arr := v.<span class="fn">AsFloat64</span>()
+        _ = arr.<span class="fn">Sum</span>()                              <span class="cmt">// 15</span>
+    }
+    _ = p
+    os.<span class="fn">Remove</span>(<span class="str">"a.npy"</span>)
+}</code></pre>
+      </div>
+      <p class="footnote">NumPy 2.x semantics are verified against golden fixtures generated from
+      NumPy; some surfaces are intentionally skipped (recarrays, <code>np.matrix</code>, legacy
+      <code>RandomState</code>) — see the <a href="https://github.com/aixfoundry/numgo/blob/main/docs/numpy-parity.md">parity notes</a>.</p>
+    </div>
+  </section>
+
+  <!-- ============ Packages ============ -->
+  <section class="section section-alt" aria-labelledby="pkg-title">
+    <div class="wrap">
+      <p class="kicker">packages</p>
+      <h2 id="pkg-title">Nine packages, NumPy module by module</h2>
+      <div class="pkg-grid">
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo">numgo</a>
+          <p><code>Array[T]</code> views &amp; constructors, ufuncs, reductions, sorting, manipulation,
+          dot products, einsum, IO (<code>.npy</code>/<code>.npz</code>/txt), interop</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/linalg">numgo/linalg</a>
+          <p><code>numpy.linalg</code>: solve, least squares, SVD/QR/Cholesky/eigen decompositions,
+          norms — pure-Go LAPACK kernels</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/fft">numgo/fft</a>
+          <p><code>numpy.fft</code>: mixed-radix FFT/inverse/rfft families + fftshift, three
+          <code>norm</code> modes</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/random">numgo/random</a>
+          <p><code>numpy.random</code>: SeedSequence + MT19937/PCG64 + Generator distributions;
+          streams match NumPy (libm-free paths bit-identical)</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/polynomial">numgo/polynomial</a>
+          <p><code>numpy.polynomial</code>: Polynomial, Chebyshev, Legendre, Laguerre, Hermite,
+          HermiteE</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/strings">numgo/strings</a>
+          <p><code>numpy.strings</code>: vectorized string operations on StrArray
+          (upper/split/replace/…)</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/ma">numgo/ma</a>
+          <p><code>numpy.ma</code>: MaskedArray = data + mask with mask-propagating operations</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/emath">numgo/emath</a>
+          <p><code>numpy.emath</code>: scimath functions that promote to complex outside the real
+          domain</p>
+        </article>
+        <article class="pkg">
+          <a class="pkg-name" href="https://pkg.go.dev/github.com/aixfoundry/numgo/assert">numgo/assert</a>
+          <p><code>numpy.testing</code>: AssertAllClose/AssertArrayEqual and friends, for downstream
+          tests</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-row">
+    <p>Apache-2.0 · Copyright 2024–2026 kaisawind · This product includes software translated from
+    NumPy (BSD-3-Clause); see <a href="https://github.com/aixfoundry/numgo/blob/main/NOTICE">NOTICE</a>
+    for details.</p>
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="https://github.com/aixfoundry/numgo">GitHub</a>
+      <a href="https://pkg.go.dev/github.com/aixfoundry/numgo">pkg.go.dev</a>
+      <a href="https://github.com/aixfoundry/numgo/blob/main/README.zh-CN.md" lang="zh-Hans">简体中文 README</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

@@ -7,7 +7,7 @@ Go 泛型 N 维数组库，语义对齐 numpy，接口符合 Go 习惯。
 ![License](https://img.shields.io/badge/License-Apache--2.0-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-[English](README.md)
+[English](README.md) · [网站](https://aixfoundry.github.io/numgo/)
 
 ## 为什么是 numgo
 

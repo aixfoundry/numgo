@@ -274,7 +274,8 @@ func panicBroadcastArrays(shapes [][]int) {
 	var b strings.Builder
 	b.WriteString("numgo: operands could not be broadcast together with shapes")
 	for _, s := range shapes {
-		b.WriteString(" " + shapeString(s))
+		b.WriteString(" ")
+		b.WriteString(shapeString(s))
 	}
 	panic(b.String())
 }
