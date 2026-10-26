@@ -2,20 +2,26 @@ package random
 
 import (
 	"math"
+	"runtime"
 	"testing"
 )
 
-// ULP tolerance for numpy-fixture parity of libm-sensitive draws. Fixtures
-// were generated from numpy on glibc/Linux; on platforms where numpy links a
-// different libm (e.g. Apple's on macOS), libm-sensitive draws may drift a
-// few ULP — the bit-exact guarantee is documented for glibc/Linux builds.
-const parityULPTol = 16
+// ULP tolerance for numpy-fixture parity of float draws. Fixtures were
+// generated from numpy on linux/amd64. On amd64, numgo must match bit for
+// bit. On arm64 the Go compiler fuses x*y+z across statements (the Go spec
+// allows it) and the C toolchains that build numpy there fuse the same
+// expressions, so draws can drift tens of ULP vs the amd64 fixtures while
+// still matching same-platform numpy — bounded drift, not bit equality.
+const parityULPTolNonAmd64 = 64
 
-// eqBits asserts bit-identical float64 draws. It allows ≤parityULPTol ULP of
-// drift ONLY for values that straddle a different-sign zero or NaN pattern —
-// otherwise bitwise equality is required.
+// eqBits asserts bit-identical float64 draws on amd64; on other
+// architectures it allows the bounded drift described above.
 func eqBits(t *testing.T, name string, got []float64, want []uint64) {
 	t.Helper()
+	tol := int64(0)
+	if runtime.GOARCH != "amd64" {
+		tol = parityULPTolNonAmd64
+	}
 	if len(got) != len(want) {
 		t.Fatalf("%s: len %d != %d", name, len(got), len(want))
 	}
@@ -31,7 +37,7 @@ func eqBits(t *testing.T, name string, got []float64, want []uint64) {
 		if dist < 0 {
 			dist = -dist
 		}
-		if dist <= parityULPTol {
+		if dist <= tol {
 			continue
 		}
 		t.Fatalf("%s[%d]: got %x want %x (%v vs %v, %d ULP)", name, i,
@@ -47,9 +53,6 @@ func orderedBits(b uint64) int64 {
 	}
 	return int64(b | 1<<63)
 }
-
-// ulp32 is the float32 counterpart of parityULPTol.
-const ulp32Tol = 8
 
 // eqInts asserts exact integer draws — integers are libm-free and stay
 // bit-exact on every platform.

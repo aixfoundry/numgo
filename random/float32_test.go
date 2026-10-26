@@ -2,15 +2,22 @@ package random
 
 import (
 	"math"
+	"runtime"
 	"testing"
 )
 
 // eqBits32 asserts float32 parity. Fixtures were generated from numpy on
-// glibc/Linux; on platforms where numpy links a different libm, libm-sensitive
-// draws may drift a few ULP — the bit-exact guarantee is documented for
-// glibc/Linux builds. Tolerance: ≤ulp32Tol float32 ULP (ordered-bit distance).
+// linux/amd64: bit-identical on amd64; on other architectures (arm64 Go
+// compiler FMA fusion — see eqBits) bounded drift of ≤ulp32TolNonAmd64
+// float32 ULP (ordered-bit distance) is accepted.
+const ulp32TolNonAmd64 = 32
+
 func eqBits32(t *testing.T, name string, got []float32, want []uint64) {
 	t.Helper()
+	tol := int32(0)
+	if runtime.GOARCH != "amd64" {
+		tol = ulp32TolNonAmd64
+	}
 	if len(got) != len(want) {
 		t.Fatalf("%s: len %d != %d", name, len(got), len(want))
 	}
@@ -24,7 +31,7 @@ func eqBits32(t *testing.T, name string, got []float32, want []uint64) {
 		if dist < 0 {
 			dist = -dist
 		}
-		if dist <= ulp32Tol {
+		if dist <= tol {
 			continue
 		}
 		t.Fatalf("%s[%d]: got %x want %x (%v vs %v, %d ULP)", name, i,
