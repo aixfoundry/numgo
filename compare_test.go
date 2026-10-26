@@ -144,14 +144,27 @@ func TestPredicates(t *testing.T) {
 	if !slices.Equal(f32.IsNaN(), []bool{false, true}) {
 		t.Errorf("float32 IsNaN = %v", f32.IsNaN())
 	}
-	// Complex comparison uses the real part.
+	// Complex comparisons are lexicographic (real, then imaginary).
 	cl := FromSlice([]complex128{1 + 100i, 0 - 5i})
 	cr := FromSlice([]complex128{2, -1})
 	if !slices.Equal(cl.Less(cr), []bool{true, false}) {
-		t.Errorf("complex real-part Less = %v", cl.Less(cr))
+		t.Errorf("complex lexicographic Less = %v", cl.Less(cr))
 	}
 	if !slices.Equal(cl.GreaterValue(0+999i), []bool{true, false}) {
-		t.Errorf("complex real-part GreaterValue = %v", cl.GreaterValue(0+999i))
+		t.Errorf("complex lexicographic GreaterValue = %v", cl.GreaterValue(0+999i))
+	}
+	// Real-part ties break on the imaginary part (numpy ordering).
+	lt := FromSlice([]complex128{1 + 50i, 1 + 150i})
+	if !slices.Equal(lt.Greater(FromSlice([]complex128{1 + 100i, 1 + 100i})), []bool{false, true}) {
+		t.Errorf("complex tie-break Greater = %v", lt.Greater(FromSlice([]complex128{1 + 100i, 1 + 100i})))
+	}
+	// Equality compares both components.
+	eq := FromSlice([]complex128{1 + 2i})
+	if eq.Equal(FromSlice([]complex128{1 + 7i}))[0] {
+		t.Errorf("complex Equal must compare both components")
+	}
+	if !eq.Equal(FromSlice([]complex128{1 + 2i}))[0] || eq.NotEqual(FromSlice([]complex128{1 + 2i}))[0] {
+		t.Errorf("complex Equal/NotEqual exact match failed")
 	}
 }
 

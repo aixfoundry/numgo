@@ -7,7 +7,7 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	a := FromSlice([]float64{-3.5, 0, -0.0, 2.5}, 2, 2)
+	a := FromSlice([]float64{-3.5, 0, math.Copysign(0, -1), 2.5}, 2, 2)
 	got := a.Sign()
 	if got.At(0, 0) != -1 || got.At(0, 1) != 0 || got.At(1, 0) != 0 || got.At(1, 1) != 1 {
 		t.Fatalf("Sign real = %v, %v, %v, %v", got.At(0, 0), got.At(0, 1), got.At(1, 0), got.At(1, 1))
@@ -125,7 +125,7 @@ func TestSinc(t *testing.T) {
 }
 
 func TestHeaviside(t *testing.T) {
-	got := FromSlice([]float64{-2, 0, 3, -0.0, 1, 0}, 2, 3).Heaviside(0.75)
+	got := FromSlice([]float64{-2, 0, 3, math.Copysign(0, -1), 1, 0}, 2, 3).Heaviside(0.75)
 	want := []float64{0, 0.75, 1, 0.75, 1, 0.75}
 	for i, w := range want {
 		if v := got.At(i/3, i%3); v != w {

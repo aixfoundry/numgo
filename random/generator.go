@@ -287,14 +287,16 @@ func (g *Generator) Permuted(x *numgo.Array[float64], axis int) *numgo.Array[flo
 	n := out.Shape()[ax]
 	rest := append(append([]int{}, out.Shape()[:ax]...), out.Shape()[ax+1:]...)
 	coords := make([]int, out.Ndim())
+	ci := make([]int, out.Ndim())
+	cj := make([]int, out.Ndim())
 	odometerPermuted(rest, func(c []int) {
 		copy(coords[:ax], c[:ax])
 		copy(coords[ax+1:], c[ax:])
+		copy(ci, coords)
+		copy(cj, coords)
 		for i := n - 1; i >= 1; i-- {
 			j := int(g.randomInterval(uint64(i)))
-			ci := append([]int(nil), coords...)
 			ci[ax] = i
-			cj := append([]int(nil), coords...)
 			cj[ax] = j
 			vi, vj := out.At(ci...), out.At(cj...)
 			out.Set(ci, vj)

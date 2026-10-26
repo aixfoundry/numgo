@@ -17,13 +17,7 @@ func IsClose[T Number](a, b *Array[T], rtol, atol float64) []bool {
 	coords := make([]int, len(shape))
 	for i := range out {
 		out[i] = isCloseScalar(a.data[nditer.Index(la, coords)], b.data[nditer.Index(lb, coords)], rtol, atol)
-		for k := len(coords) - 1; k >= 0; k-- {
-			coords[k]++
-			if coords[k] < shape[k] {
-				break
-			}
-			coords[k] = 0
-		}
+		advance(coords, shape)
 	}
 	return out
 }
