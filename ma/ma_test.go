@@ -8,7 +8,7 @@ import (
 )
 
 // Golden tests against numpy 2.5.1 ma semantics (values generated with
-// np.ma; see docs/design.md and numpy/ma/core.py references).
+// np.ma; see docs/architecture.md and numpy/ma/core.py references).
 
 func approx(t *testing.T, name string, got []float64, want []float64) {
 	t.Helper()

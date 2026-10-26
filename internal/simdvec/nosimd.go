@@ -47,7 +47,7 @@ func AddF64(dst, a, b []float64) {
 // mul+add): "default unchanged" is the core contract of the dual-build design,
 // so default-mode matmul keeps pre-P1 bits AND speed. The GOEXPERIMENT=simd
 // twin accumulates fused (MulAdd) and may differ in the last ulp on generic
-// float64 inputs — documented in the package doc and docs/perf-baseline.md.
+// float64 inputs — documented in the package doc and docs/performance.md.
 func MatmulKernelF64(a, b, c []float64, M, K, N int) {
 	M4, N8 := M-M%4, N-N%8
 	for i0 := 0; i0 < M4; i0 += 4 {

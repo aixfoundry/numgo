@@ -1,5 +1,5 @@
 // Package ma provides numpy.ma-style masked arrays over numgo.Array
-// (numpy/ma/core.py semantics, narrowed to this batch — see docs/design.md §2).
+// (numpy/ma/core.py semantics; see docs/architecture.md).
 //
 // A Masked pairs a data array with a parallel mask: true marks an element as
 // invalid. The mask is always materialized (a []bool whose length equals the
