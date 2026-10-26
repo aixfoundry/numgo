@@ -19,11 +19,12 @@
   --win-soft:      #dcf3e3;
   --code-bg:       #10192b;   /* code stays dark in both themes */
   --code-ink:      #dbe4f3;
-  --kw:   #7dd3fc;
-  --str:  #fbbf24;
-  --num:  #f0abfc;
-  --fn:   #86efac;
-  --cmt:  #64748b;
+  /* code tokens — GitHub Dark palette, matches how this code renders on GitHub */
+  --kw:   #ff7b72;
+  --str:  #a5d6ff;
+  --num:  #79c0ff;
+  --fn:   #d2a8ff;
+  --cmt:  #8b949e;
 
   --radius: 14px;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
