@@ -34,7 +34,7 @@ func Where[T Number](cond []bool, x, y *Array[T]) *Array[T] {
 	}
 	dst := newArray(shape, nditer.COrderStrides(shape), 0, make([]T, n))
 	coords := make([]int, len(shape))
-	for k := 0; k < n; k++ {
+	for k := range n {
 		if cond[k] {
 			dst.data[k] = x.data[nditer.Index(la, coords)]
 		} else {
