@@ -103,6 +103,8 @@ g = np.random.default_rng(42)
 row("StandardNormal 1M", "1e6", timeit(lambda: g.standard_normal(1_000_000)))
 row("Random 1M", "1e6", timeit(lambda: g.random(1_000_000)))
 row("Integers 1M", "1e6", timeit(lambda: g.integers(0, 1000, 1_000_000)))
+row("StandardGamma 1M", "1e6", timeit(lambda: g.standard_gamma(3.0, 1_000_000)))
+row("Weibull 1M", "1e6", timeit(lambda: g.weibull(1.5, 1_000_000)))
 
 # ---- ma ----
 mask = np.zeros((1000, 1000), dtype=bool)
