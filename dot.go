@@ -14,12 +14,20 @@ import (
 // c is M×N and must be pre-zeroed. Float64 matrices run simdvec.MatmulKernelF64
 // (build-tag selected): lanes span N, so per output element the sum still
 // accumulates k in ascending order — bit-identical to the naive i-j-k loop
-// this comment historically described. Other dtypes keep the 4×8 register
-// blocked generic kernel below.
+// this comment historically described. Float32 runs simdvec.MatmulKernelF32 in
+// simd builds (fused lanes, last-ulp exception); in default builds the shim
+// reports false and falls through to the generic kernel below, so default f32
+// behavior is unchanged. All other dtypes keep the 4×8 register blocked
+// generic kernel.
 func matmulKernel[T Number](a, b, c []T, M, K, N int) {
 	if ad, ok := any(a).([]float64); ok {
 		simdvec.MatmulKernelF64(ad, any(b).([]float64), any(c).([]float64), M, K, N)
 		return
+	}
+	if af, ok := any(a).([]float32); ok {
+		if simdvec.MatmulKernelF32(af, any(b).([]float32), any(c).([]float32), M, K, N) {
+			return
+		}
 	}
 	genericMatmulKernel(a, b, c, M, K, N)
 }

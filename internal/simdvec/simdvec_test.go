@@ -53,6 +53,65 @@ func TestMatmulKernelF64Bits(t *testing.T) {
 	}
 }
 
+func TestMatmulKernelF32Mode(t *testing.T) {
+	// Mode-correct oracle mirroring the F64 test. Default build: the shim
+	// reports false and must leave c untouched (caller falls through to its
+	// generic kernel). GOEXPERIMENT=simd: per-region bits — fused FMA inside
+	// 4×l panels, plain mul+add in the edge columns/rows, exactly like the
+	// scalar tails of the kernel itself.
+	shapes := [][3]int{{5, 7, 9}, {4, 8, 8}, {3, 5, 17}, {1, 1, 1}, {7, 13, 6}, {2, 3, 0}}
+	for _, sh := range shapes {
+		M, K, N := sh[0], sh[1], sh[2]
+		a := make([]float32, M*K)
+		b := make([]float32, K*N)
+		for i := range a {
+			a[i] = float32(i%17-8) / 3
+		}
+		for i := range b {
+			b[i] = float32(i%11-5) / 7
+		}
+		want := make([]float32, M*N)
+		if fmaMode {
+			for i := range M {
+				for j := range N {
+					var acc float32
+					panelCol := j < N-N%16 // 16 = simd.Float32s{}.Len() on AVX-512
+					panelRow := i < M-M%4
+					if panelCol && panelRow {
+						// float32 FMA oracle: widen to float64 (products and
+						// sums of float32 are exact there) so math.FMA +
+						// round-to-float32 == per-element fmaf.
+						for k := range K {
+							acc = float32(math.FMA(float64(a[i*K+k]), float64(b[k*N+j]), float64(acc)))
+						}
+					} else {
+						for k := range K {
+							acc += a[i*K+k] * b[k*N+j]
+						}
+					}
+					want[i*N+j] = acc
+				}
+			}
+		}
+		got := make([]float32, M*N)
+		for i := range got {
+			got[i] = -1 // sentinel: shim must not touch c
+		}
+		handled := MatmulKernelF32(a, b, got, M, K, N)
+		if handled != fmaMode {
+			t.Fatalf("M=%d K=%d N=%d: handled=%v want %v", M, K, N, handled, fmaMode)
+		}
+		if !fmaMode {
+			continue
+		}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Fatalf("M=%d K=%d N=%d [%d]: got %v want %v", M, K, N, i, got[i], want[i])
+			}
+		}
+	}
+}
+
 func TestSumF64(t *testing.T) {
 	// Mode-branched oracle: default = sequential left-to-right; simd =
 	// lane accumulators merged left-to-right (documented pairwise-ish).

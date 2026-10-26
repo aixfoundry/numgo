@@ -60,6 +60,11 @@ row("Unique", "100k 1-d", timeit(lambda: np.unique(u)))
 row("Matmul 200", "200x200x200", timeit(lambda: a[:200, :200] @ b[:200, :200]))
 batch = np.arange(16 * 64 * 64, dtype=np.float64).reshape(16, 64, 64) / 13
 row("Matmul batch", "16x64x64x64", timeit(lambda: batch @ batch))
+a32 = np.arange(200 * 200, dtype=np.float32).reshape(200, 200) / 257
+b32 = np.arange(200 * 200, dtype=np.float32).reshape(200, 200) / 257
+row("Matmul 200 f32", "200x200x200", timeit(lambda: a32 @ b32))
+batch32 = np.arange(16 * 64 * 64, dtype=np.float32).reshape(16, 64, 64) / 13
+row("Matmul batch f32", "16x64x64x64", timeit(lambda: batch32 @ batch32))
 row("Einsum ij,jk->ik", "100x100x100", timeit(lambda: np.einsum("ij,jk->ik", a[:100, :100], b[:100, :100])))
 
 

@@ -291,4 +291,17 @@ P2（Sum 归约）：`SumF64` 车道累加 + 顺序 lane 合并（pairwise 类�
 哨兵——后者在 `t.Parallel()` 下有数据竞争，已移除）。SumAll/SumAxis0 的 2.28/1.35ms
 基线是闭包回调遍历而非带宽极限，simd 后双双反超 numpy。
 
+P3（float32 matmul）：`MatmulKernelF32` 与 F64 同构（Float32s 车道跨 N、k 升序、MulAdd；
+nosimd 侧为 bool shim 直接回落 `genericMatmulKernel`，默认构建逐字节不变）。simd 模式：
+Matmul200 f32 1.74→0.51ms（3.4×，vs numpy f32 0.028ms ≈18×——BLAS f32 单精度双吞吐
+差距仍在），批量 f32 0.95→0.129ms（7.4×，vs numpy 0.051ms ≈2.5×）。f32 matmul 加入
+simd 模式末位 ULP 例外清单。
+
+P3（FFT 尝试，已回滚）：实虚拆面对 fftRec 的 radix 组合层与 Bluestein 点乘链做了完整
+向量化实现并验证正确，但实测 **无实质收益**（FFT65536 ≈1.05×，IRFFT ≈1.0×，FFTN64
+反慢 8%），结论已测量归因（pprof）：n≤32 的标量 dftNaive 叶子占 44-73% 运行时，拆面/
+交错往返又吃掉组合层收益。要突破需要向量 radix-32 叶子内核 + 根包 At/Set 拷贝优化
+（另约 10%），超出 fft 包范围——按不恋战原则整体回滚，仅保留此测量结论。重做前提：
+simd 包出现 shuffle/permute 类指令或完成 radix-32 向量内核设计。
+
 CI 新增 `test-goexperiment-simd` 任务（gofmt/vet/test 与主任务镜像，GOEXPERIMENT=simd）。

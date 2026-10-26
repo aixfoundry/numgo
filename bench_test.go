@@ -115,6 +115,34 @@ func BenchmarkMatmulBatch(b *testing.B) {
 	}
 }
 
+func BenchmarkMatmulF32(b *testing.B) {
+	data := make([]float32, 200*200)
+	for i := range data {
+		data[i] = float32(i%257) / 257
+	}
+	a := numgo.FromSlice(data, 200, 200)
+	c := numgo.FromSlice(data, 200, 200)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		a.Matmul(c)
+	}
+}
+
+func BenchmarkMatmulBatchF32(b *testing.B) {
+	data := make([]float32, 16*64*64)
+	for i := range data {
+		data[i] = float32(i%13) / 13
+	}
+	a := numgo.FromSlice(data, 16, 64, 64)
+	c := numgo.FromSlice(data, 16, 64, 64)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		a.Matmul(c)
+	}
+}
+
 func BenchmarkEinsum(b *testing.B) {
 	a := benchMat[float64](100)
 	c := benchMat[float64](100)

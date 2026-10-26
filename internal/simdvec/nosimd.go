@@ -21,6 +21,11 @@
 // （einsum 折叠路径与通用路径 bit-identical）在两种构建下各自成立。默认构建的
 // 代码路径保持 pre-P1 位级与速度不变，这是双构建设计的核心契约。
 //
+// Float32 matmul joins the exception list too (simd 构建的 MatmulKernelF32
+// 为 FMA 累加，与默认构建 generic 内核在一般 float32 输入上末位 ULP 可能
+// 不同)：默认构建中它是只返回 false 的 shim，float32 永远走 generic 内核，
+// 默认路径位级与速度保持不变。
+//
 // SumF64 joins the exception list: simd 通道并行累加后合并，合并顺序近似两两
 // （pairwise-ish），与默认构建的顺序累加在一般 float64 输入上末位 ULP 可能不同
 // （见 SumF64 注释）。SumAxis0F64 不是例外：通道只跨列，每列仍是升序行累加，
@@ -125,6 +130,15 @@ func MatmulKernelF64(a, b, c []float64, M, K, N int) {
 			c[i*N+j] = sum
 		}
 	}
+}
+
+// MatmulKernelF32 is the default-build shim: it only reports false so the
+// caller falls through to its generic kernel — default-build float32 matmul
+// keeps today's exact code path, bits and speed (the core contract). The
+// GOEXPERIMENT=simd twin computes with fused lanes and reports true; its
+// fused accumulation joins the documented last-ulp exception list above.
+func MatmulKernelF32(a, b, c []float32, M, K, N int) bool {
+	return false
 }
 
 // SumF64 folds src into one float64 sum: the existing sequential

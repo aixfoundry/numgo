@@ -144,6 +144,66 @@ func MatmulKernelF64(a, b, c []float64, M, K, N int) {
 	}
 }
 
+// MatmulKernelF32 computes c = a@b for dense C-order float32 blocks (a is
+// M×K, b is K×N, c is M×N pre-zeroed) and reports true — the caller falls
+// back to its generic kernel when the nosimd shim reports false. It mirrors
+// MatmulKernelF64: Float32s lanes span N (each lane one output column),
+// accumulating k ascending with fused MulAdd. Float32 matmul joins the
+// documented last-ulp exception list (see package doc in nosimd.go): fused
+// simd accumulation may differ from the default build's generic kernel in
+// the last ulp; the per-mode bit oracle in simdvec_test.go pins each build.
+func MatmulKernelF32(a, b, c []float32, M, K, N int) bool {
+	l := simd.Float32s{}.Len()
+	M4, N8 := M-M%4, N-N%l
+	for i0 := 0; i0 < M4; i0 += 4 {
+		c0 := c[(i0+0)*N:]
+		c1 := c[(i0+1)*N:]
+		c2 := c[(i0+2)*N:]
+		c3 := c[(i0+3)*N:]
+		for j0 := 0; j0 < N8; j0 += l {
+			var r0, r1, r2, r3 simd.Float32s
+			for k := range K {
+				bk := simd.LoadFloat32s(b[k*N+j0 : k*N+j0+l : k*N+j0+l])
+				a0 := simd.BroadcastFloat32s(a[(i0+0)*K+k])
+				r0 = bk.MulAdd(a0, r0)
+				a1 := simd.BroadcastFloat32s(a[(i0+1)*K+k])
+				r1 = bk.MulAdd(a1, r1)
+				a2 := simd.BroadcastFloat32s(a[(i0+2)*K+k])
+				r2 = bk.MulAdd(a2, r2)
+				a3 := simd.BroadcastFloat32s(a[(i0+3)*K+k])
+				r3 = bk.MulAdd(a3, r3)
+			}
+			r0.Store(c0[j0 : j0+l : j0+l])
+			r1.Store(c1[j0 : j0+l : j0+l])
+			r2.Store(c2[j0 : j0+l : j0+l])
+			r3.Store(c3[j0 : j0+l : j0+l])
+		}
+	}
+	// Edge columns/rows outside the 4×l panels: plain k-ascending dot per
+	// element, the same loop shape and order as the scalar kernel. The fused
+	// panel lanes and these non-fused tails can differ in the last ulp; the
+	// test oracle is per-region like the F64 one.
+	for i := range M {
+		for j := N8; j < N; j++ {
+			var sum float32
+			for k := range K {
+				sum += a[i*K+k] * b[k*N+j]
+			}
+			c[i*N+j] = sum
+		}
+	}
+	for i := M4; i < M; i++ {
+		for j := range N8 {
+			var sum float32
+			for k := range K {
+				sum += a[i*K+k] * b[k*N+j]
+			}
+			c[i*N+j] = sum
+		}
+	}
+	return true
+}
+
 // ConvertF64ToF32 writes float32(src[i]) into dst. Go 1.27's simd package has
 // no Float64s→Float32s conversion method (only Int32s.ConvertToFloat32 and the
 // bit-reinterpret BitsToFloat32), so this stays the scalar loop — shortcut:
