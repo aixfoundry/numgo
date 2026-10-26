@@ -101,9 +101,7 @@ func (g *Generator) Laplace(loc, scale float64, size ...int) *arrayF {
 		if hi < lo {
 			m = hi
 		}
-		// barrier: no arm64 FMA fusion
-		draw := sign * scale * math.Log(m)
-		out.Data()[i] = loc + draw
+		out.Data()[i] = loc + sign*scale*math.Log(m)
 	}
 	return out
 }
@@ -121,9 +119,7 @@ func (g *Generator) Gumbel(loc, scale float64, size ...int) *arrayF {
 				break
 			}
 		}
-		// barrier: no arm64 FMA fusion
-		draw := scale * math.Log(-math.Log(U))
-		out.Data()[i] = loc - draw
+		out.Data()[i] = loc - scale*math.Log(-math.Log(U))
 	}
 	return out
 }
@@ -140,9 +136,7 @@ func (g *Generator) Logistic(loc, scale float64, size ...int) *arrayF {
 				break
 			}
 		}
-		// barrier: no arm64 FMA fusion
-		draw := scale * math.Log(U/(1.0-U))
-		out.Data()[i] = loc + draw
+		out.Data()[i] = loc + scale*math.Log(U/(1.0-U))
 	}
 	return out
 }
@@ -152,9 +146,7 @@ func (g *Generator) Lognormal(mean, sigma float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
 	for i := range n {
-		// barrier: no arm64 FMA fusion
-		zz := sigma * g.StandardNormalScalar()
-		out.Data()[i] = math.Exp(mean + zz)
+		out.Data()[i] = math.Exp(mean + sigma*g.StandardNormalScalar())
 	}
 	return out
 }
@@ -164,9 +156,7 @@ func (g *Generator) Rayleigh(scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
 	for i := range n {
-		// barrier: no arm64 FMA fusion
-		e2 := 2.0 * g.StandardExponentialScalar()
-		out.Data()[i] = scale * math.Sqrt(e2)
+		out.Data()[i] = scale * math.Sqrt(2.0*g.StandardExponentialScalar())
 	}
 	return out
 }
@@ -200,9 +190,7 @@ func (g *Generator) NoncentralChisquare(df, nonc float64, size ...int) *arrayF {
 		if 1 < df {
 			chi2 := 2.0 * g.StandardGammaScalar((df-1.0)/2.0)
 			nv := g.StandardNormalScalar() + math.Sqrt(nonc)
-			// barrier: no arm64 FMA fusion
-			nv2 := nv * nv
-			out.Data()[i] = chi2 + nv2
+			out.Data()[i] = chi2 + nv*nv
 		} else {
 			p := g.poissonScalar(nonc / 2.0)
 			out.Data()[i] = 2.0 * g.StandardGammaScalar((df+2.0*float64(p))/2.0)
@@ -282,16 +270,11 @@ func (g *Generator) vonMisesScalar(mu, kappa float64) float64 {
 	if kappa < 1e-5 {
 		s = 1.0/kappa + kappa
 	} else if kappa <= 1e6 {
-		// barrier: no arm64 FMA fusion (4κ² feeds 1+ via add)
-		k2 := kappa * kappa
-		r := 1.0 + math.Sqrt(1.0+4.0*k2)
+		r := 1.0 + math.Sqrt(1.0+4.0*kappa*kappa)
 		rho := (r - math.Sqrt(2.0*r)) / (2.0 * kappa)
-		rho2 := rho * rho
-		s = (1.0 + rho2) / (2.0 * rho)
+		s = (1.0 + rho*rho) / (2.0 * rho)
 	} else {
-		// barrier: no arm64 FMA fusion
-		zterm := math.Sqrt(1.0/kappa) * g.StandardNormalScalar()
-		result := mu + zterm
+		result := mu + math.Sqrt(1.0/kappa)*g.StandardNormalScalar()
 		if result < -math.Pi {
 			result += 2.0 * math.Pi
 		}
@@ -308,14 +291,10 @@ func (g *Generator) vonMisesScalar(mu, kappa float64) float64 {
 		// product with correct rounding; math.Pi * U gave a 1-ULP
 		// difference in one observed draw).
 		Z := math.Cos(0x1.921fb54442d18p+1 * U)
-		// barrier: no arm64 FMA fusion
-		sz := s * Z
-		W = (1.0 + sz) / (s + Z)
+		W = (1.0 + s*Z) / (s + Z)
 		Y := kappa * (s - W)
 		V := g.nextDouble()
-		// barrier: no arm64 FMA fusion
-		y2 := Y * (2.0 - Y)
-		if y2-V >= 0 || math.Log(Y/V)+1.0-Y >= 0 {
+		if (Y*(2.0-Y)-V >= 0) || (math.Log(Y/V)+1.0-Y >= 0) {
 			break
 		}
 	}
@@ -355,13 +334,9 @@ func (g *Generator) Triangular(left, mode, right float64, size ...int) *arrayF {
 	for i := range n {
 		U := g.nextDouble()
 		if U <= ratio {
-			// barrier: no arm64 FMA fusion
-			sq := math.Sqrt(U * leftprod)
-			out.Data()[i] = left + sq
+			out.Data()[i] = left + math.Sqrt(U*leftprod)
 		} else {
-			// barrier: no arm64 FMA fusion
-			sq := math.Sqrt((1.0 - U) * rightprod)
-			out.Data()[i] = right - sq
+			out.Data()[i] = right - math.Sqrt((1.0-U)*rightprod)
 		}
 	}
 	return out
@@ -453,18 +428,14 @@ func (g *Generator) randomZipf(a float64) int64 {
 	Umin := math.Pow(randIntMax, -am1)
 	for {
 		U01 := g.nextDouble()
-		// barrier: no arm64 FMA fusion
-		scaled := U01 * Umin
-		U := scaled + (1.0 - U01)
+		U := U01*Umin + (1.0 - U01)
 		V := g.nextDouble()
 		X := math.Floor(math.Pow(U, -1.0/am1))
 		if X > randIntMax || X < 1.0 {
 			continue
 		}
 		T := math.Pow(1.0+1.0/X, am1)
-		// barrier: no arm64 FMA fusion
-		vx := V * X
-		if vx*(T-1.0)/(b-1.0) <= T/b {
+		if V*X*(T-1.0)/(b-1.0) <= T/b {
 			return int64(X)
 		}
 	}
@@ -536,13 +507,7 @@ func logfactorial(k int64) float64 {
 		return logfact[k]
 	}
 	lf := float64(k)
-	// barriers: no arm64 FMA fusion, original associations kept
-	lfh := lf + 0.5
-	lfl := lfh * math.Log(lf)
-	inv := 1.0 / lf
-	stirling := inv * (1.0/12.0 - 1.0/(360.0*lf*lf))
-	corr := halfln2pi + stirling
-	return lfl - lf + corr
+	return (lf+0.5)*math.Log(lf) - lf + (halfln2pi + (1.0/lf)*(1.0/12.0-1.0/(360.0*lf*lf)))
 }
 
 // hypergeometricSample: random_hypergeometric.c:53 (counting draw-down).
@@ -589,9 +554,7 @@ func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 	a := mu + 0.5
 	vr := float64(popsize-computedSample) * float64(computedSample) * p * q / float64(popsize-1)
 	c := math.Sqrt(vr + 0.5)
-	// barrier: no arm64 FMA fusion
-	hc := hyperD1 * c
-	h := hc + hyperD2
+	h := hyperD1*c + hyperD2
 	m := int64(math.Floor(float64(computedSample+1) * float64(mingoodbad+1) / float64(popsize+2)))
 	gg := logfactorial(m) + logfactorial(int64(mingoodbad)-m) +
 		logfactorial(int64(computedSample)-m) +
@@ -605,9 +568,7 @@ func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 	for {
 		U := g.nextDouble()
 		V := g.nextDouble()
-		// barrier: no arm64 FMA fusion
-		hv := h * (V - 0.5) / U
-		X := a + hv
+		X := a + h*(V-0.5)/U
 		if X < 0.0 || X >= float64(bound)+1.0 {
 			continue
 		}
@@ -616,14 +577,10 @@ func (g *Generator) hypergeometricHRUA(good, bad, sample int64) int64 {
 			logfactorial(int64(computedSample)-K) +
 			logfactorial(int64(maxgoodbad)-int64(computedSample)+K)
 		T := gg - gp
-		// barrier: no arm64 FMA fusion
-		u4 := U * (4.0 - U)
-		if u4-3.0 <= T {
+		if U*(4.0-U)-3.0 <= T {
 			break
 		}
-		// barrier: no arm64 FMA fusion
-		ut := U * (U - T)
-		if ut >= 1.0 {
+		if U*(U-T) >= 1.0 {
 			continue
 		}
 		if 2.0*math.Log(U) <= T {

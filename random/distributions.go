@@ -65,10 +65,7 @@ func (g *Generator) standardExponentialUnlikely(idx uint8, x float64) float64 {
 	if idx == 0 {
 		// 1.0 - U to avoid log(0.0), GH 13361
 		return expR - math.Log1p(-g.nextDouble())
-	}
-	// barrier: no arm64 FMA fusion
-	probe := (fe[idx-1] - fe[idx]) * g.nextDouble()
-	if probe+fe[idx] < math.Exp(-x) {
+	} else if (fe[idx-1]-fe[idx])*g.nextDouble()+fe[idx] < math.Exp(-x) {
 		return x
 	}
 	return g.StandardExponentialScalar()
@@ -97,9 +94,7 @@ func (g *Generator) StandardNormalScalar() float64 {
 				}
 			}
 		} else {
-			// barrier: no arm64 FMA fusion
-			probe := (fi[idx-1] - fi[idx]) * g.nextDouble()
-			if probe+fi[idx] < math.Exp(-0.5*x*x) {
+			if (fi[idx-1]-fi[idx])*g.nextDouble()+fi[idx] < math.Exp(-0.5*x*x) {
 				return x
 			}
 		}
@@ -143,8 +138,7 @@ func (g *Generator) Normal(loc, scale float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
 	for i := range n {
-		term := scale * g.StandardNormalScalar() // barrier: no arm64 FMA fusion
-		out.Data()[i] = loc + term
+		out.Data()[i] = loc + scale*g.StandardNormalScalar()
 	}
 	return out
 }
@@ -156,8 +150,7 @@ func (g *Generator) Uniform(lower, high float64, size ...int) *arrayF {
 	n := sizeOr1(size)
 	out := newF(n)
 	for i := range n {
-		term := rng * g.nextDouble() // barrier: no arm64 FMA fusion
-		out.Data()[i] = lower + term
+		out.Data()[i] = lower + rng*g.nextDouble()
 	}
 	return out
 }
@@ -191,8 +184,7 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 				}
 			} else {
 				Y = -math.Log((1 - U) / shape)
-				shapeY := shape * Y // barrier: no arm64 FMA fusion
-				X = math.Pow(1.0-shape+shapeY, 1.0/shape)
+				X = math.Pow(1.0-shape+shape*Y, 1.0/shape)
 				if X <= V+Y {
 					return X
 				}
@@ -211,19 +203,11 @@ func (g *Generator) StandardGammaScalar(shape float64) float64 {
 			}
 			V = V * V * V
 			U = g.nextDouble()
-			// barriers: original association kept, mul/add split into
-			// statements (gc fuses a*b+c on arm64).
-			x2 := X * X
-			scaled := 0.0331 * x2
-			quart := scaled * x2
-			if U < 1.0-quart {
+			if U < 1.0-0.0331*(X*X)*(X*X) {
 				return b * V
 			}
 			// log(0.0) ok here
-			quad := 0.5 * x2
-			bTail := b * (1.0 - V + math.Log(V))
-			cmp := quad + bTail
-			if math.Log(U) < cmp {
+			if math.Log(U) < 0.5*X*X+b*(1.0-V+math.Log(V)) {
 				return b * V
 			}
 		}
@@ -321,12 +305,7 @@ func loggam(x float64) float64 {
 		gl0 *= x2
 		gl0 += a[k]
 	}
-	// barriers: no arm64 FMA fusion, original left-to-right association kept
-	gl0x := gl0 / x0
-	half := 0.5 * lg2pi
-	xm := x0 - 0.5
-	xlm := xm * math.Log(x0)
-	gl := gl0x + half + xlm - x0
+	gl := gl0/x0 + 0.5*lg2pi + (x0-0.5)*math.Log(x0) - x0
 	if x < 7.0 {
 		for k := int64(1); k <= n; k++ {
 			gl -= math.Log(x0 - 1.0)
@@ -364,20 +343,15 @@ func (g *Generator) poissonPTRS(lam float64) int64 {
 		U := g.nextDouble() - 0.5
 		V := g.nextDouble()
 		us := 0.5 - math.Abs(U)
-		// barriers: no arm64 FMA fusion, original associations kept
-		ab := 2*a/us + b
-		abU := ab * U
-		k := int64(math.Floor(abU + lam + 0.43))
+		k := int64(math.Floor((2*a/us+b)*U + lam + 0.43))
 		if us >= 0.07 && V <= vr {
 			return k
 		}
 		if k < 0 || (us < 0.013 && V > us) {
 			continue
 		}
-		// barriers: no arm64 FMA fusion, original associations kept
-		kl := float64(k) * loglam
-		rhs := -lam + kl - loggam(float64(k)+1)
-		if math.Log(V)+math.Log(invalpha)-math.Log(a/(us*us)+b) <= rhs {
+		if math.Log(V)+math.Log(invalpha)-math.Log(a/(us*us)+b) <=
+			-lam+float64(k)*loglam-loggam(float64(k)+1) {
 			return k
 		}
 	}
@@ -413,8 +387,7 @@ type binomialState struct {
 
 // binomialBTPE: distributions.c:620.
 func (g *Generator) binomialBTPE(n int64, p float64, st *binomialState) int64 {
-	var a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x, vc, acc float64
-	var term1, term2, term3, t4, t5, t6, t7, nmf, ymf, kf, kf3, kfrac, knrq, kk, pv float64
+	var a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x float64
 	var y, k, i int64
 
 	if !st.hasBinomial || st.nsave != n || st.psave != p {
@@ -423,15 +396,9 @@ func (g *Generator) binomialBTPE(n int64, p float64, st *binomialState) int64 {
 		st.hasBinomial = true
 		st.r = math.Min(p, 1.0-p)
 		st.q = 1.0 - st.r
-		// barrier: no arm64 FMA fusion
-		nr := float64(n) * st.r
-		st.fm = nr + st.r
+		st.fm = float64(n)*st.r + st.r
 		st.m = int64(math.Floor(st.fm))
-		// barriers: no arm64 FMA fusion, original associations kept
-		nrqSetup := float64(n) * st.r * st.q
-		sq := 2.195 * math.Sqrt(nrqSetup)
-		qTerm := 4.6 * st.q
-		st.p1 = math.Floor(sq-qTerm) + 0.5
+		st.p1 = math.Floor(2.195*math.Sqrt(float64(n)*st.r*st.q)-4.6*st.q) + 0.5
 		st.xm = float64(st.m) + 0.5
 		st.xl = st.xm - st.p1
 		st.xr = st.xm + st.p1
@@ -440,9 +407,7 @@ func (g *Generator) binomialBTPE(n int64, p float64, st *binomialState) int64 {
 		st.laml = a * (1.0 + a/2.0)
 		a = (st.xr - st.fm) / (st.xr * st.q)
 		st.lamr = a * (1.0 + a/2.0)
-		// barrier: no arm64 FMA fusion
-		twoC := 2.0 * st.c
-		st.p2 = st.p1 * (1.0 + twoC)
+		st.p2 = st.p1 * (1.0 + 2.0*st.c)
 		st.p3 = st.p2 + st.c/st.laml
 		st.p4 = st.p3 + st.c/st.lamr
 	}
@@ -454,16 +419,12 @@ func (g *Generator) binomialBTPE(n int64, p float64, st *binomialState) int64 {
 
 step10:
 	nrq = float64(n) * r * q
-	// barrier: no arm64 FMA fusion
-	up4 := g.nextDouble() * p4
-	u = up4
+	u = g.nextDouble() * p4
 	v = g.nextDouble()
 	if u > p1 {
 		goto step20
 	}
-	// barriers: no arm64 FMA fusion, original associations kept
-	pv = p1 * v
-	y = int64(math.Floor(xm - pv + u))
+	y = int64(math.Floor(xm - p1*v + u))
 	goto step60
 
 step20:
@@ -471,14 +432,13 @@ step20:
 		goto step30
 	}
 	x = xl + (u-p1)/c
-	// barrier: no arm64 FMA fusion
-	vc = v * c
-	v = vc + 1.0 - math.Abs(float64(m)-x+0.5)/p1
+	v = v*c + 1.0 - math.Abs(float64(m)-x+0.5)/p1
 	if v > 1.0 {
 		goto step10
 	}
 	y = int64(math.Floor(x))
 	goto step50
+
 step30:
 	if u > p3 {
 		goto step40
@@ -520,14 +480,8 @@ step50:
 	goto step60
 
 step52:
-	// barriers: no arm64 FMA fusion, original associations kept
-	kf = float64(k)
-	kf3 = kf / 3.0
-	kfrac = kf*(kf3+0.625) + 0.16666666666666666
-	knrq = kfrac / nrq
-	rho = (kf / nrq) * (knrq + 0.5)
-	kk = -kf * kf
-	t = kk / (2 * nrq)
+	rho = (float64(k) / nrq) * ((float64(k)*(float64(k)/3.0+0.625)+0.16666666666666666)/nrq + 0.5)
+	t = -float64(k) * float64(k) / (2 * nrq)
 	A = math.Log(v)
 	if A < t-rho {
 		goto step60
@@ -543,20 +497,15 @@ step52:
 	f2 = f1 * f1
 	z2 = z * z
 	w2 = w * w
-	// barriers: no arm64 FMA fusion, term order and associations kept
-	term1 = xm * math.Log(f1/x1)
-	nmf = float64(n) - float64(m) + 0.5
-	term2 = nmf * math.Log(z/w)
-	ymf = float64(y - m)
-	term3 = ymf * math.Log(w*r/(x1*q))
-	t4 = (13860. - (462.-(132.-(99.-140./f2)/f2)/f2)/f2) / f1 / 166320.
-	t5 = (13860. - (462.-(132.-(99.-140./z2)/z2)/z2)/z2) / z / 166320.
-	t6 = (13860. - (462.-(132.-(99.-140./x2)/x2)/x2)/x2) / x1 / 166320.
-	t7 = (13860. - (462.-(132.-(99.-140./w2)/w2)/w2)/w2) / w / 166320.
-	acc = term1 + term2 + term3 + t4 + t5 - t6 - t7
-	if A > acc {
+	if A > (xm*math.Log(f1/x1) + (float64(n)-float64(m)+0.5)*math.Log(z/w) +
+		float64(y-m)*math.Log(w*r/(x1*q)) +
+		(13860.-(462.-(132.-(99.-140./f2)/f2)/f2)/f2)/f1/166320. +
+		(13860.-(462.-(132.-(99.-140./z2)/z2)/z2)/z2)/z/166320. -
+		(13860.-(462.-(132.-(99.-140./x2)/x2)/x2)/x2)/x1/166320. -
+		(13860.-(462.-(132.-(99.-140./w2)/w2)/w2)/w2)/w/166320.) {
 		goto step10
 	}
+
 step60:
 	if p > 0.5 {
 		y = n - y
