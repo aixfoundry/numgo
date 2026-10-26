@@ -1,6 +1,9 @@
 package numgo
 
 import (
+	"fmt"
+	"math"
+	"math/cmplx"
 	"slices"
 
 	"github.com/aixfoundry/numgo/internal/nditer"
@@ -173,4 +176,232 @@ func mapValues[T Number](a *Array[T], f func(T) T) *Array[T] {
 			}
 		})
 	return out
+}
+
+// Binary ufuncs beyond the arithmetic four: min/max with and without NaN
+// propagation, the two remainder conventions, floor division and power, plus
+// scalar bounds clipping. Real-only ops compute in float64 and convert back
+// (the float32 convention); division by zero stays IEEE (Inf/NaN), no panic.
+
+// Maximum returns the element-wise maximum of a and b, broadcasting both
+// operands. If one of the elements being compared is a NaN, then that
+// element is returned (numpy maximum propagates NaNs).
+func (a *Array[T]) Maximum(b *Array[T]) *Array[T] {
+	la, lb, shape := broadcastPair(a, b)
+	return zip2(la, a.data, lb, b.data, shape, maximumElem[T])
+}
+
+// Minimum returns the element-wise minimum of a and b, broadcasting both
+// operands. If one of the elements being compared is a NaN, then that
+// element is returned (numpy minimum propagates NaNs).
+func (a *Array[T]) Minimum(b *Array[T]) *Array[T] {
+	la, lb, shape := broadcastPair(a, b)
+	return zip2(la, a.data, lb, b.data, shape, minimumElem[T])
+}
+
+// MaximumValue returns a new array with each element replaced by its maximum
+// with v, propagating NaNs like Maximum.
+func (a *Array[T]) MaximumValue(v T) *Array[T] {
+	return mapValues(a, func(x T) T { return maximumElem(x, v) })
+}
+
+// MinimumValue returns a new array with each element replaced by its minimum
+// with v, propagating NaNs like Minimum.
+func (a *Array[T]) MinimumValue(v T) *Array[T] {
+	return mapValues(a, func(x T) T { return minimumElem(x, v) })
+}
+
+// Fmax returns the element-wise maximum of a and b, ignoring NaNs: a NaN
+// element yields the other one, and two NaNs yield NaN (numpy fmax).
+func (a *Array[T]) Fmax(b *Array[T]) *Array[T] {
+	la, lb, shape := broadcastPair(a, b)
+	return zip2(la, a.data, lb, b.data, shape, fmaxElem[T])
+}
+
+// Fmin returns the element-wise minimum of a and b, ignoring NaNs: a NaN
+// element yields the other one, and two NaNs yield NaN (numpy fmin).
+func (a *Array[T]) Fmin(b *Array[T]) *Array[T] {
+	la, lb, shape := broadcastPair(a, b)
+	return zip2(la, a.data, lb, b.data, shape, fminElem[T])
+}
+
+// maximumElem is numpy maximum for one pair: NaN wins over everything,
+// otherwise the larger real part.
+func maximumElem[T Number](x, y T) T {
+	if isNaN(x) || isNaN(y) {
+		return nanScalar[T]()
+	}
+	if greater(y, x) {
+		return y
+	}
+	return x
+}
+
+// minimumElem is numpy minimum for one pair.
+func minimumElem[T Number](x, y T) T {
+	if isNaN(x) || isNaN(y) {
+		return nanScalar[T]()
+	}
+	if less(y, x) {
+		return y
+	}
+	return x
+}
+
+// fmaxElem is numpy fmax for one pair: NaN loses to any number.
+func fmaxElem[T Number](x, y T) T {
+	switch {
+	case isNaN(x):
+		return y
+	case isNaN(y):
+		return x
+	}
+	if greater(y, x) {
+		return y
+	}
+	return x
+}
+
+// fminElem is numpy fmin for one pair.
+func fminElem[T Number](x, y T) T {
+	switch {
+	case isNaN(x):
+		return y
+	case isNaN(y):
+		return x
+	}
+	if less(y, x) {
+		return y
+	}
+	return x
+}
+
+// pyMod is Python's % (numpy mod): the remainder has the sign of the divisor,
+// unlike C's fmod. r += y once flips the sign of math.Mod's result into
+// divisor orientation; a zero divisor leaves the NaN untouched.
+func pyMod(x, y float64) float64 {
+	r := math.Mod(x, y)
+	if r != 0 && ((r < 0) != (y < 0)) {
+		r += y
+	}
+	return r
+}
+
+// floorDiv is numpy floor_divide: floor(x/y), corrected by one when the
+// truncated quotient rounds the wrong way, so x = y*q + pyMod(x, y) always
+// holds. y == 0 follows IEEE (±Inf/NaN), no panic.
+func floorDiv(x, y float64) float64 {
+	q := math.Floor(x / y)
+	if r := x - q*y; r != 0 && ((r < 0) != (y < 0)) {
+		q--
+	}
+	return q
+}
+
+// Mod returns the element-wise Python-style remainder of a and b: the result
+// has the same sign as the divisor (numpy mod). Complex arrays are not
+// supported (numpy leaves complex mod undefined).
+func (a *Array[T]) Mod(b *Array[T]) *Array[T] { return realBin(a, b, "Mod", pyMod) }
+
+// Fmod returns the element-wise C-style remainder of a and b: the result has
+// the same sign as the dividend (numpy fmod). Complex arrays are not
+// supported.
+func (a *Array[T]) Fmod(b *Array[T]) *Array[T] { return realBin(a, b, "Fmod", math.Mod) }
+
+// ModValue returns the element-wise Python-style remainder with scalar v
+// (sign of v); see Mod.
+func (a *Array[T]) ModValue(v T) *Array[T] { return realBinValue(a, v, "Mod", pyMod) }
+
+// FmodValue returns the element-wise C-style remainder with scalar v (sign
+// of the element); see Fmod.
+func (a *Array[T]) FmodValue(v T) *Array[T] { return realBinValue(a, v, "Fmod", math.Mod) }
+
+// FloorDivide returns the element-wise floor quotient of a and b (numpy's //
+// operator), consistent with Mod: x = y*FloorDivide(x,y) + Mod(x,y). Complex
+// arrays are not supported.
+func (a *Array[T]) FloorDivide(b *Array[T]) *Array[T] {
+	return realBin(a, b, "FloorDivide", floorDiv)
+}
+
+// FloorDivideValue returns the element-wise floor quotient with scalar v;
+// see FloorDivide.
+func (a *Array[T]) FloorDivideValue(v T) *Array[T] {
+	return realBinValue(a, v, "FloorDivide", floorDiv)
+}
+
+// Pow returns a with every element raised to the power of the corresponding
+// element of b, broadcasting both operands (numpy power). Real elements use
+// math.Pow, complex ones cmplx.Pow.
+func (a *Array[T]) Pow(b *Array[T]) *Array[T] {
+	la, lb, shape := broadcastPair(a, b)
+	if isComplexKind[T]() {
+		return zip2(la, a.data, lb, b.data, shape, func(x, y T) T {
+			xre, xim := parts(x)
+			yre, yim := parts(y)
+			w := cmplx.Pow(complex(xre, xim), complex(yre, yim))
+			return scalarFromParts[T](real(w), imag(w))
+		})
+	}
+	return zip2(la, a.data, lb, b.data, shape, func(x, y T) T {
+		return scalarFromParts[T](math.Pow(mustFloat(x), mustFloat(y)), 0)
+	})
+}
+
+// PowValue returns a with every element raised to the scalar power p.
+func (a *Array[T]) PowValue(p T) *Array[T] {
+	pre, pim := parts(p)
+	pc := complex(pre, pim)
+	if isComplexKind[T]() {
+		return mapValues(a, func(x T) T {
+			re, im := parts(x)
+			w := cmplx.Pow(complex(re, im), pc)
+			return scalarFromParts[T](real(w), imag(w))
+		})
+	}
+	return mapValues(a, func(x T) T {
+		return scalarFromParts[T](math.Pow(mustFloat(x), pre), 0)
+	})
+}
+
+// Clip clips (limits) the values in an array: values outside [lo, hi] are
+// clipped to the interval edges. lo greater than hi panics (numpy raises
+// ValueError for the same input).
+func (a *Array[T]) Clip(lo, hi T) *Array[T] {
+	if greater(lo, hi) {
+		panicClipBounds()
+	}
+	return mapValues(a, func(x T) T { return minimumElem(maximumElem(x, lo), hi) })
+}
+
+// realBin applies the float64 op over broadcast a and b for real element
+// types only, converting each result back to T.
+func realBin[T Number](a, b *Array[T], op string, f func(x, y float64) float64) *Array[T] {
+	if isComplexKind[T]() {
+		panicComplexMod(op)
+	}
+	la, lb, shape := broadcastPair(a, b)
+	return zip2(la, a.data, lb, b.data, shape, func(x, y T) T {
+		return scalarFromParts[T](f(mustFloat(x), mustFloat(y)), 0)
+	})
+}
+
+// realBinValue is realBin with a scalar second operand.
+func realBinValue[T Number](a *Array[T], v T, op string, f func(x, y float64) float64) *Array[T] {
+	if isComplexKind[T]() {
+		panicComplexMod(op)
+	}
+	y := mustFloat(v)
+	return mapValues(a, func(x T) T { return scalarFromParts[T](f(mustFloat(x), y), 0) })
+}
+
+// panicComplexMod reports Mod/Fmod/FloorDivide on complex arrays, which
+// numpy leaves undefined.
+func panicComplexMod(op string) {
+	panic(fmt.Sprintf("numgo: %s is not defined for complex arrays", op))
+}
+
+// panicClipBounds reports a Clip whose bounds are inverted (numpy raises
+// ValueError for min > max).
+func panicClipBounds() {
+	panic("numgo: Clip: min must be less than or equal to max")
 }

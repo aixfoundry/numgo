@@ -1,6 +1,7 @@
 package random
 
 import (
+	"fmt"
 	"math"
 	"sort"
 
@@ -265,4 +266,86 @@ func (g *Generator) PermutationArray(a *numgo.Array[float64]) *numgo.Array[float
 	cp := a.Copy()
 	g.Shuffle(cp)
 	return cp
+}
+
+// Permuted permutes x independently along axis (numpy Generator.permuted):
+// each slice along the other axes is shuffled with the same Fisher-Yates
+// walk as Shuffle (_shuffle_raw: for i in reversed(range(1, n)):
+// j = random_interval(i); swap). The iteration order follows the pyx: an
+// iterator over all-but-axis dimensions runs the slices in C order, so the
+// random stream matches numpy's for the same seed. x is not modified; a
+// copy is returned. Negative axes normalize (axis=-1 is the last axis).
+func (g *Generator) Permuted(x *numgo.Array[float64], axis int) *numgo.Array[float64] {
+	out := x.Copy()
+	ax := axis
+	if ax < 0 {
+		ax += out.Ndim()
+	}
+	if ax < 0 || ax >= out.Ndim() {
+		panic(fmt.Sprintf("axis %d is out of bounds for array of dimension %d", axis, out.Ndim()))
+	}
+	n := out.Shape()[ax]
+	rest := append(append([]int{}, out.Shape()[:ax]...), out.Shape()[ax+1:]...)
+	coords := make([]int, out.Ndim())
+	odometerPermuted(rest, func(c []int) {
+		copy(coords[:ax], c[:ax])
+		copy(coords[ax+1:], c[ax:])
+		for i := n - 1; i >= 1; i-- {
+			j := int(g.randomInterval(uint64(i)))
+			ci := append([]int(nil), coords...)
+			ci[ax] = i
+			cj := append([]int(nil), coords...)
+			cj[ax] = j
+			vi, vj := out.At(ci...), out.At(cj...)
+			out.Set(ci, vj)
+			out.Set(cj, vi)
+		}
+	})
+	return out
+}
+
+// odometerPermuted iterates every coordinate of shape in C order (the
+// root package's odometer is unexported, so this is the local copy).
+func odometerPermuted(shape []int, f func(coords []int)) {
+	if len(shape) == 0 {
+		f(nil)
+		return
+	}
+	idx := make([]int, len(shape))
+	for {
+		f(idx)
+		k := len(idx) - 1
+		for k >= 0 {
+			idx[k]++
+			if idx[k] < shape[k] {
+				break
+			}
+			idx[k] = 0
+			k--
+		}
+		if k < 0 {
+			return
+		}
+	}
+}
+
+// Bytes returns n random bytes (numpy Generator.bytes): ceil(n/4) uint32
+// draws from the bitgen via integers(0, 2^32) laid out little-endian,
+// truncated to n.
+func (g *Generator) Bytes(n int) []byte {
+	if n < 0 {
+		panicNegativeEntropy()
+	}
+	nUint32 := 0
+	if n > 0 {
+		nUint32 = (n-1)/4 + 1
+	}
+	// numpy: integers(0, 2**32, dtype=uint32) — endpoint excluded, so rng =
+	// 0xFFFFFFFF hits randomBoundedUint64's direct next_uint32 path.
+	words := g.integersRange(0, 1<<32, false, nUint32).Data()
+	out := make([]byte, n)
+	for i := range out {
+		out[i] = byte(words[i/4] >> (8 * (i % 4)))
+	}
+	return out
 }

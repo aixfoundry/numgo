@@ -246,3 +246,84 @@ func TestMatmulFloat32(t *testing.T) {
 		t.Fatalf("float32 matmul = %v", got)
 	}
 }
+
+func TestTensorDot(t *testing.T) {
+	// axes=() outer product: numpy tensordot(x, y, 0) shape (2,3,2,2).
+	x := FromSlice([]float64{0, 1, 2, 3, 4, 5}, 2, 3)
+	y := FromSlice([]float64{0, 1, 2, 3}, 2, 2)
+	outer := TensorDot(x, y, nil, nil)
+	if !shapesEqual(outer.Shape(), []int{2, 3, 2, 2}) {
+		t.Fatalf("outer shape = %v", outer.Shape())
+	}
+	assertAllClose(t, outer, Einsum("ij,kl->ijkl", x, y))
+	// One-axis contraction: ij,jk->ik.
+	b := FromSlice([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, 3, 4)
+	mv := TensorDot(x, b, []int{1}, []int{0})
+	if !shapesEqual(mv.Shape(), []int{2, 4}) {
+		t.Fatalf("mv shape = %v", mv.Shape())
+	}
+	assertAllClose(t, mv, Einsum("ij,jk->ik", x, b))
+	// Negative axes: contract a's last with b's second-to-last.
+	// x (2,3) with b2 (3,4): tensordot(x, b2, (-1), (-2)) -> (2,4),
+	// equal to x @ b2 (einsum 'ij,jk->ik').
+	b2 := FromSlice([]float64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, 3, 4)
+	neg := TensorDot(x, b2, []int{-1}, []int{-2})
+	if !shapesEqual(neg.Shape(), []int{2, 4}) {
+		t.Fatalf("neg shape = %v", neg.Shape())
+	}
+	assertAllClose(t, neg, Einsum("ij,jk->ik", x, b2))
+	// Batch contraction: tensordot(c,d,([2,1],[0,1])) with c (2,3,4), d (4,3,2);
+	// numpy: [[880, 946], [2464, 2674]] == einsum('ijk,kjl->il').
+	c := FromSlice(range64(24), 2, 3, 4)
+	d := FromSlice(range64(24), 4, 3, 2)
+	batch := TensorDot(c, d, []int{2, 1}, []int{0, 1})
+	if !shapesEqual(batch.Shape(), []int{2, 2}) {
+		t.Fatalf("batch shape = %v", batch.Shape())
+	}
+	assertAllClose(t, batch, Einsum("ijk,kjl->il", c, d))
+	want := []float64{880, 946, 2464, 2674}
+	for i, w := range want {
+		if v := batch.At(i/2, i%2); v != w {
+			t.Errorf("batch[%d] = %v, want %v", i, v, w)
+		}
+	}
+	// Mismatched contraction dims panic (numpy: shape-mismatch for sum).
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("expected shape-mismatch panic")
+			}
+		}()
+		TensorDot(x, b2, []int{0}, []int{0}) // 2 vs 3
+	}()
+	// Axis count mismatch panics.
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("expected axes-count panic")
+			}
+		}()
+		TensorDot(x, b2, []int{0}, []int{0, 1})
+	}()
+}
+
+func range64(n int) []float64 {
+	out := make([]float64, n)
+	for i := range out {
+		out[i] = float64(i)
+	}
+	return out
+}
+
+func assertAllClose(t *testing.T, got, want *Array[float64]) {
+	t.Helper()
+	if !shapesEqual(got.Shape(), want.Shape()) {
+		t.Fatalf("shape %v, want %v", got.Shape(), want.Shape())
+	}
+	gd, wd := got.Ravel().Data()[:got.Size()], want.Ravel().Data()[:want.Size()]
+	for i := range gd {
+		if math.Abs(gd[i]-wd[i]) > 1e-9 {
+			t.Errorf("[%d] = %v, want %v", i, gd[i], wd[i])
+		}
+	}
+}

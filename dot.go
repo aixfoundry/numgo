@@ -363,3 +363,78 @@ func shapesEqual(x, y []int) bool {
 	}
 	return true
 }
+
+// TensorDot contracts the axesA dimensions of a with the axesB dimensions
+// of b over a GEMM path (numpy tensordot, equivalent to einsum but running
+// through Matmul): the contraction axes are moved to the end of a and the
+// front of b via Transpose, the operands are reshaped to matrices, Matmul
+// runs the sum, and the result is reshaped back to a's free axes followed by
+// b's free axes. Negative axes normalize like numpy. An empty axes pair is
+// the outer product (numpy tensordot(a, b, 0)). Axis count mismatches,
+// out-of-range axes and mismatched contraction dims panic.
+func TensorDot[T Number](a, b *Array[T], axesA, axesB []int) *Array[T] {
+	if len(axesA) != len(axesB) {
+		panicMatmulShape("tensordot", a.Shape(), b.Shape())
+	}
+	if len(axesA) == 0 {
+		// Outer product (numpy tensordot(a, b, 0)): a column of a's elements
+		// times a row of b's, folded back to aShape ++ bShape.
+		outer := a.Ravel().Reshape(a.Size(), 1).Matmul(b.Ravel().Reshape(1, b.Size()))
+		return outer.Reshape(append(append([]int{}, a.Shape()...), b.Shape()...)...)
+	}
+	nA, nB := a.Ndim(), b.Ndim()
+	cA := make([]int, len(axesA))
+	for i, ax := range axesA {
+		cA[i] = a.resolveAxis(ax)
+	}
+	cB := make([]int, len(axesB))
+	for i, ax := range axesB {
+		cB[i] = b.resolveAxis(ax)
+	}
+	for i, ax := range cA {
+		if a.shape[ax] != b.shape[cB[i]] {
+			panicMatmulShape("tensordot", a.Shape(), b.Shape())
+		}
+	}
+	// Move a's contraction axes last and b's first.
+	aFree := freeAxes(nA, cA)
+	at := a.Transpose(append(aFree, cA...)...).Reshape(a.Size()/prodDims(a, cA), prodDims(a, cA))
+	bFree := freeAxes(nB, cB)
+	bt := b.Transpose(append(cB, bFree...)...).Reshape(prodDims(b, cB), b.Size()/prodDims(b, cB))
+	rest := at.Matmul(bt)
+	outShape := append(dimsOf(a, aFree), dimsOf(b, bFree)...)
+	return rest.Reshape(outShape...)
+}
+
+// freeAxes lists the axes of shape not in used, ascending.
+func freeAxes(ndim int, used []int) []int {
+	out := make([]int, 0, ndim-len(used))
+	use := make([]bool, ndim)
+	for _, ax := range used {
+		use[ax] = true
+	}
+	for ax := range ndim {
+		if !use[ax] {
+			out = append(out, ax)
+		}
+	}
+	return out
+}
+
+// prodDims returns the product of a's dims along axes.
+func prodDims[T Number](a *Array[T], axes []int) int {
+	n := 1
+	for _, ax := range axes {
+		n *= a.shape[ax]
+	}
+	return n
+}
+
+// dimsOf collects a's dims along the given axes in order.
+func dimsOf[T Number](a *Array[T], axes []int) []int {
+	out := make([]int, len(axes))
+	for i, ax := range axes {
+		out[i] = a.shape[ax]
+	}
+	return out
+}

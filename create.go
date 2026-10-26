@@ -74,6 +74,54 @@ func Linspace[T Number](start, stop T, num int) *Array[T] {
 	return New1DArray(data)
 }
 
+// Geomspace returns num values spaced evenly on a log scale (a geometric
+// progression) from start to stop inclusive. Both endpoints are exact:
+// start/stop are written directly rather than recovered via exp(log).
+// start or stop ≤ 0 panics, as does num < 0.
+func Geomspace[T Number](start, stop T, num int) *Array[T] {
+	startRe, _ := parts(start)
+	stopRe, _ := parts(stop)
+	if !(startRe > 0) || !(stopRe > 0) {
+		panic("numgo: Geomspace: start and stop must be positive")
+	}
+	if num < 0 {
+		panicSamples(num)
+	}
+	data := make([]T, num)
+	if num == 0 {
+		return New1DArray(data)
+	}
+	if num == 1 {
+		data[0] = start
+		return New1DArray(data)
+	}
+	ls := Linspace(math.Log10(startRe), math.Log10(stopRe), num)
+	data[0] = start
+	data[num-1] = stop
+	for i := 1; i < num-1; i++ {
+		data[i] = scalarFromParts[T](math.Pow(10, mustFloat(ls.At(i))), 0)
+	}
+	return New1DArray(data)
+}
+
+// Logspace returns num values spaced evenly on a log scale with the given
+// base: base**Linspace(start, stop, num). The endpoints are exact powers,
+// start and stop being the exponents.
+func Logspace[T Number](start, stop T, num int, base float64) *Array[T] {
+	ls := Linspace(start, stop, num)
+	data := make([]T, ls.Size())
+	for i := range data {
+		data[i] = scalarFromParts[T](math.Pow(base, mustFloat(ls.At(i))), 0)
+	}
+	return New1DArray(data)
+}
+
+// Empty returns a new array of the given shape whose values are unspecified.
+// Go always zero-initializes; provided for numpy API parity (np.empty).
+func Empty[T Number](shape ...int) *Array[T] {
+	return newArray(slices.Clone(shape), nditer.COrderStrides(shape), 0, make([]T, nditer.Size(shape)))
+}
+
 // Eye returns the n-by-n identity matrix.
 func Eye[T Number](n int) *Array[T] {
 	a := Zeros[T](n, n)
@@ -117,8 +165,8 @@ func New2DArray[T Number](rows [][]T) *Array[T] {
 	return FromSlice(data, len(rows), cols)
 }
 
-// Identity returns the n-by-n matrix with ones on the diagonal. Eye with a
-// single argument; no Empty constructor exists because Go's make already zeroes.
+// Identity returns the n-by-n matrix with ones on the diagonal; Eye with a
+// single argument.
 func Identity[T Number](n int) *Array[T] {
 	return Eye[T](n)
 }

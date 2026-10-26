@@ -156,3 +156,21 @@ func TestMathPure(t *testing.T) {
 		t.Fatal("math function mutated its receiver")
 	}
 }
+
+func TestSquareComplex(t *testing.T) {
+	c := FromSlice([]complex128{1 + 2i, 2 - 1i, 0, 3 + 0i, -1 - 1i, 0.5}, 2, 3).Square()
+	for i, z := range []complex128{-3 + 4i, 3 - 4i, 0, 9, 2i, 0.25} {
+		if got := c.At(i/3, i%3); got != z {
+			t.Errorf("Square[%d] = %v, want %v", i, got, z)
+		}
+	}
+}
+
+func TestSignComplexZeros(t *testing.T) {
+	c := FromSlice([]complex128{0 + 0i, -2 + 0i, 3i, 5 + 0i, 0 - 2i, 1 + 1i}, 2, 3).Sign()
+	for i, z := range []complex128{0, -1, 1i, 1, -1i, complex(1/math.Sqrt2, 1/math.Sqrt2)} {
+		if got := c.At(i/3, i%3); cmplx.Abs(got-z) > 1e-15 {
+			t.Errorf("Sign[%d] = %v, want %v", i, got, z)
+		}
+	}
+}

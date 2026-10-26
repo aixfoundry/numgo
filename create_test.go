@@ -120,3 +120,53 @@ func TestNew1DArrayCopies(t *testing.T) {
 		t.Fatalf("got %v shape %v", a.At(1), a.Shape())
 	}
 }
+
+func TestGeomspace(t *testing.T) {
+	a := Geomspace(1.0, 1000.0, 4)
+	want := []float64{1, 10, 100, 1000}
+	if a.Size() != len(want) {
+		t.Fatalf("size = %d", a.Size())
+	}
+	for i, w := range want {
+		if got := a.At(i); got != w {
+			t.Errorf("Geomspace[%d] = %v, want %v", i, got, w)
+		}
+	}
+	if got := Geomspace(2.0, 5.0, 1).At(0); got != 2 {
+		t.Errorf("num=1 got %v", got)
+	}
+	mustPanic(t, "numgo: Geomspace: start and stop must be positive", func() { Geomspace(-1.0, 10.0, 4) })
+	mustPanic(t, "numgo: number of samples, -1, must be non-negative", func() { Geomspace(1.0, 10.0, -1) })
+}
+
+func TestLogspace(t *testing.T) {
+	a := Logspace(0.0, 3.0, 4, 10)
+	want := []float64{1, 10, 100, 1000}
+	for i, w := range want {
+		if got := a.At(i); got != w {
+			t.Errorf("Logspace[%d] = %v, want %v", i, got, w)
+		}
+	}
+	b := Logspace(0.0, 2.0, 3, 2)
+	want2 := []float64{1, 2, 4}
+	for i, w := range want2 {
+		if got := b.At(i); got != w {
+			t.Errorf("Logspace base=2[%d] = %v, want %v", i, got, w)
+		}
+	}
+}
+
+func TestEmpty(t *testing.T) {
+	e := Empty[float64](2, 3)
+	if !slices.Equal(e.Shape(), []int{2, 3}) || e.Size() != 6 {
+		t.Fatalf("shape=%v size=%d", e.Shape(), e.Size())
+	}
+	// Go zero-initializes; zero values are a legal outcome.
+	for i := range 2 {
+		for j := range 3 {
+			if e.At(i, j) != 0 {
+				t.Errorf("Empty At(%d,%d) = %v, want 0", i, j, e.At(i, j))
+			}
+		}
+	}
+}
