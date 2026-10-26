@@ -7,8 +7,9 @@ import (
 )
 
 // Parity of the distributions in distributions2.go against numpy 2.5.1
-// default_rng(12345): every element bit-identical (uint64 IEEE bits for
-// floats, raw values for ints). Cases removed during the libm migration
+// default_rng(12345): bit-identical on the platform the fixtures were made on
+// (numpy on glibc/Linux); elsewhere libm-sensitive draws are ULP-bounded (see
+// eqBits). Cases removed during the libm migration
 // (lognormal, weibull, power, noncentral_chisq_lt1, laplace_u_half,
 // vonmises, vonmises_mid_kappa, dirichlet_small) diverge by 1 ULP in Go's
 // math package at rejection boundaries; the distributions themselves are

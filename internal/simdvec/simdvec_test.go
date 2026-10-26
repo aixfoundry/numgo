@@ -23,13 +23,18 @@ func TestMatmulKernelF64Bits(t *testing.T) {
 			b[i] = float64(i%11-5) / 7
 		}
 		want := make([]float64, M*N)
+		// Panel boundaries derived from the SAME runtime values the kernel
+		// uses (simd.Float64s{}.Len() under the tag, 8 in the nosimd twin):
+		// region→oracle classification must match kernel behavior at any
+		// lane width (AVX-512 l=8 locally, AVX-2 l=4 on CI).
+		panelEdge := N - N%f64Lanes()
 		for i := range M {
 			for j := range N {
 				var acc float64
 				// Oracle per region: panels are fused in the simd build
-				// (MulAdd lanes); tail columns/rows (j >= N8 or i >= M4)
-				// are plain mul+add in BOTH builds. Mirror that here.
-				panelCol := j < N-N%8 && fmaMode
+				// (MulAdd lanes); tail columns/rows (j >= panelEdge or
+				// i >= M4) are plain mul+add in BOTH builds. Mirror that.
+				panelCol := j < panelEdge && fmaMode
 				panelRow := i < M-M%4 && fmaMode
 				if panelCol && panelRow {
 					for k := range K {
@@ -72,10 +77,13 @@ func TestMatmulKernelF32Mode(t *testing.T) {
 		}
 		want := make([]float32, M*N)
 		if fmaMode {
+			// Panel width from the runtime lane count the kernel uses
+			// (simd.Float32s{}.Len(): 16 on AVX-512, 8 on AVX2).
+			panelEdge := N - N%f32Lanes()
 			for i := range M {
 				for j := range N {
 					var acc float32
-					panelCol := j < N-N%16 // 16 = simd.Float32s{}.Len() on AVX-512
+					panelCol := j < panelEdge
 					panelRow := i < M-M%4
 					if panelCol && panelRow {
 						// float32 FMA oracle: widen to float64 (products and
@@ -117,7 +125,7 @@ func TestSumF64(t *testing.T) {
 	// lane accumulators merged left-to-right (documented pairwise-ish).
 	// Small-int inputs make both agree; fraction inputs expose the order
 	// difference only in the simd lane merge, so oracle must match mode.
-	for n := 0; n <= 2*8+1; n++ {
+	for n := 0; n <= 2*sumLanes()+1; n++ {
 		src := make([]float64, n)
 		for i := range src {
 			src[i] = float64(i%17-8) / 4 // quarters: dyadic → order-free bits
@@ -126,7 +134,8 @@ func TestSumF64(t *testing.T) {
 		want := 0.0
 		if sumLaneMerge {
 			// simd semantics: l lane sums, merged left-to-right, then tail.
-			l := 8
+			// l is the runtime lane count the kernel uses.
+			l := sumLanes()
 			lanes := make([]float64, l)
 			i := 0
 			for ; i+l <= n; i += l {
