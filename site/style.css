@@ -310,14 +310,19 @@ h1 span { display: block; }
   margin: 0; padding: 1.2rem 1.4rem;
   overflow-x: auto;
   font-family: var(--mono); font-size: 0.875rem; line-height: 1.6;
-  color: var(--code-ink);
+  color: var(--code-ink, #dbe4f3);
   tab-size: 4;
+  /* literal fallback: keep the block dark even where custom properties are unavailable */
+  background: var(--code-bg, #10192b);
 }
-.code .kw  { color: var(--kw); }
-.code .str { color: var(--str); }
-.code .num { color: var(--num); }
-.code .fn  { color: var(--fn); }
-.code .cmt { color: var(--cmt); font-style: italic; }
+.code .kw  { color: var(--kw, #ff7b72); }
+.code .str { color: var(--str, #a5d6ff); }
+.code .num { color: var(--num, #79c0ff); }
+.code .fn  { color: var(--fn, #d2a8ff); }
+.code .cmt { color: var(--cmt, #8b949e); font-style: italic; }
+/* neutralize the inline-code pill inside code blocks: the global `code` rule
+   would otherwise paint light strips behind every line */
+.code code { background: transparent; border: 0; border-radius: 0; padding: 0; font-size: 1em; }
 
 /* ---------- Packages ---------- */
 .pkg-grid {
