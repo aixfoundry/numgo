@@ -57,7 +57,10 @@ func (g *Generator) standardExponentialUnlikelyF(idx uint8, x float32) float32 {
 	if idx == 0 {
 		// 1.0 - U to avoid log(0.0), GH 13361
 		return zigguratExpRf - log1pf(-g.nextFloat())
-	} else if (feFloat[idx-1]-feFloat[idx])*g.nextFloat()+feFloat[idx] < expf(-x) {
+	}
+	// barrier: no arm64 FMA fusion
+	probe := (feFloat[idx-1] - feFloat[idx]) * g.nextFloat()
+	if probe+feFloat[idx] < expf(-x) {
 		return x
 	}
 	return g.StandardExponential32Scalar()
@@ -114,7 +117,9 @@ func (g *Generator) StandardNormal32Scalar() float32 {
 			}
 		} else {
 			// distributions.c:207 uses double exp here (not expf).
-			if (fiFloat[idx-1]-fiFloat[idx])*g.nextFloat()+fiFloat[idx] <
+			// barrier: no arm64 FMA fusion
+			probe := (fiFloat[idx-1] - fiFloat[idx]) * g.nextFloat()
+			if probe+fiFloat[idx] <
 				float32(math.Exp(-0.5*float64(x)*float64(x))) {
 				return x
 			}
@@ -154,7 +159,8 @@ func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
 				}
 			} else {
 				Y = -logf((1.0 - U) / shape)
-				X = powf(1.0-shape+shape*Y, 1.0/shape)
+				shapeY := shape * Y // barrier: no arm64 FMA fusion
+				X = powf(1.0-shape+shapeY, 1.0/shape)
 				if X <= V+Y {
 					return X
 				}
@@ -173,11 +179,19 @@ func (g *Generator) StandardGamma32Scalar(shape float32) float32 {
 			}
 			V = V * V * V
 			U = g.nextFloat()
-			if U < 1.0-0.0331*(X*X)*(X*X) {
+			// barriers: original association kept, mul/add split into
+			// statements (gc fuses a*b+c on arm64).
+			x2 := X * X
+			scaled := 0.0331 * x2
+			quart := scaled * x2
+			if U < 1.0-quart {
 				return b * V
 			}
 			// logf(0.0) ok here (distributions.c:311)
-			if logf(U) < 0.5*X*X+b*(1.0-V+logf(V)) {
+			quad := 0.5 * x2
+			bTail := b * (1.0 - V + logf(V))
+			cmp := quad + bTail
+			if logf(U) < cmp {
 				return b * V
 			}
 		}
@@ -244,7 +258,8 @@ func (g *Generator) Normal32(mu, sigma float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
 	for i := range n {
-		out.Data()[i] = mu + sigma*g.StandardNormal32Scalar()
+		term := sigma * g.StandardNormal32Scalar() // barrier: no arm64 FMA fusion
+		out.Data()[i] = mu + term
 	}
 	return out
 }
@@ -256,7 +271,8 @@ func (g *Generator) Uniform32(low, high float32, size ...int) *arrayF32 {
 	n := sizeOr1(size)
 	out := newF32(n)
 	for i := range n {
-		out.Data()[i] = low + rng*g.nextFloat()
+		term := rng * g.nextFloat() // barrier: no arm64 FMA fusion
+		out.Data()[i] = low + term
 	}
 	return out
 }
