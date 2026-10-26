@@ -251,3 +251,44 @@ numpy nditer 的 buffering 能力）。
 - **主要差距**（宽表逐元素/归约 10–21×、Sort 8.6×、FFT 族 6–15×）均为无 SIMD 的纯 Go
   循环 vs numpy 向量化内核，属结构性的，Phase 5 各批次已把其中最痛点从数量级差距压到
   个位数/十几倍。
+
+## 2026-10-26 SIMD 探针（P0/P1，GOEXPERIMENT=simd）
+
+Go 1.27 实验 `simd` 包（GOEXPERIMENT=simd 门控）接入两条热点，构建标签双实现：
+`internal/simdvec`（`simd.go` / `nosimd.go`，API 同名），默认构建零改动。
+
+落地内容：
+
+- **Add 连续 float64 快路径**（P0）：`ufunc.go` `Add` 在三数组同形 C 连续时走
+  `simdvec.AddF64`。默认构建借快路径重构 2.19ms → ~1.1ms；GOEXPERIMENT=simd
+  AVX-512 全向量 Load/Add/Store + Part 尾处理，~1.0ms。
+- **Matmul FMA 内核**（P1）：`dot.go` `matmulKernel` 的 float64 分支走
+  `simdvec.MatmulKernelF64`。simd 构建：8 通道跨 N（每通道一个输出列），k 升序
+  `MulAdd`（探测证实 ≡ 逐元素 `math.FMA` 位级）；einsum 折叠与批量 matmul 经共享
+  内核自动继承。**语义注记**：GOEXPERIMENT=simd 构建为 FMA 累加语义，与默认构建
+  （普通 mul+add，恢复 pre-P1 原始内核，位级与速度均不变）在一般 float64 输入上
+  末位 ULP 可能不同——与 numpy 跨 BLAS 后端行为同类；库内契约（einsum 折叠路径与
+  通用路径 bit-identical）在两种构建下各自成立。
+- **AsType f64→f32**：Go 1.27 simd 包暂无 Float64s→Float32s 转换指令（仅
+  Int32s.ConvertToFloat32 / 位重解释），两构建均保持标量循环，无数值变化。
+
+基准（7950X，count=2，pre-P1 基线 → 默认 → GOEXPERIMENT=simd）：
+
+| 基准 | 基线 | 默认 | GOEXPERIMENT=simd |
+|---|---|---|---|
+| UfuncAddContiguous 1000×1000 | 2.19ms | ~1.1ms | ~1.0ms |
+| Matmul200 | 1.91ms | ~1.9ms（不变） | ~0.45ms（≈4.2×） |
+| MatmulBatch 16×64×64 | 1.02ms | ~1.0ms（不变） | ~0.26ms（≈4×） |
+| Einsum 100×100 | 0.29ms | ~0.29ms（不变） | ~0.12ms（≈2.4×） |
+| Sum 全归约 1000×1000 | 2.28ms | ~2.24ms（不变） | **~0.072ms（≈31×，反超 numpy 0.107ms）** |
+| Sum axis=0 1000×1000 | 1.35ms | ~1.35ms（不变） | **~0.088ms（≈15×，反超 numpy 0.125ms）** |
+| AsType f64→f32 1e6 | 0.56ms | ~0.5ms | ~0.5ms |
+
+P2（Sum 归约）：`SumF64` 车道累加 + 顺序 lane 合并（pairwise 类顺序，末位 ULP 语义注记
+同 matmul FMA）；`SumAxis0F64` 车道跨列、每列行序累加——跨构建 **bit-identical**（测试
+证明）。simd Sum 仅覆盖纯 Sum：Mean/Var/Std/Nan*/Prod/Max/Min 不走 simd 路径（Var 的
+(Σx²−(Σx)²/n) 要求两个求和同序，避免灾难性消元；经 `reduced` 显式参数传递，非包级
+哨兵——后者在 `t.Parallel()` 下有数据竞争，已移除）。SumAll/SumAxis0 的 2.28/1.35ms
+基线是闭包回调遍历而非带宽极限，simd 后双双反超 numpy。
+
+CI 新增 `test-goexperiment-simd` 任务（gofmt/vet/test 与主任务镜像，GOEXPERIMENT=simd）。

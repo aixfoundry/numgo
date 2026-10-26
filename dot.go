@@ -2,6 +2,7 @@ package numgo
 
 import (
 	"github.com/aixfoundry/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/simdvec"
 )
 
 // Matrix products: Matmul, Vdot and Dot. All are pure (new data / value) and
@@ -10,12 +11,25 @@ import (
 // arithmetic stays inside nditer (P0-1).
 
 // matmulKernel computes c = a@b for dense C-order blocks: a is M×K, b is K×N,
-// c is M×N and must be pre-zeroed. 4×8 register blocking over (i,j): each k
+// c is M×N and must be pre-zeroed. Float64 matrices run simdvec.MatmulKernelF64
+// (build-tag selected): lanes span N, so per output element the sum still
+// accumulates k in ascending order — bit-identical to the naive i-j-k loop
+// this comment historically described. Other dtypes keep the 4×8 register
+// blocked generic kernel below.
+func matmulKernel[T Number](a, b, c []T, M, K, N int) {
+	if ad, ok := any(a).([]float64); ok {
+		simdvec.MatmulKernelF64(ad, any(b).([]float64), any(c).([]float64), M, K, N)
+		return
+	}
+	genericMatmulKernel(a, b, c, M, K, N)
+}
+
+// genericMatmulKernel is the dtype-generic 4×8 register-blocked kernel: each k
 // step FMA-updates a 4×8 register panel, so per output element the sum still
 // accumulates k in ascending order — float results are bit-identical to the
 // naive i-j-k loop. Edges (M%4, N%8) fall back to per-element k-ascending
 // dots, same order.
-func matmulKernel[T Number](a, b, c []T, M, K, N int) {
+func genericMatmulKernel[T Number](a, b, c []T, M, K, N int) {
 	M4, N8 := M-M%4, N-N%8
 	for i0 := 0; i0 < M4; i0 += 4 {
 		c0 := c[(i0+0)*N:]

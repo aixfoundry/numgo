@@ -59,6 +59,12 @@ func contiguousSame(l *Layout, shape []int) bool {
 	return slices.Equal(l.Shape, shape) && IsContiguous(l)
 }
 
+// ContiguousSame is the exported form of contiguousSame, for fast-path guards
+// outside this package that must match Zip's notion of "fully contiguous".
+func ContiguousSame(l *Layout, shape []int) bool {
+	return contiguousSame(l, shape)
+}
+
 // CheckCoords validates index rank and bounds. Negative indices are not
 // supported (numpy semantics, but the Go API keeps it explicit).
 func CheckCoords(l *Layout, coords []int) error {

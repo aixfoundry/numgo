@@ -58,16 +58,29 @@ func reduceShape(shape []int, axes []int) []int {
 }
 
 // reduced folds a along axes into a fresh 1-d array prefilled with ident.
-// All whole-array/axis reductions route through it.
-func reduced[T Number](a *Array[T], axes []int, ident T, fn func(acc *T, v T)) *Array[T] {
+// All whole-array/axis reductions route through it. simdOK gates the
+// GOEXPERIMENT=simd float64 Sum fast path: only Sum's plain-add fold passes
+// true — Mean/Var/Nan*/Prod/Max/Min reuse `reduced` with other folds and
+// always take the nditer walk (Var's Σx/Σx² cancellation needs both sums in
+// the same order, and the contract is plain-Sum-only).
+func reduced[T Number](a *Array[T], axes []int, ident T, fn func(acc *T, v T), simdOK ...bool) *Array[T] {
 	shape := reduceShape(a.shape, axes)
 	out := make([]T, nditer.Size(shape))
 	for i := range out {
 		out[i] = ident
 	}
+	// simdSumF64 is the no-op default-build twin (reduce_nosimd.go) / real
+	// path (reduce_simd.go, GOEXPERIMENT=simd); the default build keeps
+	// pre-P2 bits and speed.
+	if len(simdOK) > 0 && simdOK[0] && simdSumF64(a, out, axes, true) {
+		return newArray(shape, nditer.COrderStrides(shape), 0, out)
+	}
 	nditer.Reduce(a.layout(), a.data, axes, out, fn)
 	return newArray(shape, nditer.COrderStrides(shape), 0, out)
 }
+
+// simdSumF64 is declared per build: reduce_nosimd.go's default-build body is
+// the no-op stub; reduce_simd.go (goexperiment.simd) has the real path.
 
 // reducedCount is the number of elements folded per slot for the axes.
 func reducedCount[T Number](a *Array[T], axes []int) int {
@@ -98,7 +111,7 @@ func (a *Array[T]) Sum(axes ...int) *Array[T] {
 		axes = allAxes(a.Ndim())
 	}
 	axes = normalizeAxes(axes, a.Ndim())
-	return reduced(a, axes, 0, func(acc *T, v T) { *acc += v })
+	return reduced(a, axes, 0, func(acc *T, v T) { *acc += v }, true)
 }
 
 // Pure: SumKeepdims folds addition along axes, keeping reduced axes as size 1.

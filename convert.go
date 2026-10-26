@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/aixfoundry/numgo/internal/nditer"
+	"github.com/aixfoundry/numgo/internal/simdvec"
 )
 
 // Pure: AsType returns a new array with every element converted to P. Real values
@@ -46,9 +47,7 @@ func convertTyped[F, P Number](dst []P, src []F) bool {
 		case []float64:
 			copy(d, s)
 		case []float32:
-			for i, v := range s {
-				d[i] = float32(v)
-			}
+			simdvec.ConvertF64ToF32(d, s)
 		case []complex64:
 			for i, v := range s {
 				d[i] = complex64(complex(v, 0))
