@@ -254,7 +254,7 @@ func Diagonal[T numgo.Number](a *numgo.Array[T], offset int) *numgo.Array[T] {
 	eachBatch(shape, func(batch []int) {
 		coords := append(append([]int(nil), batch...), 0, 0)
 		k := len(batch)
-		for t := 0; t < d; t++ {
+		for t := range d {
 			coords[k], coords[k+1] = i0+t, i1+t
 			out.Set(append(append([]int(nil), batch...), t), a.At(coords...))
 		}

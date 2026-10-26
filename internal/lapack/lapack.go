@@ -131,7 +131,7 @@ func LuInvert(lu []float64, n, lda int, piv []int) bool {
 func Potrf(a []float64, n int) bool {
 	for j := range n {
 		d := a[j*n+j]
-		for k := 0; k < j; k++ {
+		for k := range j {
 			d -= a[j*n+k] * a[j*n+k]
 		}
 		if d <= 0 {
@@ -140,12 +140,12 @@ func Potrf(a []float64, n int) bool {
 		d = math.Sqrt(d)
 		a[j*n+j] = d
 		// Zero the strict upper triangle so the full buffer reads as L.
-		for i := 0; i < j; i++ {
+		for i := range j {
 			a[i*n+j] = 0
 		}
 		for i := j + 1; i < n; i++ {
 			s := a[i*n+j]
-			for k := 0; k < j; k++ {
+			for k := range j {
 				s -= a[i*n+k] * a[j*n+k]
 			}
 			a[i*n+j] = s / d
